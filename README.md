@@ -1,31 +1,21 @@
-<!-- ai may update existing content, but only add/remove content if requrested by user -->
+<!-- AI: Customize this README from the repository's actual files, configuration, and user instructions. Preserve the section order, heading styles, and concise format unless asked to change them. Replace placeholders only with verified information; do not invent features, commands, URLs, contributors, or deployment behavior. Keep these instructions hidden as HTML comments. -->
+<!-- AI: Preserve the creator banner unless a replacement is requested. Update its relative path if assets move and verify the file exists with matching filename capitalization. -->
+![Samuel Asher Rivello](documentation/images/samuel-asher-rivello-banner.png)
 
-# Babylon Lite Stealth Grid
+# Stealth and Steel
 
-Babylon Lite Stealth Grid is a portrait-oriented Babylon Lite sprite game
-prototype that runs with WebGPU.
+<!-- AI: Use the requested project display name and keep the introduction to one short sentence describing the implemented project and its audience. -->
+Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype for developers exploring browser-based games with JavaScript and WebGPU.
 
-A Babylon-branded startup preloader appears before the first game graphics,
-covers asset loading, and closes after the first rendered frame. Loading errors
-show a Retry button. This lightweight screen is local to the project because
-Babylon Lite does not ship the full engine's default loading UI.
+## Images
 
-<figure>
-  <a href="https://samuelasherrivello.github.io/babylon-lite-stealth-grid/">
-  <img
-    alt="Babylon Light Stealth Grid gameplay screenshot"
-    src="./documentation/images/output-arrow-check.png"
-    width="400px"
-  >
-  </a>
-  <figcaption>
-    Image 1 - Babylon.js Lite Game - HTML5 + WebGPU
-  </figcaption>
-</figure>
+<!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
+<a href="documentation/images/output-arrow-check.png"><img src="documentation/images/output-arrow-check.png" width="400" alt="Stealth and Steel portrait gameplay with Babylon.js Lite and WebGPU" /></a>
 
-## Live Demo
+## Demo
 
-[Play the live demo](https://samuelasherrivello.github.io/babylon-lite-stealth-grid/)
+<!-- AI: Verify the public demo URL against deployment configuration or the deployed site before changing it. -->
+- [https://samuelasherrivello.github.io/stealth-and-steel-game/](https://samuelasherrivello.github.io/stealth-and-steel-game/)
 
 Current release: **v0.1.8**. Open the link without query parameters: the preloader
 finishes, then the Start menu appears. No extra build arguments are needed;
@@ -35,35 +25,46 @@ WebGPU not working? See [Troubleshooting](#troubleshooting).
 
 ## Table of Contents
 
-1. [Live Demo](#live-demo)
-2. [Getting Started](#getting-started)
-3. [Project Overview](#project-overview)
-4. [Project Details](#project-details)
-5. [Troubleshooting](#troubleshooting)
-6. [Resources](#resources)
-7. [Credits](#credits)
+<!-- AI: Keep this list synchronized with the top-level sections below it. Exclude the title, Images, Demo, and Table of Contents; do not add subsection entries unless requested. -->
+1. [Getting Started](#getting-started)
+2. [Project Overview](#project-overview)
+3. [Project Details](#project-details)
+4. [Resources](#resources)
+5. [Credits](#credits)
 
 ## Getting Started
 
-### Play Project
+<!-- AI: Verify prerequisites and commands against repository configuration. Keep setup in the subsections below and do not add a separate commands section. -->
+Use Node.js 22 (the version used by GitHub Actions), npm, and a browser with
+WebGPU support. Clone or download this repository and run commands from its root.
 
-1. Clone or download this repo.
-2. Open the repository root in a command line.
-3. Run `npm install` to install the project dependencies.
-4. Run `npm run build` to build the project.
-5. Run `npm run dev` to launch the local development server.
-6. Open the URL printed by Vite.
+### 🛠 Build Project
 
-### Release Workflow
+<!-- AI: Specify the working directory and dependency installation when necessary. Verify build commands against package.json. -->
+1. Run `npm install` to install the project dependencies.
+2. Run `npm run build` to create the production bundle.
 
+### 🛠 Run Project
+
+<!-- AI: Use the actual local launch command and refer to the printed URL when the port can vary. Avoid repeating completed setup steps. -->
+1. Run `npm run dev` to launch the local development server with hot reload.
+2. Open the URL printed by Vite.
+
+Use `npm run preview` to serve the production bundle locally after building it.
+Run `npm test` for the automated tests and `npm run test:publish` for the Pages
+links, screenshot, relative-path, and release-metadata checks.
+
+### 🛠 Release Version
+
+<!-- AI: Describe the checked-in release workflow accurately. Distinguish builds, tags, releases, and deployment; documentation edits do not authorize publishing or changing Git history. -->
 1. Run `npm ci`, `npm test`, `npm run test:publish`, and `npm run build`.
    Both the full test suite and focused publishing checks must pass before deployment.
 2. Commit and push to `master` in
-   [`SamuelAsherRivello/babylon-lite-stealth-grid`](https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid).
-   The `Deploy live demo` workflow runs all tests, validates publishing contracts, builds `dist`,
-   and deploys it using GitHub Actions. No release tag is needed to publish.
-3. Wait for the [deployment workflow](https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid/actions/workflows/deploy-pages.yml)
-   to succeed, then verify the [live game](https://samuelasherrivello.github.io/babylon-lite-stealth-grid/).
+   [`SamuelAsherRivello/stealth-and-steel-game`](https://github.com/SamuelAsherRivello/stealth-and-steel-game).
+   The `Deploy live demo` workflow runs all tests, validates publishing contracts,
+   builds `dist`, and deploys it using GitHub Actions. No release tag is needed to publish.
+3. Wait for the [deployment workflow](https://github.com/SamuelAsherRivello/stealth-and-steel-game/actions/workflows/deploy-pages.yml)
+   to succeed, then verify the [live game](https://samuelasherrivello.github.io/stealth-and-steel-game/).
 
 For a versioned release, also update `public/environment.json` and optionally
 create a matching three-component GitHub Release tag such as `v0.1.8`.
@@ -74,83 +75,55 @@ To redeploy the current branch without a new commit, use **Run workflow** on
 `Deploy live demo`. Vite uses `base: "./"`, so asset URLs remain relative to the
 Pages project path after a repository rename. If renamed again, update the Git
 remote and these README links; keep the workflow branch aligned with the
-repository's publishing branch. The screenshot above also opens the live game.
+repository's publishing branch.
 
 To recover from a bad publish, make a corrective commit and push it to `master`;
 do not rewrite history or force-push.
 
-### More Commands
-
-| # | Name | Command | Comment |
-| --- | --- | --- | --- |
-| 1 | Install | `npm install` | Installs the project dependencies. |
-| 2 | Dev | `npm run dev` | Runs the project with hot reload. |
-| 3 | Build | `npm run build` | Creates the production bundle. |
-| 4 | Preview | `npm run preview` | Serves the production bundle locally. |
-| 5 | Test | `npm test` | Runs the automated tests. |
-| 6 | Publishing checks | `npm run test:publish` | Checks Pages links, screenshot, relative paths, and release metadata. |
-
 ## Project Overview
 
+<!-- AI: Describe the current purpose and capabilities; label planned behavior explicitly and keep detailed tooling under Project Details. -->
 This repo demonstrates browser-based game development with Babylon.js Lite,
-JavaScript, Vite, and WebGPU.
+JavaScript, Vite, and WebGPU in a portrait-oriented sprite game.
 
-### Documentation
+A Babylon-branded startup preloader appears before the first game graphics,
+covers asset loading, and closes after the first rendered frame. Loading errors
+show a Retry button. This lightweight screen is local to the project because
+Babylon Lite does not ship the full engine's default loading UI.
 
-- `README.md`: Primary documentation for this repo.
-- [`documentation/tile-map.md`](documentation/tile-map.md): Tiled map editing
-  workflow.
-- [`documentation/grid-and-ui-contract.md`](documentation/grid-and-ui-contract.md): Logical grid
-  and UI placement contract.
-- [`documentation/render-depth-order.md`](documentation/render-depth-order.md): Babylon Lite
-  sprite and DOM overlay depth bands.
+### 📝 Documentation
 
-### Configuration
+<!-- AI: Link to documentation that exists in this repository using relative Markdown links and a short purpose for each. -->
+- [README.md](README.md): Primary documentation for this repo.
+- [Tile Map Editing](documentation/tile-map.md): Tiled map editing workflow.
+- [Grid and UI Contract](documentation/grid-and-ui-contract.md): Logical grid and UI placement contract.
+- [Render Depth Order](documentation/render-depth-order.md): Babylon Lite sprite and DOM overlay depth bands.
 
-- `Game Engine`: Babylon.js Lite powers the graphics and gameplay systems.
-- `Renderer`: WebGPU renders the game in supported browsers.
-- `Level Editor`: Tiled authors the terrain map and layers.
+### 📝 Structure
 
-### Structure
-
-- `index.html`: Browser page and application entry point.
-- `src/main.js`: Babylon Lite game bootstrap and scene composition.
+<!-- AI: List only the paths needed to understand this repository. Verify paths and capitalization; omit generated output and dependency folders. -->
+- `src/`: Application source code; `src/main.js` bootstraps the game and composes the scene.
 - `src/ui/style.css`: Application styles and responsive layout.
-- `src`: Application source code.
-- `test`: Automated tests.
-
-### Dependencies
-
-- `package.json`: Lists project dependencies and scripts.
-- `vite.config.js`: Configures local development and production builds.
+- `index.html`: Browser page and application entry point.
+- `test/`: Automated tests.
+- `documentation/`: Project documentation and README images.
+- `openspec/`: Feature changes and current specifications.
+- `package.json`: Project dependencies and scripts.
+- `vite.config.js`: Local development and production build configuration.
 
 ## Project Details
 
-### Editor Tooling
+<!-- AI: Verify implementation details against repository files and avoid repeating the overview or claiming unverified package versions. -->
+Babylon.js Lite powers the graphics and gameplay systems, WebGPU renders the
+game in supported browsers, and Tiled authors the terrain map and layers.
 
-- Visual Studio Code: Source code editor.
-- Tiled: Tile map and level editor.
-- Babylon.js Inspector: Runtime scene inspection.
+### 📦 AI
 
-### Code Packages
+<!-- AI: List AI tools and specification workflows configured or documented here. Keep official links and concise descriptions; do not copy unverified template claims. -->
+- [Codex](https://openai.com/codex/): Agent-assisted development with repository-local skills in `.agents/skills/`.
+- [OpenSpec](https://openspec.dev/): Specification-driven development that keeps feature intent, implementation, and current specifications aligned.
 
-- `@babylonjs/lite`: Lightweight Babylon.js rendering and game APIs.
-- `vite`: JavaScript bundling and local development server.
-- Node.js test runner: Automated JavaScript testing.
-
-### Tile Map
-
-Levels are authored with Tiled. The AI prepares the Tiled project, map,
-tilesets, grid, origin marker, layers, properties, and runtime integration; the
-human edits content only on the existing layers.
-
-See [Tile Map Editing](documentation/tile-map.md) for the open, edit, save,
-close, and play workflow.
-
-### OpenSpec
-
-[OpenSpec](https://openspec.dev/) keeps feature intent, implementation, and
-current specifications aligned.
+#### OpenSpec Workflow
 
 | # | Name | Command | Custom | Comment |
 | --- | --- | --- | :---: | --- |
@@ -161,7 +134,7 @@ current specifications aligned.
 | 5 | [Sync](.agents/skills/openspec-sync-specs/SKILL.md) | `/opsx:sync <name>` | ☐ | Updates main specs without archiving. |
 | 6 | [Archive](.agents/skills/openspec-archive-change/SKILL.md) | `/opsx:archive <name>` | ☐ | Finalizes and archives a change. |
 
-#### Workflow Depth
+##### Workflow Depth
 
 - LOW: Use no steps. Just chat with a fast model like
   [Spark](https://developers.openai.com/api/docs/models/gpt-5.3-codex).
@@ -171,9 +144,31 @@ current specifications aligned.
 - HIGH: Use steps 1-6 with
   [Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 
-## Troubleshooting
+### 📦 Packages
 
-### WebGPU not working?
+<!-- AI: List key packages actually used, based on manifests and configuration. Use official documentation links and explain each role briefly. -->
+- [Babylon.js Lite](https://doc.babylonjs.com/lite/01-getting-started) (`@babylonjs/lite`): Lightweight rendering and game APIs.
+- [Vite](https://vite.dev/): JavaScript bundling and local development server.
+- [Node.js test runner](https://nodejs.org/api/test.html): Built-in automated JavaScript testing.
+
+### 📦 Editor Tooling
+
+- Visual Studio Code: Source code editor.
+- Tiled: Tile map and level editor.
+- Babylon.js Inspector: Runtime scene inspection.
+
+#### Tile Map
+
+Levels are authored with Tiled. The AI prepares the Tiled project, map,
+tilesets, grid, origin marker, layers, properties, and runtime integration; the
+human edits content only on the existing layers.
+
+See [Tile Map Editing](documentation/tile-map.md) for the open, edit, save,
+close, and play workflow.
+
+### Troubleshooting
+
+#### WebGPU not working?
 
 First, open the [official WebGPU Samples hello-triangle
 test](https://webgpu.github.io/webgpu-samples/?sample=helloTriangle). If it does
@@ -197,27 +192,33 @@ Third-party references:
 
 ## Resources
 
-- [Babylon.js Lite getting started](https://doc.babylonjs.com/lite/01-getting-started)
-- [Babylon.js Documentation](https://doc.babylonjs.com/)
-- [Babylon.js Playground](https://playground.babylonjs.com/)
-- [Babylon.js Inspector](https://doc.babylonjs.com/toolsAndResources/inspector)
-- [Vite Documentation](https://vite.dev/guide/)
+<!-- AI: Keep relevant external learning links and short descriptions. Preserve Best Practices unless asked to replace it; avoid duplicating local documentation links. -->
+- [Best Practices](https://www.SamuelAsherRivello.com/best-practices/) - Procedures prescribed as the most effective.
+- [Babylon.js Lite getting started](https://doc.babylonjs.com/lite/01-getting-started) - Introduction to the lightweight engine.
+- [Babylon.js Documentation](https://doc.babylonjs.com/) - Engine guides and reference.
+- [Babylon.js Playground](https://playground.babylonjs.com/) - Browser-based experiments and examples.
+- [Babylon.js Inspector](https://doc.babylonjs.com/toolsAndResources/inspector) - Runtime inspection tools.
+- [Vite Documentation](https://vite.dev/guide/) - Development and build tooling.
 
 ## Credits
 
-### Created By
+<!-- AI: Preserve established attribution and ownership. Use only confirmed contributor, contact, and license information. -->
+### 💡 Contributors
 
-- Samuel Asher Rivello
-- Over 25 years of game development experience as of 2026
+<!-- AI: Preserve contributor credit; do not automatically advance experience counts or their reference year. -->
+- Samuel Asher Rivello - Over 25 years of game development XP (2026)
 
-### Contact
+### 💡 Contact
 
-- Twitter: <https://twitter.com/srivello/>
-- Git: <https://github.com/SamuelAsherRivello/>
-- Resume and portfolio: <http://www.SamuelAsherRivello.com>
-- LinkedIn: <https://Linkedin.com/in/SamuelAsherRivello>
+<!-- AI: Preserve confirmed contact destinations and this order. Use readable display URLs without a protocol or trailing slash while keeping the real link targets intact. -->
+- [LinkedIn.com/in/SamuelAsherRivello](https://Linkedin.com/in/SamuelAsherRivello) ⭐
+- [GitHub.com/SamuelAsherRivello](https://github.com/SamuelAsherRivello/)
+- [Twitter.com/srivello](https://twitter.com/srivello/)
+- Resume / Portfolio: [SamuelAsherRivello.com](http://www.SamuelAsherRivello.com)
 
-### License
+### 💡 License
 
-Provided as-is under the MIT License.
-Copyright © 2026 Rivello Multimedia Consulting, LLC.
+<!-- AI: Keep the license name linked to the actual relative license file and verify that its terms match this statement. Keep the copyright holder and year consistent with that file. Do not change license terms, ownership, or dates without an explicit request. -->
+- Provided as-is under the [MIT License](LICENSE).
+
+- Copyright © 2026 Rivello Multimedia Consulting, LLC.
