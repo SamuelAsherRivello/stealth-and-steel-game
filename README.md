@@ -1,6 +1,6 @@
 <!-- AI: Customize this README from the repository's actual files, configuration, and user instructions. Preserve the section order, heading styles, and concise format unless asked to change them. Replace placeholders only with verified information; do not invent features, commands, URLs, contributors, or deployment behavior. Keep these instructions hidden as HTML comments. -->
 <!-- AI: Preserve the creator banner unless a replacement is requested. Update its relative path if assets move and verify the file exists with matching filename capitalization. -->
-![Samuel Asher Rivello](documentation/images/samuel-asher-rivello-banner.png)
+![Samuel Asher Rivello](STEALTH_STEEL/documentation/images/samuel-asher-rivello-banner.png)
 
 # Stealth and Steel
 
@@ -10,7 +10,7 @@ Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype f
 ## Images
 
 <!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
-<a href="documentation/images/output-arrow-check.png"><img src="documentation/images/output-arrow-check.png" width="400" alt="Stealth and Steel portrait gameplay with Babylon.js Lite and WebGPU" /></a>
+<a href="STEALTH_STEEL/documentation/images/output-arrow-check.png"><img src="STEALTH_STEEL/documentation/images/output-arrow-check.png" width="400" alt="Stealth and Steel portrait gameplay with Babylon.js Lite and WebGPU" /></a>
 
 ## Demo
 
@@ -59,14 +59,14 @@ links, screenshot, relative-path, and release-metadata checks.
 <!-- AI: Describe the checked-in release workflow accurately. Distinguish builds, tags, releases, and deployment; documentation edits do not authorize publishing or changing Git history. -->
 1. Run `npm ci`, `npm test`, `npm run test:publish`, and `npm run build`.
    Both the full test suite and focused publishing checks must pass before deployment.
-2. Commit and push to `master` in
+2. Commit and push to `main` in
    [`SamuelAsherRivello/stealth-and-steel-game`](https://github.com/SamuelAsherRivello/stealth-and-steel-game).
    The `Deploy live demo` workflow runs all tests, validates publishing contracts,
    builds `dist`, and deploys it using GitHub Actions. No release tag is needed to publish.
 3. Wait for the [deployment workflow](https://github.com/SamuelAsherRivello/stealth-and-steel-game/actions/workflows/deploy-pages.yml)
    to succeed, then verify the [live game](https://samuelasherrivello.github.io/stealth-and-steel-game/).
 
-For a versioned release, also update `public/environment.json` and optionally
+For a versioned release, also update `STEALTH_STEEL/public/environment.json` and optionally
 create a matching three-component GitHub Release tag such as `v0.1.8`.
 The displayed version comes from that file, not from Git tags.
 
@@ -77,7 +77,7 @@ Pages project path after a repository rename. If renamed again, update the Git
 remote and these README links; keep the workflow branch aligned with the
 repository's publishing branch.
 
-To recover from a bad publish, make a corrective commit and push it to `master`;
+To recover from a bad publish, make a corrective commit and push it to `main`;
 do not rewrite history or force-push.
 
 ## Project Overview
@@ -95,21 +95,57 @@ Babylon Lite does not ship the full engine's default loading UI.
 
 <!-- AI: Link to documentation that exists in this repository using relative Markdown links and a short purpose for each. -->
 - [README.md](README.md): Primary documentation for this repo.
-- [Tile Map Editing](documentation/tile-map.md): Tiled map editing workflow.
-- [Grid and UI Contract](documentation/grid-and-ui-contract.md): Logical grid and UI placement contract.
-- [Render Depth Order](documentation/render-depth-order.md): Babylon Lite sprite and DOM overlay depth bands.
+- [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md): Tiled map editing workflow.
+- [Grid and UI Contract](STEALTH_STEEL/documentation/grid-and-ui-contract.md): Logical grid and UI placement contract.
+- [Render Depth Order](STEALTH_STEEL/documentation/render-depth-order.md): Babylon Lite sprite and DOM overlay depth bands.
 
 ### 📝 Structure
 
 <!-- AI: List only the paths needed to understand this repository. Verify paths and capitalization; omit generated output and dependency folders. -->
-- `src/`: Application source code; `src/main.js` bootstraps the game and composes the scene.
-- `src/ui/style.css`: Application styles and responsive layout.
-- `index.html`: Browser page and application entry point.
-- `test/`: Automated tests.
-- `documentation/`: Project documentation and README images.
-- `openspec/`: Feature changes and current specifications.
-- `package.json`: Project dependencies and scripts.
-- `vite.config.js`: Local development and production build configuration.
+```text
+./
+|-- .agents/
+|-- .codex/
+|-- .github/
+|-- .openspec/
+|   |-- changes/
+|   |-- specs/
+|   |-- cli.mjs
+|   `-- config.yaml
+|-- .gitignore
+|-- LICENSE
+|-- README.md
+|-- package.json
+|-- package-lock.json
+|-- vite.config.js
+`-- STEALTH_STEEL/
+    |-- documentation/
+    |-- plugins/
+    |-- public/
+    |   |-- assets/
+    |   |   |-- audio/
+    |   |   |-- images/
+    |   |   |   |-- enemies/       # Includes archer
+    |   |   |   |-- goals/
+    |   |   |   |-- npc/
+    |   |   |   |-- particles/
+    |   |   |   |-- player/
+    |   |   |   |-- terrain/
+    |   |   |   `-- ui/            # Includes Tiled spawner icons
+    |   |   `-- levels/
+    |   `-- environment.json
+    |-- src/
+    |   |-- runtime/
+    |   `-- test/                  # Includes runner and browser checks
+    |-- vendor/
+    `-- index.html
+```
+
+Run npm commands from the repository root. Vite serves `STEALTH_STEEL/index.html`
+and writes production output to root `dist/`. Runtime source starts at
+`STEALTH_STEEL/src/runtime/bootstrap.js`; `main.js` composes the game scene.
+Aseprite sources sit beside their exported images. Files in `public/` are
+served and copied into builds, including locally present Git-ignored source art.
 
 ## Project Details
 
@@ -125,11 +161,19 @@ game in supported browsers, and Tiled authors the terrain map and layers.
 
 #### OpenSpec Workflow
 
+Planning lives only in `.openspec/`. With Node.js 22.15+ and OpenSpec 1.11.0
+installed, use `npm run openspec -- <command>` from the repository root, for
+example `npm run openspec -- list` or
+`npm run openspec -- validate restructure-project-folders --strict`.
+The repository adapter handles the CLI's hardcoded folder paths without a
+second folder or link and without modifying the installed CLI. If OpenSpec
+is installed in a custom location, set `OPENSPEC_CLI` to its `bin/openspec.js`.
+
 | # | Name | Command | Custom | Comment |
 | --- | --- | --- | :---: | --- |
 | 1 | [Explore](.agents/skills/openspec-explore/SKILL.md) | `/opsx:explore` | ☐ | Optional feature discovery and planning. |
 | 2 | [Propose](.agents/skills/openspec-propose/SKILL.md) | `/opsx:propose <name>` | ☐ | Creates one focused feature change. |
-| 3 | [Grill Me](.agents/skills/open-spec-grill-me/SKILL.md) | `/open-spec-grill-me <name>` | ☑ | Resolves design decisions before implementation. |
+| 3 | [Grill Me](.agents/skills/openspec-grill-me/SKILL.md) | `/openspec-grill-me <name>` | ☑ | Resolves design decisions before implementation. |
 | 4 | [Apply](.agents/skills/openspec-apply-change/SKILL.md) | `/opsx:apply <name>` | ☐ | Implements and completes one change. |
 | 5 | [Sync](.agents/skills/openspec-sync-specs/SKILL.md) | `/opsx:sync <name>` | ☐ | Updates main specs without archiving. |
 | 6 | [Archive](.agents/skills/openspec-archive-change/SKILL.md) | `/opsx:archive <name>` | ☐ | Finalizes and archives a change. |
@@ -163,7 +207,7 @@ Levels are authored with Tiled. The AI prepares the Tiled project, map,
 tilesets, grid, origin marker, layers, properties, and runtime integration; the
 human edits content only on the existing layers.
 
-See [Tile Map Editing](documentation/tile-map.md) for the open, edit, save,
+See [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md) for the open, edit, save,
 close, and play workflow.
 
 ### Troubleshooting

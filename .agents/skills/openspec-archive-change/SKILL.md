@@ -1,7 +1,7 @@
 ---
 name: openspec-archive-change
 description: Archive a completed change in the experimental workflow. Use when the user wants to finalize and archive a change after implementation is complete.
-allowed-tools: Bash(openspec:*)
+allowed-tools: Bash(npm run openspec --:*)
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:
@@ -10,6 +10,8 @@ metadata:
   generatedBy: "1.11.0"
 ---
 
+**Repository CLI:** Run commands from the repository root using `npm run openspec -- <command>`. The adapter uses only `.openspec/`; do not create an `openspec/` directory or link. Requires Node.js 22.15+ and installed OpenSpec 1.11.0.
+
 Archive a completed change in the experimental workflow.
 
 **Canonical identity:** Accept a change name or `C###` ID, displaying both.
@@ -17,7 +19,7 @@ Resolve IDs to the current CLI change name before commands. Preserve the
 change ID in `.openspec.yaml` and every `C###-T###` task ID when moving a
 change into the archive. Never use the archive directory name as identity.
 
-**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `schemas`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow. Every unscoped example of those commands below is shorthand: before running it, append the flag. For example, run `openspec status --change "<name>" --json --store "<id>"`, not the unscoped form shown below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
+**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `npm run openspec -- store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `schemas`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow. Every unscoped example of those commands below is shorthand: before running it, append the flag. For example, run `npm run openspec -- status --change "<name>" --json --store "<id>"`, not the unscoped form shown below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `.openspec/` root.
 
 `<capability-path>` is the spec directory relative to `specs/` (for example, `user-auth` or `identity/user-auth`). Preserve the full path from each delta spec when resolving its main spec.
 
@@ -30,7 +32,7 @@ change into the archive. Never use the archive directory name as identity.
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run `openspec list --json` to get available changes and ask the user to select one
+   - If ambiguous, run `npm run openspec -- list --json` to get available changes and ask the user to select one
 
    When prompting, show only active changes (not already archived).
    Include the schema used for each change if available.
@@ -41,7 +43,7 @@ change into the archive. Never use the archive directory name as identity.
 
    After resolving the selected change and planning root, run:
    ```bash
-   openspec instructions archive --change "<name>" --json
+   npm run openspec -- instructions archive --change "<name>" --json
    ```
    Keep the same selected-root flags on this command. This lookup is advisory and
    optional: it only supplies extra prompt inputs, so it must never block archiving.
@@ -66,7 +68,7 @@ change into the archive. Never use the archive directory name as identity.
 
 2. **Check artifact completion status**
 
-   Run `openspec status --change "<name>" --json` to check artifact completion.
+   Run `npm run openspec -- status --change "<name>" --json` to check artifact completion.
 
    Parse the JSON to understand:
    - `schemaName`: The workflow being used
@@ -99,7 +101,7 @@ change into the archive. Never use the archive directory name as identity.
    delta specs from other artifacts.
 
    **If delta specs exist:**
-   - Compare each delta spec with its corresponding main spec at `<planningHome.root>/openspec/specs/<capability-path>/spec.md` (use the store-aware `planningHome.root` from step 2, not a hardcoded repo path)
+   - Compare each delta spec with its corresponding main spec at `<planningHome.root>/.openspec/specs/<capability-path>/spec.md` (use the store-aware `planningHome.root` from step 2, not a hardcoded repo path)
    - Determine what changes would be applied (adds, modifications, removals, renames)
    - Show a combined summary before prompting
 
@@ -114,7 +116,7 @@ change into the archive. Never use the archive directory name as identity.
    - Anything else — ask again rather than archiving
 
    Before a selected sync writes any main spec, run
-   `openspec instructions specs --change "<name>" --json` once with the same
+   `npm run openspec -- instructions specs --change "<name>" --json` once with the same
    selected-root flags. Require a zero exit status and valid artifact-instruction
    JSON. If the lookup fails or returns invalid JSON, report the error and stop
    before writing any main spec or moving the change. A valid response with omitted
@@ -139,7 +141,7 @@ change into the archive. Never use the archive directory name as identity.
    mkdir -p "<planningHome.changesDir>/archive"
    ```
 
-   Generate the target name: use the change name as-is when it already starts with a `YYYY-MM-DD-` prefix; otherwise prepend the current date as `YYYY-MM-DD-<change-name>`. Never stack a second date (same rule as `openspec archive`).
+   Generate the target name: use the change name as-is when it already starts with a `YYYY-MM-DD-` prefix; otherwise prepend the current date as `YYYY-MM-DD-<change-name>`. Never stack a second date (same rule as `npm run openspec -- archive`).
 
    **Check if target already exists:**
    - If yes: Fail with error, suggest renaming existing archive or using different date
@@ -173,7 +175,7 @@ change into the archive. Never use the archive directory name as identity.
 
 **Guardrails**
 - Announce the selected change; prompt for selection when it is ambiguous
-- Use artifact graph (openspec status --json) for completion checking
+- Use artifact graph (npm run openspec -- status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
 - Show clear summary of what happened

@@ -3,6 +3,8 @@ name: openspec-grill-me
 description: Relentlessly interview the user about an OpenSpec plan, exploration, or existing proposal; resolve the design tree with recommended answers, investigate answerable codebase questions directly, and reconcile confirmed conclusions into planning artifacts. Use before, during, or after OpenSpec exploration or proposal creation. Never implements code.
 ---
 
+**Repository CLI:** Run commands from the repository root using `npm run openspec -- <command>`. The adapter uses only `.openspec/`; do not create an `openspec/` directory or link. Requires Node.js 22.15+ and installed OpenSpec 1.11.0.
+
 # OpenSpec Grill Me
 
 Drive ambiguity out of an OpenSpec change through an adaptive,
@@ -35,10 +37,10 @@ wording.
 
 1. Determine whether the user supplied a plan, named a change, is already
    exploring one, or has an existing proposal.
-2. Run `openspec list --json` and resolve the relevant change from explicit
+2. Run `npm run openspec -- list --json` and resolve the relevant change from explicit
    input, conversation context, or the only active change. If several changes
    are plausible, ask which one to use.
-3. When a change exists, run `openspec status --change "<name>" --json` and read
+3. When a change exists, run `npm run openspec -- status --change "<name>" --json` and read
    every existing artifact from the reported
    `artifactPaths.<id>.existingOutputPaths`. Use the reported schema, paths,
    dependencies, `changeRoot`, and `actionContext`; do not assume standard

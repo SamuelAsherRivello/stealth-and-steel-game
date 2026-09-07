@@ -1,9 +1,11 @@
 ---
 name: openspec-list-changes
 description: List active and archived OpenSpec changes with stable IDs and task progress, assigning missing legacy IDs safely.
-allowed-tools: Bash(openspec:*)
+allowed-tools: Bash(npm run openspec --:*)
 license: MIT
 ---
+
+**Repository CLI:** Run commands from the repository root using `npm run openspec -- <command>`. The adapter uses only `.openspec/`; do not create an `openspec/` directory or link. Requires Node.js 22.15+ and installed OpenSpec 1.11.0.
 
 List project OpenSpec changes and maintain their canonical identities. By
 default, list only `OPEN` changes. To show more, the user may invoke this skill
@@ -23,8 +25,8 @@ again with `All` or `archived`.
 1. Parse the optional scope argument. With no argument, use `OPEN` scope. Use
    `All` for active and archived changes, or `archived` for archived changes
    only. Treat scope matching as case-insensitive.
-2. Find the nearest OpenSpec root and scan both `openspec/changes/` and
-   `openspec/changes/archive/` without relying on CLI listing order.
+2. Find the nearest OpenSpec root and scan both `.openspec/changes/` and
+   `.openspec/changes/archive/` without relying on CLI listing order.
 3. Read every `.openspec.yaml`. Classify a change as archived only when its
    path is under the archive directory.
 4. Validate all existing change IDs and task IDs before writing anything:
@@ -47,7 +49,7 @@ again with `All` or `archived`.
    default scope, exclude archived changes.
 10. Re-scan and validate after writes. Then calculate synchronization. For each
    delta spec, locate the corresponding main spec under the resolved
-   `openspec/specs/` root. Display `Synched: Yes` only when every delta
+   `.openspec/specs/` root. Display `Synched: Yes` only when every delta
    requirement is represented in the main spec. Display `Synched: No` when a
    main spec is missing, a delta is unapplied, or the comparison is not
    conclusive. A change with no delta specs is `Synched: Yes`. Report a brief

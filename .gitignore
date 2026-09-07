@@ -2,7 +2,7 @@ node_modules/
 dist/
 .playwright-cli/
 output/
-assets/local-imports/
+STEALTH_STEEL/public/assets/images/enemies/goblin/Torch_Red.aseprite
 # Generated root-level test/build logs and diagnostic capture.
 /*.log
 /vision-check.png
