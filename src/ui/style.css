@@ -508,7 +508,20 @@ body {
   touch-action: manipulation;
 }
 
+.settings-github-button {
+  min-width: 30cqw;
+  padding: 2.5cqw 5cqw;
+  border: 0.4cqw solid rgb(255 255 255 / 68%);
+  border-radius: 1.8cqw;
+  background: #273654;
+  color: #fff;
+  cursor: pointer;
+  justify-self: center;
+  touch-action: manipulation;
+}
+
 .settings-reset:hover,
+.settings-github-button:hover,
 .settings-reset:focus-visible {
   border-color: #fff;
   outline: 0.55cqw solid #2563eb;
@@ -535,6 +548,7 @@ body {
 .start-game-prompt-start,
 .level-complete-continue,
 .settings-reset,
+.settings-github-button,
 .developer-settings-button {
   width: 100%;
   min-width: 0;
@@ -554,6 +568,8 @@ body {
 .level-complete-continue:focus-visible,
 .settings-reset:hover,
 .settings-reset:focus-visible,
+.settings-github-button:hover,
+.settings-github-button:focus-visible,
 .developer-settings-button:hover,
 .developer-settings-button:focus-visible {
   border-color: transparent;

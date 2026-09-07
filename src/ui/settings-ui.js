@@ -7,6 +7,7 @@ import { applyFullscreenPreference } from "./fullscreen-settings.js";
 import { GameWindow } from "./game-window.js";
 
 const ASSET_BASE = import.meta.env?.BASE_URL ?? "/";
+const PROJECT_GITHUB_URL = "https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid";
 
 function createVolumeControl(documentRef, store, labelText, key) {
   const row = documentRef.createElement("label");
@@ -90,9 +91,11 @@ export function createSettingsUi({
   modalHost = host,
   screenLayer = modalHost,
   pauseController,
+  openAccount,
   store = runtimeSettingsStore,
   documentRef = globalThis.document,
   applyFullscreen = applyFullscreenPreference,
+  openExternal = (url, target, features) => globalThis.open?.(url, target, features),
 }) {
   const gear = documentRef.createElement("button");
   gear.className = "settings-gear";
@@ -107,8 +110,11 @@ export function createSettingsUi({
 
   let activeWindow = null;
   let developerWindow = null;
-  const close = () => activeWindow?.close();
+  let accountButton = null;
+  let accountActive = false;
+  const close = () => { if (!accountActive) activeWindow?.close(); };
   const open = () => {
+    if (accountActive) return;
     if (activeWindow) {
       close();
       return;
@@ -135,11 +141,18 @@ export function createSettingsUi({
     const cropMarksControl = createDebugControl(documentRef, store, "Crop Marks", RUNTIME_DEBUG_SETTING_KEYS.showCropMarks);
     const particleFxControl = createDebugControl(documentRef, store, "Particle FX (Preview)?", RUNTIME_DEBUG_SETTING_KEYS.showParticleFxPreview);
     const animatedTileControl = createDebugControl(documentRef, store, "Animated Tile (Preview)", RUNTIME_DEBUG_SETTING_KEYS.showAnimatedTilePreview);
+    const githubButton = documentRef.createElement("button");
+    githubButton.className = "settings-github-button menu-button-text";
+    githubButton.type = "button";
+    githubButton.textContent = "Open GitHub";
+    githubButton.addEventListener("click", () => {
+      openExternal(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer");
+    });
     const resetButton = documentRef.createElement("button");
     resetButton.className = "settings-reset menu-button-text";
     resetButton.type = "button";
     resetButton.textContent = "Reset";
-    developerContent.append(colliderControl.row, cropMarksControl.row, particleFxControl.row, animatedTileControl.row, resetButton);
+    developerContent.append(colliderControl.row, cropMarksControl.row, particleFxControl.row, animatedTileControl.row, githubButton, resetButton);
     const colliderCheckbox = colliderControl.checkbox;
     const cropMarksCheckbox = cropMarksControl.checkbox;
     const particleFxCheckbox = particleFxControl.checkbox;
@@ -182,7 +195,21 @@ export function createSettingsUi({
       fullscreenControl.row,
       developerButton,
     );
-    pauseController.pause();
+    if (openAccount) {
+      accountButton = documentRef.createElement("button");
+      accountButton.type = "button";
+      accountButton.className = "settings-account-button";
+      accountButton.textContent = "⚡ Account";
+      accountButton.addEventListener("click", event => {
+        event.stopPropagation();
+        if (accountActive) return;
+        accountActive = true;
+        activeWindow?.setVisible(false);
+        void openAccount();
+      });
+      content.prepend(accountButton);
+    }
+    pauseController.pause('settings');
     gear.setAttribute("aria-label", "Close settings");
     activeWindow = new GameWindow({
       host: modalHost,
@@ -197,7 +224,7 @@ export function createSettingsUi({
         fullscreenControl.dispose();
         activeWindow = null;
         gear.setAttribute("aria-label", "Open settings");
-        pauseController.resume();
+        pauseController.resume('settings');
       },
     });
   };
@@ -210,6 +237,11 @@ export function createSettingsUi({
 
   return {
     gear,
+    returnFromAccount() {
+      accountActive = false;
+      activeWindow?.setVisible(true);
+      accountButton?.focus();
+    },
     open,
     close,
     get activeWindow() { return activeWindow; },

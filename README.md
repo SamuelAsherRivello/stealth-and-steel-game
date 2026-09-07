@@ -221,3 +221,17 @@ Third-party references:
 
 Provided as-is under the MIT License.
 Copyright © 2026 Rivello Multimedia Consulting, LLC.
+
+## BIS Account smoke preview
+
+Settings → **⚡ Account** opens the complete public BIS Account UI. Back returns to Settings; ordinary guest play requires no account. Account loads on demand, and a failed load keeps a Back path. The game owns restart after BIS confirms logout. The package is a hash-named snapshot in `vendor/`, with locked React peers; no sibling source import is used.
+
+See the [BIS smoke runbook](../blockchain-integration-service/documentation/SMOKE_TEST_BIS_TO_GAME.md) for build/refresh provenance, isolated tests, separate origins and private disposable-account acceptance. Planning is coordinated by BIS's `smoke-test-bis-to-game` change.
+
+Game server: `npm run dev -- --host 127.0.0.1 --port 5175 --strictPort`. Windows browser: http://127.0.0.1:15175/. Paste this entire line in PowerShell and leave the terminal open:
+
+```powershell
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:15175:127.0.0.1:5175 contabo-srive
+```
+
+The BIS demo at http://127.0.0.1:15174/ has separate origin storage. Keep the hostname/port stable; do not copy wallet storage or record recovery words.

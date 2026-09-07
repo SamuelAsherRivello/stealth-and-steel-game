@@ -95,6 +95,8 @@ import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
+import { createBisAccount } from "./integration/bis-account.js";
+import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
 import { createLevelCompleteUi } from "./ui/level-complete-ui.js";
 import { createGoal } from "./systems/goals/goal.js";
@@ -931,27 +933,12 @@ export async function start({ showStartPrompt = true } = {}) {
   registerSpriteRenderer(renderer);
   pickupSystem.setRenderer({ add: (layer) => addSpriteRendererLayer(renderer, layer), remove: (layer) => removeSpriteRendererLayer(renderer, layer) });
 
-  const handleGoldPickupClick = (event) => {
-    const viewport = latestGameViewport ?? refreshGameViewportDiagnostics();
-    const point = logicalPointFromClient({ x: event.clientX, y: event.clientY }, viewport);
-    const x = point.x;
-    const y = SCREEN_HEIGHT - point.y;
-    for (const pickup of pickupSystem.pickups) {
-      const collider = pickup.getCombatCollider();
-      if (collider && x >= collider.x && x <= collider.x + collider.width
-        && y >= collider.y && y <= collider.y + collider.height) {
-        if (pickup.pickup()) playSfx("pickup");
-        break;
-      }
-    }
-  };
   const handleGridSelection = (event) => {
     const viewport = latestGameViewport ?? refreshGameViewportDiagnostics();
     const logicalPoint = logicalPointFromClient({ x: event.clientX, y: event.clientY }, viewport);
     const selectedGridSpot = gridSpotFromLogicalPoint(logicalPoint, GRID);
     if (selectedGridSpot) selectionSystem.toggleGridSpot(selectedGridSpot);
   };
-  canvas.addEventListener("pointerup", handleGoldPickupClick);
   canvas.addEventListener("pointerup", handleGridSelection);
 
   for (const spawner of spawners) {
@@ -1030,7 +1017,12 @@ export async function start({ showStartPrompt = true } = {}) {
       previousTime = performance.now();
     },
   });
-  createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController });
+  const accountHost = createBisAccount({
+    host: domScreen, pauseController,
+    restartGame: () => window.location.reload(),
+    onClose: () => settingsUi.returnFromAccount(),
+  });
+  const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: () => accountHost.open() });
   showCropMarks = runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showCropMarks);
   if (latestGameViewport) renderViewportQaMarkers(latestGameViewport, showCropMarks);
   const unsubscribeCropMarks = runtimeSettingsStore.subscribe(
@@ -1560,7 +1552,7 @@ export async function start({ showStartPrompt = true } = {}) {
 
   requestAnimationFrame(update);
   window.addEventListener("pagehide", () => {
-    canvas.removeEventListener("pointerup", handleGoldPickupClick);
+    accountHost.dispose();
     canvas.removeEventListener("pointerup", handleGridSelection);
     viewportSafeArea.dispose();
     viewportResizeObserver.disconnect();

@@ -6,7 +6,7 @@ Defines a reliable modal pause state that freezes mutable gameplay and input whi
 ## Requirements
 
 ### Requirement: Pause gameplay while settings is open
-Opening the Settings Menu SHALL freeze player movement, virtual-controller actions, keyboard gameplay input, player animation progression, animated terrain progression, coordinate changes, and every other mutable game-time behavior until the menu closes.
+Opening the Settings Menu SHALL freeze player movement, virtual-controller actions, keyboard gameplay input, player animation progression, animated terrain progression, coordinate changes, and every other mutable game-time behavior until all applicable Settings, Account and other pause owners release their pauses.
 
 #### Scenario: Open settings during movement
 - **WHEN** the archer is moving and the player opens settings
@@ -26,7 +26,7 @@ The render loop SHALL continue presenting the frozen game scene and Settings Men
 - **AND** the rendered surface does not become blank or stale because rendering stopped
 
 ### Requirement: Resume without hidden progress
-Closing the Settings Menu SHALL resume from the same logical state without applying elapsed wall-clock time from the pause or replaying input that occurred while paused.
+Closing the Settings Menu SHALL resume only if no other pause owner remains, from the same logical state without applying elapsed wall-clock time from the pause or replaying input that occurred while paused.
 
 #### Scenario: Resume after a long pause
 - **WHEN** the player closes settings after leaving it open for an arbitrary duration
@@ -36,3 +36,10 @@ Closing the Settings Menu SHALL resume from the same logical state without apply
 #### Scenario: Release input during pause
 - **WHEN** an input was active before settings opened and is released while settings is open
 - **THEN** closing settings does not restore that input as active
+
+### Requirement: Independent Account pause ownership
+Settings and BIS Account SHALL acquire/release separate pause reasons while preserving existing start/loss pauses. Account SHALL keep the scene rendered, isolate keyboard/pointer input and preserve the final-resume time reset. Coordination: BIS `.openspec/changes/smoke-test-bis-to-game/`; no payment, revival or death requirements change.
+
+#### Scenario: Account returns while another pause remains
+- **WHEN** Account returns to Settings, or Settings closes while a start/loss pause remains
+- **THEN** gameplay stays paused with no intermediate resume or replay of held input

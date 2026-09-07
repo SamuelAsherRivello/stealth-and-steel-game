@@ -29,6 +29,7 @@ class FakeElement extends EventTarget {
       this.children.push(child);
     }
   }
+  prepend(...children) { this.append(...children); this.children = [...children, ...this.children.filter(child => !children.includes(child))]; }
   remove() {
     if (this.parentNode) {
       this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
@@ -181,11 +182,14 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /slider\.max = "100"/);
   assert.match(source, /addEventListener\("input"/);
   assert.match(source, /resetButton\.textContent = "Reset"/);
+  assert.match(source, /githubButton\.textContent = "Open GitHub"/);
+  assert.match(source, /PROJECT_GITHUB_URL = "https:\/\/github\.com\/SamuelAsherRivello\/babylon-lite-stealth-grid"/);
+  assert.match(source, /openExternal\(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer"\)/);
   assert.match(source, /store\.reset\(\)/);
-  assert.match(source, /pauseController\.pause\(\)/);
-  assert.match(source, /pauseController\.resume\(\)/);
+  assert.match(source, /pauseController\.pause\('settings'\)/);
+  assert.match(source, /pauseController\.resume\('settings'\)/);
   assert.doesNotMatch(source, /Skip Start Menu/);
-  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController \}\)/);
+  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: \(\) => accountHost.open\(\) \}\)/);
   assert.match(main, /updateSpriteAnimationManager\(animationManager, activeDelta \* 1000\)/);
   assert.match(main, /playerRecord\.actor\.update\(activeDelta, dynamicColliders\)/);
   assert.match(main, /showColliders = runtimeSettingsStore\.get\(RUNTIME_DEBUG_SETTING_KEYS\.showColliders\)/);
@@ -233,6 +237,33 @@ test("developer settings opens above the main settings window and closes back to
   assert.equal(pauseCalls.join(","), "pause,resume");
 });
 
+test("developer settings opens the related GitHub project above Reset", () => {
+  const documentRef = createDocument();
+  const opened = [];
+  const settingsUi = createSettingsUi({
+    host: new FakeElement(),
+    documentRef,
+    store: { get: () => 100, reset() {} },
+    pauseController: { pause() {}, resume() {} },
+    openExternal: (...args) => opened.push(args),
+  });
+
+  settingsUi.open();
+  click(settingsUi.activeWindow.panel.children[2].children[0].children[3]);
+  const developerContent = settingsUi.developerWindow.panel.children[2].children[0];
+  const githubButton = developerContent.children.at(-2);
+  const resetButton = developerContent.children.at(-1);
+
+  assert.equal(githubButton.textContent, "Open GitHub");
+  assert.equal(resetButton.textContent, "Reset");
+  click(githubButton);
+  assert.deepEqual(opened, [[
+    "https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid",
+    "_blank",
+    "noopener,noreferrer",
+  ]]);
+});
+
 test("settings chrome follows inspiration frame-relative measurements", async () => {
   const styles = await readFile(new URL("../../src/ui/style.css", import.meta.url), "utf8");
   for (const selector of [
@@ -261,4 +292,16 @@ test("gear icon is transparent vector artwork", async () => {
   const icon = await readFile(new URL("../../public/ui/gear.svg", import.meta.url), "utf8");
   assert.match(icon, /viewBox="0 0 64 64"/);
   assert.doesNotMatch(icon, /<rect[^>]+(?:fill|style)=/);
+});
+
+
+test("Account is styled and placed before the volume controls", () => {
+  const settings = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(),
+    store: {get: () => 100}, pauseController: {pause() {}, resume() {}}, openAccount() {} });
+  settings.open();
+  const content = settings.activeWindow.panel.children[2].children[0];
+  assert.equal(content.children[0].textContent, '⚡ Account');
+  assert.equal(content.children[0].className, 'settings-account-button');
+  assert.equal(content.children[1].className, 'volume-control');
+  settings.close();
 });

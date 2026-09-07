@@ -3,32 +3,32 @@ export function createPauseController({
   onResume = () => {},
   now = () => performance.now(),
 } = {}) {
-  let paused = false;
+  const reasons = new Set();
   let lastResumeTime = null;
 
   return {
     get isPaused() {
-      return paused;
+      return reasons.size > 0;
     },
     get lastResumeTime() {
       return lastResumeTime;
     },
     getDelta(deltaSeconds) {
-      return paused ? 0 : Math.max(0, deltaSeconds);
+      return reasons.size ? 0 : Math.max(0, deltaSeconds);
     },
-    pause() {
-      if (paused) {
+    pause(reason = "legacy") {
+      const alreadyPaused = reasons.size > 0;
+      reasons.add(reason);
+      if (alreadyPaused) {
         return false;
       }
-      paused = true;
       onPause();
       return true;
     },
-    resume() {
-      if (!paused) {
+    resume(reason = "legacy") {
+      if (!reasons.delete(reason) || reasons.size) {
         return lastResumeTime;
       }
-      paused = false;
       lastResumeTime = now();
       onResume();
       return lastResumeTime;

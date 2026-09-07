@@ -44,3 +44,15 @@ test("opening settings clears input before gameplay becomes paused", () => {
   pause.pause();
   assert.deepEqual(sequence, ["paused"]);
 });
+
+
+test("Settings and Account release only their own pause while start/loss remains", () => {
+  const calls=[]; const pause=createPauseController({onPause:()=>calls.push('clear-input'),onResume:()=>calls.push('resume'),now:()=>9000});
+  pause.pause(); pause.pause('settings'); pause.pause('bis-account');
+  pause.resume('settings'); assert.equal(pause.getDelta(100),0);
+  pause.pause('settings'); pause.resume('bis-account');
+  assert.equal(pause.isPaused,true); pause.resume('settings');
+  assert.equal(pause.isPaused,true); assert.equal(pause.lastResumeTime,null);
+  pause.resume(); assert.equal(pause.lastResumeTime,9000);
+  assert.deepEqual(calls,['clear-input','resume']);
+});

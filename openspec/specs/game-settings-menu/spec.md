@@ -164,3 +164,16 @@ The five existing developer options SHALL retain their labels, values, persisten
 #### Scenario: Reset developer settings
 - **WHEN** the player activates Reset in Developer Settings
 - **THEN** all settings are restored to their defaults, visible controls update immediately, and the Developer Settings window remains open and usable
+
+### Requirement: Public BIS Account from Settings
+Settings SHALL expose ⚡ Account through the public BIS package and stylesheet, independently of guest startup. All production Account destinations SHALL remain available with their existing guards. The adapter SHALL preserve one context, isolate loading/error feedback with a Back path, and dispose subscriptions/UI on pagehide. Coordination: BIS `.openspec/changes/smoke-test-bis-to-game/`.
+
+#### Scenario: Account replaces Settings interaction
+- **WHEN** Account opens
+- **THEN** Settings becomes hidden and inert while the production Account root owns input and focus
+- **AND** nested Back stays within BIS, while root Back restores Settings and focuses Account
+
+#### Scenario: Logout requests game-owned restart
+- **WHEN** BIS confirms cleanup and emits restartRequested
+- **THEN** the game invokes its own restart routine once per logout ID without restoring Settings or resuming first
+- **AND** ordinary Back or integration disposal never clears the saved account
