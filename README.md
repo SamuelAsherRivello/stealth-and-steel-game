@@ -156,7 +156,7 @@ current specifications aligned.
 | --- | --- | --- | :---: | --- |
 | 1 | [Explore](.agents/skills/openspec-explore/SKILL.md) | `/opsx:explore` | ☐ | Optional feature discovery and planning. |
 | 2 | [Propose](.agents/skills/openspec-propose/SKILL.md) | `/opsx:propose <name>` | ☐ | Creates one focused feature change. |
-| 3 | [Grill Me](.agents/skills/open-spec-grill-me/SKILL.md) | `/open-spec-grill-me <name>` | ☑ | Resolves design decisions before implementation. |
+| 3 | [Grill Me](.agents/skills/openspec-grill-me/SKILL.md) | `/openspec-grill-me <name>` | ☑ | Resolves design decisions before implementation. |
 | 4 | [Apply](.agents/skills/openspec-apply-change/SKILL.md) | `/opsx:apply <name>` | ☐ | Implements and completes one change. |
 | 5 | [Sync](.agents/skills/openspec-sync-specs/SKILL.md) | `/opsx:sync <name>` | ☐ | Updates main specs without archiving. |
 | 6 | [Archive](.agents/skills/openspec-archive-change/SKILL.md) | `/opsx:archive <name>` | ☐ | Finalizes and archives a change. |

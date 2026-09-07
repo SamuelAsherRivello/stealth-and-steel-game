@@ -1,9 +1,9 @@
 ---
-name: open-spec-grill-me
+name: openspec-grill-me
 description: Relentlessly interview the user about an OpenSpec plan, exploration, or existing proposal; resolve the design tree with recommended answers, investigate answerable codebase questions directly, and reconcile confirmed conclusions into planning artifacts. Use before, during, or after OpenSpec exploration or proposal creation. Never implements code.
 ---
 
-# Open Spec Grill Me
+# OpenSpec Grill Me
 
 Drive ambiguity out of an OpenSpec change through an adaptive,
 decision-by-decision interview, then incorporate the confirmed conclusions into
@@ -61,7 +61,7 @@ branches revealed by the code or answers.
 
 - If the invocation argument consists of a single positive integer, interpret
   that integer as the maximum number of substantive grilling questions. For
-  example, `$open-spec-grill-me 3` means "grill me with 3 questions." Do not
+  example, `$openspec-grill-me 3` means "grill me with 3 questions." Do not
   treat the number as an option selection unless the surrounding conversation
   clearly contains a question awaiting that numbered answer.
 - If the user gives an explicit limit such as "grill me with 5 questions," ask
