@@ -15,11 +15,12 @@ Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype f
 ## Demo
 
 <!-- AI: Verify the public demo URL against deployment configuration or the deployed site before changing it. -->
+<!-- AI: Do not mention release version numbers anywhere in this README,
+including current-release announcements or example release tags, unless the
+user explicitly requests it. Do not restore query-parameter advice,
+preloader-to-Start-menu explanation, or build-argument/GitHub Actions build
+commentary in this Demo section unless the user explicitly requests it. -->
 - [https://samuelasherrivello.github.io/stealth-and-steel-game/](https://samuelasherrivello.github.io/stealth-and-steel-game/)
-
-Current release: **v0.1.8**. Open the link without query parameters: the preloader
-finishes, then the Start menu appears. No extra build arguments are needed;
-GitHub Actions runs plain `npm run build`.
 
 WebGPU not working? See [Troubleshooting](#troubleshooting).
 
@@ -67,7 +68,7 @@ links, screenshot, relative-path, and release-metadata checks.
    to succeed, then verify the [live game](https://samuelasherrivello.github.io/stealth-and-steel-game/).
 
 For a versioned release, also update `STEALTH_STEEL/public/environment.json` and optionally
-create a matching three-component GitHub Release tag such as `v0.1.8`.
+create a matching three-component GitHub Release tag.
 The displayed version comes from that file, not from Git tags.
 
 GitHub repository Settings → Pages → Source must remain **GitHub Actions**.
@@ -191,6 +192,10 @@ is installed in a custom location, set `OPENSPEC_CLI` to its `bin/openspec.js`.
 ### 📦 Packages
 
 <!-- AI: List key packages actually used, based on manifests and configuration. Use official documentation links and explain each role briefly. -->
+<!-- AI: The user removed the Mermaid, react-markdown, and @scure/bip39
+package entries. Do not reintroduce those entries or their documentation-viewer
+and recovery-phrase descriptions anywhere in this README unless the user
+explicitly requests it, even if those dependencies appear in the codebase. -->
 - [Babylon.js Lite](https://doc.babylonjs.com/lite/01-getting-started) (`@babylonjs/lite`): Lightweight rendering and game APIs.
 - [Vite](https://vite.dev/): JavaScript bundling and local development server.
 - [Node.js test runner](https://nodejs.org/api/test.html): Built-in automated JavaScript testing.
