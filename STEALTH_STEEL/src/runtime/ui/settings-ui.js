@@ -102,7 +102,7 @@ export function createSettingsUi({
   gear.type = "button";
   gear.setAttribute("aria-label", "Open settings");
   const icon = documentRef.createElement("img");
-  icon.src = `${ASSET_BASE}assets/images/ui/gear.svg`;
+  icon.src = `${ASSET_BASE}ui/tiny-swords/Icon_10.png`;
   icon.alt = "";
   icon.setAttribute("aria-hidden", "true");
   gear.append(icon);

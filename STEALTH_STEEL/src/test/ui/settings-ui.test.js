@@ -165,7 +165,7 @@ test("settings source composes required controls, persistence, and pause lifecyc
     readFile(new URL("../../runtime/main.js", import.meta.url), "utf8"),
   ]);
   assert.match(source, /gear\.setAttribute\("aria-label", "Open settings"\)/);
-  assert.match(source, /icon\.src = `\$\{ASSET_BASE\}assets\/images\/ui\/gear\.svg`/);
+  assert.match(source, /icon\.src = `\$\{ASSET_BASE\}ui\/tiny-swords\/Icon_10\.png`/);
   assert.match(source, /title:\s*"Settings Menu"/);
   assert.match(source, /developerButton\.textContent = "Developer Settings"/);
   assert.match(source, /title: "Developer Settings"/);

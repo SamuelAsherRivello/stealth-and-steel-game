@@ -95,6 +95,7 @@ import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
+import { drawStatusBadge, loadStatusBadgeArt } from "./ui/status-badge.js";
 import { createBisAccount } from "./integration/bis-account.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
@@ -163,6 +164,7 @@ const EMPTY_TERRAIN_FRAMES = new Set([
 const canvas = document.querySelector("#renderCanvas");
 const debugCanvas = document.querySelector("#debugCanvas");
 const debugContext = debugCanvas.getContext("2d");
+const statusBadgeArt = loadStatusBadgeArt();
 const errorOutput = document.querySelector("#error");
   const gameUi = document.querySelector("#gameUi");
   const domBody = document.querySelector("#dom-body");
@@ -1729,16 +1731,9 @@ function drawDiagnostics(
       debugContext.shadowColor = "rgb(0 0 0 / 70%)";
       debugContext.shadowBlur = 4;
       debugContext.shadowOffsetY = 2;
-      debugContext.fillStyle = "#a8a8a8";
-      debugContext.beginPath();
-      debugContext.arc(iconX, iconY, 18, 0, Math.PI * 2);
-      debugContext.fill();
-      debugContext.strokeStyle = "#4a4a4a";
-      debugContext.lineWidth = 2;
-      debugContext.stroke();
-      debugContext.fillStyle = instance.flash === "red" ? "#ff6b6b"
-        : instance.flash === "yellow" ? "#ffe066" : "#ffffff";
-      debugContext.fillText(instance.icon, iconX, iconY + 1);
+      drawStatusBadge(debugContext, statusBadgeArt, {
+        x: iconX, y: iconY, icon: instance.icon, flash: instance.flash,
+      });
       debugContext.shadowColor = "transparent";
       debugContext.shadowBlur = 0;
       debugContext.shadowOffsetY = 0;
