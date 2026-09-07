@@ -1,7 +1,7 @@
 ---
 name: openspec-sync-specs
 description: Sync delta specs from a change to main specs. Use when the user wants to update main specs with changes from a delta spec, without archiving the change.
-allowed-tools: Bash(openspec:*)
+allowed-tools: Bash(npm run openspec --:*)
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:
@@ -9,6 +9,8 @@ metadata:
   version: "1.0"
   generatedBy: "1.11.0"
 ---
+
+**Repository CLI:** Run commands from the repository root using `npm run openspec -- <command>`. The adapter uses only `.openspec/`; do not create an `openspec/` directory or link. Requires Node.js 22.15+ and installed OpenSpec 1.11.0.
 
 Sync delta specs from a change to main specs.
 
@@ -18,7 +20,7 @@ change IDs or task IDs.
 
 This is an **agent-driven** operation - you will read delta specs and directly edit main specs to apply the changes. This allows intelligent merging (e.g., adding a scenario without copying the entire requirement).
 
-**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `schemas`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow. Every unscoped example of those commands below is shorthand: before running it, append the flag. For example, run `openspec status --change "<name>" --json --store "<id>"`, not the unscoped form shown below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
+**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `npm run openspec -- store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `schemas`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow. Every unscoped example of those commands below is shorthand: before running it, append the flag. For example, run `npm run openspec -- status --change "<name>" --json --store "<id>"`, not the unscoped form shown below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `.openspec/` root.
 
 `<capability-path>` is the spec directory relative to `specs/` (for example, `user-auth` or `identity/user-auth`). Preserve the full path from each delta spec when resolving its main spec.
 
@@ -31,7 +33,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run `openspec list --json` to get available changes and ask the user to select one
+   - If ambiguous, run `npm run openspec -- list --json` to get available changes and ask the user to select one
 
    When prompting, show changes that have delta specs (under `specs/` directory).
 
@@ -41,10 +43,10 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
    Run:
    ```bash
-   openspec status --change "<name>" --json
+   npm run openspec -- status --change "<name>" --json
    ```
 
-   The JSON includes `planningHome.root`. Main specs live under `<planningHome.root>/openspec/specs/` — use that (store-aware) root for every main-spec path below, not a hardcoded repo path. When a store is selected it points at the store, not the current repository.
+   The JSON includes `planningHome.root`. Main specs live under `<planningHome.root>/.openspec/specs/` — use that (store-aware) root for every main-spec path below, not a hardcoded repo path. When a store is selected it points at the store, not the current repository.
 
 3. **Find delta specs**
 
@@ -80,7 +82,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
    Before the first main-spec write, obtain one current specs-rule snapshot:
    - If archive invoked this workflow inline and supplied a valid snapshot from
-     `openspec instructions specs --change "<name>" --json`, reuse it and do not
+     `npm run openspec -- instructions specs --change "<name>" --json`, reuse it and do not
      fetch the same instructions again.
    - Otherwise run that command once now with the same selected-root flags.
    - If the direct lookup exits non-zero or returns invalid artifact-instruction
@@ -98,7 +100,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
    a. **Read the delta spec** to understand the intended changes
 
-   b. **Read the main spec** at `<planningHome.root>/openspec/specs/<capability-path>/spec.md` (may not exist yet)
+   b. **Read the main spec** at `<planningHome.root>/.openspec/specs/<capability-path>/spec.md` (may not exist yet)
 
    c. **Apply changes intelligently**:
 
@@ -144,18 +146,18 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
       **`## Purpose` in the delta:**
       - The main spec already has one and it is authoritative - leave it alone
-        (this is what `openspec archive` does; it warns and moves on)
+        (this is what `npm run openspec -- archive` does; it warns and moves on)
 
    d. **Create new main spec** if capability doesn't exist yet:
-      - Create `<planningHome.root>/openspec/specs/<capability-path>/spec.md`
+      - Create `<planningHome.root>/.openspec/specs/<capability-path>/spec.md`
       - Add Purpose section: copy the delta's `## Purpose` body verbatim when it has one
-        (this is what `openspec archive` does); only write a brief TBD placeholder when it does not
+        (this is what `npm run openspec -- archive` does); only write a brief TBD placeholder when it does not
       - Add Requirements section with the ADDED requirements
       - Follow the **Main Spec Format Reference** below
 
 5. **Validate updated main specs**
 
-   Run `openspec validate --specs` with the same selected-root flags used earlier.
+   Run `npm run openspec -- validate --specs` with the same selected-root flags used earlier.
    If validation fails, report the problems and do not claim the sync succeeded.
 
 6. **Show summary**
@@ -230,7 +232,7 @@ The system SHALL do something new.
 **Key Principle: Intelligent Merging**
 
 Unlike programmatic merging, you merge rather than overwrite:
-- A MODIFIED block carries the whole requirement - body plus every scenario that survives the change. `openspec validate` and `openspec archive` both reject one that drops a scenario the main spec still has.
+- A MODIFIED block carries the whole requirement - body plus every scenario that survives the change. `npm run openspec -- validate` and `npm run openspec -- archive` both reject one that drops a scenario the main spec still has.
 - Keep anything the delta does not mention, in the main spec's existing order
 - Use your judgment to merge changes sensibly
 

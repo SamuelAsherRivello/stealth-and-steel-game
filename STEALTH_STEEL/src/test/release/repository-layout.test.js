@@ -1,0 +1,69 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = fileURLToPath(new URL("../../../../", import.meta.url));
+const app = join(root, "STEALTH_STEEL");
+const assets = join(app, "public/assets");
+const walk = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const file = join(directory, entry.name);
+  return entry.isDirectory() ? walk(file) : [file];
+});
+
+test("root commands target the contained application and preserve Pages output", async () => {
+  const { default: config } = await import("../../../../vite.config.js");
+  assert.equal(resolve(root, config.root), app);
+  assert.equal(resolve(app, config.build.outDir), join(root, "dist"));
+  assert.equal(config.base, "./");
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"));
+  assert.equal(pkg.scripts.test, "node STEALTH_STEEL/src/test/run-tests.mjs");
+  for (const [name, dependency] of Object.entries(pkg.dependencies)) {
+    assert.equal(lock.packages[""].dependencies[name], dependency);
+    if (dependency.startsWith("file:")) assert.ok(existsSync(join(root, dependency.slice(5))), dependency);
+  }
+  for (const legacy of ["src", "test", "scripts", "public", "plugins", "vendor", "documentation", "openspec", "index.html"]) {
+    assert.equal(existsSync(join(root, legacy)), false, `Legacy root path: ${legacy}`);
+  }
+  assert.ok(existsSync(join(root, ".openspec/config.yaml")));
+});
+
+test("every active Tiled image and external tileset resolves inside the public asset tree", () => {
+  let references = 0;
+  const visit = (value, file) => {
+    if (!value || typeof value !== "object") return;
+    for (const [key, child] of Object.entries(value)) {
+      if (["image", "source"].includes(key) && typeof child === "string") {
+        const target = resolve(dirname(file), child);
+        assert.ok(target.startsWith(assets + "/") || target.startsWith(assets + "\\"), target);
+        assert.ok(existsSync(target), `${file}: ${child}`);
+        if (key === "image") assert.ok(target.startsWith(join(assets, "images")), target);
+        references++;
+      } else visit(child, file);
+    }
+  };
+  for (const file of walk(join(assets, "levels"))) {
+    // Historical editor backups can reference retired palettes; preserve them.
+    if (/\.(tmj|tsj)$/.test(file) && !file.endsWith(".bak.tmj")) visit(JSON.parse(readFileSync(file, "utf8")), file);
+  }
+  assert.ok(references > 20, "Check the maps and the entire tileset palette");
+});
+
+test("image sources sit beside their exports and all public images use the images folder", () => {
+  assert.deepEqual(readdirSync(assets).sort(), ["audio", "images", "levels"]);
+  for (const file of walk(join(app, "public"))) {
+    if (/\.(png|svg|aseprite|jpe?g|webp)$/i.test(file)) assert.ok(file.startsWith(join(assets, "images")), file);
+    if (file.endsWith(".aseprite")) {
+      const bytes = readFileSync(file);
+      assert.equal(bytes.readUInt16LE(4), 0xa5e0);
+      assert.equal(bytes.readUInt32LE(0), bytes.length);
+      assert.ok(readdirSync(dirname(file)).some(name => name.endsWith(".png")), file);
+    }
+  }
+  assert.ok(existsSync(join(assets, "images/enemies/archer/Arrow.png")));
+  assert.ok(existsSync(join(app, "public/environment.json")));
+  const ignore = readFileSync(join(root, ".gitignore"), "utf8");
+  assert.ok(ignore.includes("STEALTH_STEEL/public/assets/images/enemies/goblin/Torch_Red.aseprite"));
+});
