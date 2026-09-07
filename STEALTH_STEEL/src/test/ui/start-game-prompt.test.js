@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import { createStartGamePrompt, shouldShowStartGamePrompt, shouldSkipIntro, START_PROMPT_BODY } from "../../runtime/ui/start-game-prompt.js";
 
 class FakeElement extends EventTarget {
+  style = {};
+  _text = "";
+  set textContent(value) { this._text = value; this.children = []; }
+  get textContent() { return this._text + this.children.map(child => child.textContent ?? "").join(""); }
   children = [];
   attributes = new Map();
   parentNode = null;
@@ -36,10 +40,11 @@ test("start prompt closes only when the backdrop itself is clicked", () => {
   const host = new FakeElement();
   let starts = 0;
   const prompt = createStartGamePrompt({ host, onStart: () => { starts += 1; }, documentRef });
-  assert.equal(prompt.panel.children[0].textContent, "Stealth Grid");
+  assert.equal(prompt.panel.children[0].textContent, "Start Menu");
   assert.equal(prompt.panel.children[1].textContent, START_PROMPT_BODY);
   assert.equal(prompt.startButton.textContent, "Start");
-  assert.equal(prompt.panel.children.length, 3);
+  assert.equal(prompt.panel.children.length, 4);
+  assert.equal(prompt.backdrop.children[0].children[0].alt, "Stealth & Steel");
   assert.equal(prompt.startButton.focused, true);
   click(prompt.backdrop, prompt.panel);
   assert.equal(host.children.length, 1);

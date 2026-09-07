@@ -24,5 +24,7 @@ test("Lancer keeps a looping idle animation and participates in enemy patrol", a
     readFile(new URL("../runtime/main.js", import.meta.url), "utf8"),
   ]);
   assert.match(catalog, /idle: createDescriptor\("Lancer Idle", "Lancer_Idle\.png", 12, true\)/);
-  assert.match(main, /character: SpawnerCharacter\.LANCER, actor, combat, controller: createEnemyPatrolController\(actor/);
+  assert.match(main, /lancerProfile/);
+  assert.match(main, /record\.brain = createEnemyBrain/);
+  assert.match(main, /character: SpawnerCharacter\.LANCER, actor, combat, controller: null/);
 });

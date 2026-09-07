@@ -2,12 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { DEBUG_SETTING_KEYS } from "../../runtime/runtime-settings/runtime-settings-store.js";
+import { DEBUG_SETTING_KEYS, createSettingsStore } from "../../runtime/runtime-settings/runtime-settings-store.js";
 import { GameWindow } from "../../runtime/ui/game-window.js";
 import {
   createDebugControl,
   createSettingsUi,
-  syncDebugPreviewControls,
 } from "../../runtime/ui/settings-ui.js";
 
 class FakeClassList {
@@ -16,6 +15,9 @@ class FakeClassList {
 }
 
 class FakeElement extends EventTarget {
+  _text = "";
+  set textContent(value) { this._text = value; this.children = []; }
+  get textContent() { return this._text + this.children.map(child => child.textContent ?? "").join(""); }
   children = [];
   attributes = new Map();
   classList = new FakeClassList();
@@ -51,6 +53,30 @@ function click(target, eventTarget = target) {
   target.dispatchEvent(event);
 }
 
+test("Developer lists five independent visualizations and clears all their settings", () => {
+  const store = createSettingsStore(null);
+  const ui = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
+    pauseController: { pause() {}, resume() {} } });
+  ui.open();
+  click(ui.activeWindow.panel.children[2].children[0].children[3]);
+  const content = ui.developerWindow.panel.children[2].children[0];
+  assert.equal(content.children[0].textContent, "Debug Draw");
+  const rows = content.children.slice(1, 6);
+  assert.deepEqual(rows.map(row => row.children[0].textContent), [
+    "Coordinates", "Enemy Perceptions", "Enemy Tasks", "Physics Colliders", "Tile Map Info",
+  ]);
+  const keys = [DEBUG_SETTING_KEYS.showCoordinates, DEBUG_SETTING_KEYS.showEnemyPerceptions,
+    DEBUG_SETTING_KEYS.showEnemyAiLabels, DEBUG_SETTING_KEYS.showColliders, DEBUG_SETTING_KEYS.showTileMapInfo];
+  rows.forEach((row, index) => {
+    row.children[1].checked = true;
+    row.children[1].dispatchEvent(new Event("change"));
+    keys.forEach((key, i) => assert.equal(store.get(key), i <= index));
+  });
+  click(content.children.at(-1));
+  keys.forEach(key => assert.equal(store.get(key), false));
+  rows.forEach(row => assert.equal(row.children[1].checked, false));
+});
+
 test("Space does not activate the settings gear", () => {
   const documentRef = createDocument();
   const host = new FakeElement();
@@ -72,11 +98,11 @@ test("Space does not activate the settings gear", () => {
   assert.equal(settingsUi.activeWindow, null);
 });
 
-test("preview debug controls use exact labels and write independent keys", () => {
+test("visualization controls use exact labels and write independent keys", () => {
   const documentRef = createDocument();
   const values = new Map([
-    [DEBUG_SETTING_KEYS.showParticleFxPreview, true],
-    [DEBUG_SETTING_KEYS.showAnimatedTilePreview, false],
+    [DEBUG_SETTING_KEYS.showCoordinates, true],
+    [DEBUG_SETTING_KEYS.showEnemyPerceptions, false],
   ]);
   const writes = [];
   const store = {
@@ -89,18 +115,18 @@ test("preview debug controls use exact labels and write independent keys", () =>
   const particles = createDebugControl(
     documentRef,
     store,
-    "Particle FX (Preview)?",
-    DEBUG_SETTING_KEYS.showParticleFxPreview,
+    "Coordinates",
+    DEBUG_SETTING_KEYS.showCoordinates,
   );
   const animatedTile = createDebugControl(
     documentRef,
     store,
-    "Animated Tile (Preview)",
-    DEBUG_SETTING_KEYS.showAnimatedTilePreview,
+    "Enemy Perceptions",
+    DEBUG_SETTING_KEYS.showEnemyPerceptions,
   );
 
-  assert.equal(particles.row.children[0].textContent, "Particle FX (Preview)?");
-  assert.equal(animatedTile.row.children[0].textContent, "Animated Tile (Preview)");
+  assert.equal(particles.row.children[0].textContent, "Coordinates");
+  assert.equal(animatedTile.row.children[0].textContent, "Enemy Perceptions");
   assert.equal(particles.checkbox.checked, true);
   assert.equal(animatedTile.checkbox.checked, false);
   particles.checkbox.checked = false;
@@ -108,15 +134,11 @@ test("preview debug controls use exact labels and write independent keys", () =>
   animatedTile.checkbox.checked = true;
   animatedTile.checkbox.dispatchEvent(new Event("change"));
   assert.deepEqual(writes, [
-    [DEBUG_SETTING_KEYS.showParticleFxPreview, false],
-    [DEBUG_SETTING_KEYS.showAnimatedTilePreview, true],
+    [DEBUG_SETTING_KEYS.showCoordinates, false],
+    [DEBUG_SETTING_KEYS.showEnemyPerceptions, true],
   ]);
 
-  values.set(DEBUG_SETTING_KEYS.showParticleFxPreview, false);
-  values.set(DEBUG_SETTING_KEYS.showAnimatedTilePreview, false);
-  syncDebugPreviewControls(store, particles.checkbox, animatedTile.checkbox);
-  assert.equal(particles.checkbox.checked, false);
-  assert.equal(animatedTile.checkbox.checked, false);
+
 });
 
 test("game window closes only when the backdrop itself is clicked", () => {
@@ -167,23 +189,21 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /gear\.setAttribute\("aria-label", "Open settings"\)/);
   assert.match(source, /icon\.src = `\$\{ASSET_BASE\}ui\/tiny-swords\/Icon_10\.png`/);
   assert.match(source, /title:\s*"Settings Menu"/);
-  assert.match(source, /developerButton\.textContent = "Developer Settings"/);
-  assert.match(source, /title: "Developer Settings"/);
+  assert.match(source, /createMenuButton\(\{ displayText: "Developer"/);
+  assert.match(source, /title: "Developer"/);
   assert.match(source, /"Music", RUNTIME_AUDIO_SETTING_KEYS\.music/);
   assert.match(source, /"SFX", RUNTIME_AUDIO_SETTING_KEYS\.sfx/);
-  assert.match(source, /"Collider\?"/);
-  assert.match(source, /"Particle FX \(Preview\)\?"/);
-  assert.match(source, /"Animated Tile \(Preview\)"/);
-  assert.match(source, /label\.textContent = "FullScreen"/);
+  assert.match(source, /"Physics Colliders"/);
+  assert.match(source, /"Coordinates"/);
+  assert.match(source, /"Enemy Perceptions"/);
+  assert.match(source, /createToggleControl\(\{ labelText: "FullScreen"/);
   assert.match(source, /checkbox\.checked = Boolean\(documentRef\.fullscreenElement\)/);
-  assert.match(source, /applyFullscreen\(checkbox\.checked, documentRef\)/);
+  assert.match(source, /applyFullscreen\(checked, documentRef\)/);
   assert.doesNotMatch(source, /DISPLAY_SETTING_KEYS/);
-  assert.match(source, /slider\.min = "0"/);
-  assert.match(source, /slider\.max = "100"/);
-  assert.match(source, /addEventListener\("input"/);
-  assert.match(source, /resetButton\.textContent = "Reset"/);
-  assert.match(source, /githubButton\.textContent = "Open GitHub"/);
-  assert.match(source, /PROJECT_GITHUB_URL = "https:\/\/github\.com\/SamuelAsherRivello\/babylon-lite-stealth-grid"/);
+  assert.match(source, /createSliderControl\(\{ labelText, value: store\.get\(key\)/);
+  assert.match(source, /createMenuButton\(\{ displayText: "Clear All Settings"/);
+  assert.match(source, /createMenuButton\(\{ displayText: "Open GitHub"/);
+  assert.match(source, /PROJECT_GITHUB_URL = "https:\/\/github\.com\/SamuelAsherRivello\/stealth-and-steel-game"/);
   assert.match(source, /openExternal\(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer"\)/);
   assert.match(source, /store\.reset\(\)/);
   assert.match(source, /pauseController\.pause\('settings'\)/);
@@ -198,8 +218,8 @@ test("settings source composes required controls, persistence, and pause lifecyc
   for (const required of ["SpawnerType.SHEEP", "SpawnerType.ENEMY", "getCombatCollider()", "getMovementCollider()", "drawDiagnostics(", "projectiles.getColliders()", "showColliders"]) {
     assert.ok(diagnostics.includes(required), `missing ${required}`);
   }
-  assert.match(main, /function drawGridLines\(\)[\s\S]*rgb\(80 86 92 \/ 48%\)[\s\S]*lineWidth = 1/);
-  assert.match(main, /if \(!enabled\) \{[\s\S]*return;[\s\S]*\}[\s\S]*drawGridLines\(\)/);
+  assert.match(main, /function drawGridLines\([^)]*\)[\s\S]*rgb\(80 86 92 \/ 48%\)[\s\S]*lineWidth = 1/);
+  assert.match(main, /if \(tileMapInfo\) drawGridLines\(offset\)/);
   assert.doesNotMatch(main, /DISPLAY_SETTING_KEYS|applyFullscreenPreference/);
 });
 
@@ -223,9 +243,9 @@ test("developer settings opens above the main settings window and closes back to
 
   settingsUi.open();
   const developerButton = settingsUi.activeWindow.panel.children[2].children[0].children[3];
-  assert.equal(developerButton.textContent, "Developer Settings");
+  assert.equal(developerButton.textContent, "Developer");
   click(developerButton);
-  assert.equal(settingsUi.developerWindow.panel.children[0].textContent, "Developer Settings");
+  assert.equal(settingsUi.developerWindow.panel.children[0].textContent, "Developer");
   assert.equal(settingsUi.developerWindow.backdrop.classList.values.has("developer-settings-backdrop"), true);
   assert.equal(pauseCalls.join(","), "pause");
 
@@ -255,10 +275,10 @@ test("developer settings opens the related GitHub project above Reset", () => {
   const resetButton = developerContent.children.at(-1);
 
   assert.equal(githubButton.textContent, "Open GitHub");
-  assert.equal(resetButton.textContent, "Reset");
+  assert.equal(resetButton.textContent, "Clear All Settings");
   click(githubButton);
   assert.deepEqual(opened, [[
-    "https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid",
+    "https://github.com/SamuelAsherRivello/stealth-and-steel-game",
     "_blank",
     "noopener,noreferrer",
   ]]);
@@ -295,13 +315,33 @@ test("gear icon is transparent vector artwork", async () => {
 });
 
 
-test("Account is styled and placed before the volume controls", () => {
+test("Account is styled and placed immediately before Developer", () => {
   const settings = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(),
     store: {get: () => 100}, pauseController: {pause() {}, resume() {}}, openAccount() {} });
   settings.open();
   const content = settings.activeWindow.panel.children[2].children[0];
-  assert.equal(content.children[0].textContent, '⚡ Account');
-  assert.equal(content.children[0].className, 'settings-account-button');
-  assert.equal(content.children[1].className, 'volume-control');
+  assert.equal(content.children[3].textContent, '⚡ Account');
+  assert.equal(content.children[4].textContent, 'Developer');
+  assert.ok(content.children[3].className.split(' ').includes('settings-account-button'));
+  assert.ok(content.children[3].className.split(' ').includes('tiny-swords-button'));
+  assert.ok(content.children[0].className.split(' ').includes('slider-control'));
   settings.close();
+});
+
+
+test("Enemy Tasks control writes independently and Clear All Settings clears the checkbox", () => {
+  const documentRef = createDocument(), values = new Map();
+  const store = { get: key => values.get(key) ?? false, set: (key,value) => values.set(key,value), reset: () => values.clear() };
+  const ui = createSettingsUi({ host: new FakeElement(), documentRef, store, pauseController: { pause() {}, resume() {} } });
+  ui.open();
+  click(ui.activeWindow.panel.children[2].children[0].children[3]);
+  const content = ui.developerWindow.panel.children[2].children[0];
+  const row = content.children.find(child => child.children[0]?.textContent === 'Enemy Tasks');
+  const checkbox = row.children[1];
+  assert.equal(checkbox.checked, false);
+  checkbox.checked = true; checkbox.dispatchEvent(new Event('change'));
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyAiLabels), true);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
+  click(content.children.at(-1));
+  assert.equal(checkbox.checked, false);
 });

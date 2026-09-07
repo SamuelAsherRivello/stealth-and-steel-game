@@ -47,7 +47,7 @@ export function reachableRoutes(start, grid, isWalkable, maximum = grid.columns 
     if (current.route.length >= maximum) continue;
     for (const step of CARDINAL_STEPS) {
       const cell = { x: current.cell.x + step.x, y: current.cell.y + step.y };
-      if (cell.x < 0 || cell.y < 0 || cell.x >= grid.columns || cell.y >= grid.rows) continue;
+      if (!isCellInGrid(cell, grid)) continue;
       if (current.route.length === 0 && excludedFirst && cellKey(cell) === cellKey(excludedFirst)) continue;
       if (visited.has(cellKey(cell)) || !isWalkable(cell) || isWalkable.canTraverse?.(current.cell, cell) === false) continue;
       visited.add(cellKey(cell));
@@ -57,3 +57,4 @@ export function reachableRoutes(start, grid, isWalkable, maximum = grid.columns 
   }
   return routes;
 }
+import { isCellInGrid } from "../systems/environment/grid-contract.js";

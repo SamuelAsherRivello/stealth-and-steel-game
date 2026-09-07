@@ -23,6 +23,18 @@ import {
 } from "../../runtime/ui/collider-diagnostics.js";
 import { GridSpot } from "../../runtime/systems/environment/grid-spot.js";
 
+test("purple visual diagnostics stop at the same blockers as vision shadows", () => {
+  const snapshot = { actors: [{ id: 'enemy', type: 'enemy', cell: { x: 0, y: 0 }, heading: 'right' }] };
+  for (const options of [{ isWalkable: cell => cell.x !== 2 }, { blockers: [{ x: 2, y: 0 }] }]) {
+    const commands = createPerceptionDrawCommands(snapshot, 64, 0, options);
+    const visual = commands.filter(command => command.channel === 'visual');
+    const shadows = createEnemyVisionShadowDrawCommands(snapshot, 64, options);
+    assert.deepEqual(visual.map(command => command.points), shadows.map(({ cell }) => createPerceptionSquare(cell, 64, 32)));
+    assert.equal(visual.length, 1);
+    assert.equal(commands.filter(command => command.channel === 'audio').length, 8);
+  }
+});
+
 test("visible visual cells stop before terrain and living blockers", () => {
   const actor = { id: "enemy", type: "enemy", isAlive: true, cell: { x: 2, y: 2 }, heading: "right", visualRange: 4 };
   assert.deepEqual(getVisibleVisualCells(actor, 64, { blockers: [{ x: 4, y: 2 }] }), [

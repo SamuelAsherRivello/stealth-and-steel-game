@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createGoal } from "../../../runtime/systems/goals/goal.js";
 import { collidersOverlap } from "../../../runtime/gameplay/game-logic.js";
 import { GRID } from "../../../runtime/systems/environment/grid-contract.js";
+import { createLevelCamera, getLevelWorld } from "../../../runtime/gameplay/level-camera.js";
 
 test("goal completion requires overlap with the centered inner half of its cell", () => {
   const documentRef = {
@@ -25,4 +26,23 @@ test("goal completion requires overlap with the centered inner half of its cell"
   });
   assert.equal(collidersOverlap({ x: position.x - 1, y: position.y - 1,
     width: 2, height: 2 }, goal.combatCollider), true);
+});
+
+test("goal view projects its DOM marker without moving world collision geometry", () => {
+  let marker;
+  const documentRef = { createElement: () => ({ style: {}, setAttribute() {}, append() {}, remove() {} }) };
+  const position = { x: 800, y: 1440 };
+  const goal = createGoal({ host: { append(element) { marker = element; } }, position,
+    screenWidth: GRID.widthPx, screenHeight: GRID.heightPx, documentRef });
+  const camera = createLevelCamera(getLevelWorld({ width: 32, height: 42, origin: { x: 1, y: 1 }, cameraMode: "follow-player" }));
+  camera.initialize({ x: 672, y: 1312 });
+  const collider = { ...goal.combatCollider };
+  goal.updateView(camera);
+  assert.equal(marker.style.top, "37.5%");
+  assert.equal(marker.hidden, false);
+  assert.deepEqual(goal.combatCollider, collider);
+  camera.initialize({ x: 1800, y: 2400 });
+  goal.updateView(camera);
+  assert.equal(marker.hidden, true);
+  assert.deepEqual(goal.combatCollider, collider);
 });

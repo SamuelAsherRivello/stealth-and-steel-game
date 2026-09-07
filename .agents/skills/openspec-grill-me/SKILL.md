@@ -17,21 +17,17 @@ name or its `C###` ID, and display both. Treat `C###` and `C###-T###` as
 stable identity; never identify a change or task solely by mutable name or
 wording.
 
-## Required collaboration mode
+## Collaboration mode
 
-- Require Plan Mode before starting or resuming the interview.
-- If another mode is active, ask the user to switch using `/plan`, then pause
-  without consuming a question. Preserve the pending question and remaining
-  question budget.
-- The skill cannot change collaboration modes itself. Resume the interview
-  only after the session confirms that Plan Mode is active.
-- This requirement avoids the numbered-choice restriction observed in the
-  Default-mode session on 2026-09-04. Do not assume every Codex version has
-  that restriction; the different behavior in the previous project is unverified.
-- While Plan Mode is active, prepare proposed artifact revisions in conversation
-  only; do not write files. Save the established revisions only after the session
-  confirms that Plan Mode has ended and any required authorization is obtained.
-  This save-only handoff does not restart the interview or authorize implementation.
+- Start or resume the interview in the current collaboration mode. Plan Mode
+  is optional; do not require a mode switch to conduct the interview.
+- Use the question format below where permitted by higher-priority instructions
+  and the available question tools. Adapt the presentation when necessary
+  without pausing the interview solely because of the collaboration mode.
+- If Plan Mode is active, prepare artifact revisions in conversation only and
+  defer file writes until that mode has ended. In Default Mode, reconcile
+  confirmed conclusions using the workflow below. Neither mode authorizes
+  implementation through this skill.
 
 ## Establish Context
 

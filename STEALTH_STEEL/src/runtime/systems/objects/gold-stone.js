@@ -6,9 +6,9 @@ import { GRID } from "../environment/grid-contract.js";
 const DEFAULT_API = { addSprite2D, createSprite2DLayer, playSprite2DAnimation, removeSprite2D, stopSpriteAnimation, updateSprite2D };
 const DEATH_SECONDS = 0.25;
 
-export function createGoldStone({ object, atlas = null, animationManager = null, screenHeight = 1024, random = Math.random, onDeathComplete = () => {}, api = DEFAULT_API }) {
+export function createGoldStone({ object, atlas = null, animationManager = null, screenHeight = 1024, depthBounds = screenHeight, random = Math.random, onDeathComplete = () => {}, api = DEFAULT_API }) {
   const descriptor = object.goldStone;
-  const layer = api.createSprite2DLayer(atlas, { capacity: 1, order: getYSortedLayerOrder(object.position.y, screenHeight), pivot: [0.5, 1] });
+  const layer = api.createSprite2DLayer(atlas, { capacity: 1, order: getYSortedLayerOrder(object.position.y, depthBounds), pivot: [0.5, 1] });
   const sprite = api.addSprite2D(layer, {
     positionPx: [object.position.x, screenHeight - object.position.y],
     sizePx: [descriptor.frameSize.width, descriptor.frameSize.height], frame: 0,

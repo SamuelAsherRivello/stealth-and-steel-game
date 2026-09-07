@@ -31,6 +31,17 @@ function createFakeApi() {
   };
 }
 
+test("projectile render height is independent of larger gameplay bounds", () => {
+  const api = createFakeApi();
+  const renderer = createProjectileRenderer({ atlas: "arrow", bounds: { width: 1920, height: 2560, renderHeight: 1024 }, obstacles: [], api });
+  renderer.shoot({ x: 1200, y: 1800 }, { x: 1, y: 0 });
+  assert.equal(api.sprites[0].positionPx[1], -776);
+  renderer.update(0.1);
+  assert.equal(api.removed.length, 0);
+  assert.equal(api.sprites[0].positionPx[1], -776);
+  renderer.dispose();
+});
+
 for (const facing of [-1, 1]) test(`grounded arrows are picked up only by their owner, facing ${facing}`, () => {
   const api = createFakeApi();
   const pickups = [];

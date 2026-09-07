@@ -21,6 +21,11 @@ export function validateTiledMap(map, externalTilesets = null) {
   if (!Number.isInteger(map?.height) || map.height <= 0) errors.push("Map height must be positive.");
   if (!Number.isInteger(map?.tilewidth) || map.tilewidth <= 0) errors.push("Tile width must be positive.");
   if (!Number.isInteger(map?.tileheight) || map.tileheight <= 0) errors.push("Tile height must be positive.");
+  const cameraMode = propertiesToObject(map?.properties).cameraMode ?? "fixed";
+  if (!["fixed", "follow-player"].includes(cameraMode)) errors.push(`Invalid level cameraMode: ${cameraMode}. Expected fixed or follow-player.`);
+  if (cameraMode === "follow-player" && (map.width < 11 || map.height < 18)) {
+    errors.push("Invalid level: scrolling maps require at least 11 columns and 18 rows, including the one-tile border.");
+  }
   for (const layer of map?.layers ?? []) {
     if (layer.type === "tilelayer" && layer.data?.length !== map.width * map.height) {
       errors.push(`Layer "${layer.name}" must contain ${map.width * map.height} cells.`);
@@ -44,15 +49,22 @@ export function normalizeTiledMap(map, externalTilesets) {
   const originLayer = map.layers.find(({ name }) => name === "World Origin");
   const originIndices = originLayer?.data?.map((gid, index) => gid ? index : -1)
     .filter((index) => index >= 0) ?? [];
-  if (originObjects.length > 1 || (originObjects.length === 0 && originIndices.length !== 1)) {
+  if (originObjects.length > 1 || (originObjects.length === 0 && originIndices.length > 1)) {
     throw new Error("World Origin must contain exactly one marker object or tile.");
   }
   const originColumn = originObjects.length === 1
     ? Math.floor(originObjects[0].x / map.tilewidth)
-    : originIndices[0] % map.width;
+    : originIndices.length ? originIndices[0] % map.width : (map.width >= 11 && map.height >= 18 ? 1 : 0);
   const originRow = originObjects.length === 1
     ? Math.floor(originObjects[0].y / map.tileheight)
-    : Math.floor(originIndices[0] / map.width);
+    : originIndices.length ? Math.floor(originIndices[0] / map.width) : map.height - 1 - (map.width >= 11 && map.height >= 18 ? 1 : 0);
+  const focusObjects = map.layers.flatMap(layer => layer.type === "objectgroup"
+    ? (layer.objects ?? []).filter(object => object.name === "Camera Focus" || (object.class || object.type) === "CameraFocus") : []);
+  if (focusObjects.length > 1) throw new Error("Only one Camera Focus object is allowed.");
+  const focus = focusObjects[0];
+  if (focus && (!Number.isFinite(focus.x) || !Number.isFinite(focus.y))) throw new Error("Camera Focus must have finite coordinates.");
+  const cameraFocus = focus ? { x: focus.x - originColumn * map.tilewidth,
+    y: (originRow + 1) * map.tileheight - focus.y } : null;
   const layers = map.layers.filter(({ type, name }) => type === "tilelayer" && name !== "World Origin")
     .map((layer) => ({
       name: layer.name,
@@ -65,14 +77,21 @@ export function normalizeTiledMap(map, externalTilesets) {
         if (!source) throw new Error(`No tileset resolves global tile id ${gid}.`);
         const frame = gid - source.firstgid;
         const tileDefinition = source.tileset.tiles?.find(({ id }) => id === frame);
-        if (!source.tileset.image) {
+        const tileProperties = propertiesToObject(tileDefinition?.properties);
+        const image = tileProperties.runtimeImage ?? source.tileset.image ?? tileDefinition?.image;
+        if (!image) {
           console.warn(`Skipping terrain tile ${gid} in layer "${layer.name}": tileset "${source.source}" has no terrain atlas image.`);
           return [];
         }
         const column = index % map.width;
         const row = Math.floor(index / map.width);
         return [{
-          frame, gid, source: source.source, image: source.tileset.image,
+          frame: source.tileset.image ? frame : 0, gid, source: source.source, image,
+          blocksVision: tileProperties.blocksVision === true,
+          frameSize: [tileProperties.frameWidth ?? source.tileset.tilewidth, tileProperties.frameHeight ?? source.tileset.tileheight],
+          animation: tileProperties.frameCount
+            ? Array.from({ length: tileProperties.frameCount }, (_, tileid) => ({ tileid, duration: tileProperties.frameDurationMs }))
+            : tileDefinition?.animation ?? [],
           collisionShapes: normalizeTileCollisionShapes(
             tileDefinition,
             source.tileset.tilewidth,
@@ -194,12 +213,36 @@ export function normalizeTiledMap(map, externalTilesets) {
   if (goals.length !== 1) throw new Error("Invalid Level Format: Must contain 1 Goal Spawner");
   return {
     width: map.width, height: map.height,
+    cameraMode: propertiesToObject(map.properties).cameraMode ?? "fixed",
     tileWidth: map.tilewidth, tileHeight: map.tileheight,
     origin: { x: originColumn, y: map.height - originRow - 1 },
-    layers, objects, spawners, goldPickupSpawners, goals,
+    cameraFocus, layers, objects, spawners, goldPickupSpawners, goals,
+    decorationOccupiedCells: collectDecorationOccupiedCells(map, originColumn, originRow),
     reactiveDecorations: objects.filter(({ decoration }) => decoration?.frameCount > 1 && decoration.triggerMode),
     goldStones: objects.filter(({ class: className }) => className === "GoldObject"),
   };
+}
+
+export function collectDecorationOccupiedCells(map, originColumn, originRow) {
+  const cells = new Map();
+  for (const layer of map.layers.filter(layer => layer.type === "objectgroup")) {
+    for (const object of layer.objects ?? []) {
+      if ([object.name, object.class, object.type].some(value => ["World Origin", "Camera Focus", "CameraFocus"].includes(value))) continue;
+      const left = object.x;
+      const top = object.y - (object.gid ? object.height ?? 0 : 0);
+      const firstColumn = Math.floor(left / map.tilewidth);
+      const firstRow = Math.floor(top / map.tileheight);
+      const lastColumn = object.width > 0 ? Math.ceil((left + object.width) / map.tilewidth) - 1 : firstColumn;
+      const lastRow = object.height > 0 ? Math.ceil((top + object.height) / map.tileheight) - 1 : firstRow;
+      for (let column = firstColumn; column <= lastColumn; column++) {
+        for (let row = firstRow; row <= lastRow; row++) {
+          const cell = { x: column - originColumn, y: originRow - row };
+          cells.set(`${cell.x},${cell.y}`, cell);
+        }
+      }
+    }
+  }
+  return [...cells.values()];
 }
 
 export async function loadTiledMap(url, fetchImpl = fetch) {

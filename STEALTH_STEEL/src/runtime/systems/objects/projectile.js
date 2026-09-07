@@ -89,6 +89,10 @@ export function advanceProjectile(projectile, deltaSeconds, bounds, obstacles, o
       projectile.verticalVelocity = (4 * projectile.arcHeight * (1 - 2 * progress) - projectile.landingDrop) / projectile.flightSeconds;
       projectile.flightVelocity = { x: projectile.velocity.x, y: projectile.verticalVelocity };
       const collider = getProjectileCollider(projectile);
+      if (bounds.enforce && (projectile.position.x < (bounds.x ?? 0)
+        || projectile.position.x > (bounds.x ?? 0) + bounds.width
+        || projectile.position.y < (bounds.y ?? 0)
+        || projectile.position.y > (bounds.y ?? 0) + bounds.height)) return { alive: false, reason: "offscreen" };
       if (projectile.collisionEnabled && onFlightStep(collider)) return { alive: false, reason: "hit" };
       if (projectile.collisionEnabled && obstacles.some(obstacle => collidersOverlap(collider, obstacle))) return { alive: false, reason: "collision" };
     }
@@ -118,10 +122,10 @@ export function advanceProjectile(projectile, deltaSeconds, bounds, obstacles, o
     }
 
     if (
-      collider.x >= bounds.width
-      || collider.x + collider.width <= 0
-      || collider.y >= bounds.height
-      || collider.y + collider.height <= 0
+      collider.x >= (bounds.x ?? 0) + bounds.width
+      || collider.x + collider.width <= (bounds.x ?? 0)
+      || collider.y >= (bounds.y ?? 0) + bounds.height
+      || collider.y + collider.height <= (bounds.y ?? 0)
     ) {
       return { alive: false, reason: "offscreen" };
     }

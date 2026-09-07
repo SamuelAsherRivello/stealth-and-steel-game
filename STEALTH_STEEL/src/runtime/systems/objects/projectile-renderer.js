@@ -115,7 +115,7 @@ export function createProjectileRenderer({ atlas, bounds, obstacles, api = DEFAU
     shoot(position, direction, ownerId = null, options = {}) {
       // Babylon Lite grows this layer automatically when its initial capacity fills.
       const projectile = createProjectile(position, direction, options);
-      const screen = worldToScreen(projectile.position, 1, bounds.height);
+      const screen = worldToScreen(projectile.position, 1, (bounds.renderHeight ?? bounds.height));
       const sprite = api.addSprite2D(layer, {
         positionPx: [screen.x, screen.y],
         sizePx: [ARROW_RENDER_SIZE, ARROW_RENDER_SIZE],
@@ -203,7 +203,7 @@ export function createProjectileRenderer({ atlas, bounds, obstacles, api = DEFAU
           record.pickupElapsedSeconds += Math.max(0, deltaSeconds);
           const { rise, opacity, complete } = getPickupAnimation(record.pickupElapsedSeconds);
           if (complete) { removeAt(index); continue; }
-          const screen = worldToScreen(record.projectile.position, 1, bounds.height);
+          const screen = worldToScreen(record.projectile.position, 1, (bounds.renderHeight ?? bounds.height));
           const angle = Math.atan2(-record.projectile.flightVelocity.y, record.projectile.flightVelocity.x);
           // Carry the frozen crop upwards with the arrow; negative alpha also
           // carries fade opacity so the ground-mask shader does not bypass it.
@@ -228,7 +228,7 @@ export function createProjectileRenderer({ atlas, bounds, obstacles, api = DEFAU
           );
           record.gridSpot.update(record.projectile.position);
           const progress = record.deflection.elapsedSeconds / DEFLECT_DURATION_SECONDS;
-          const screen = worldToScreen(record.projectile.position, 1, bounds.height);
+          const screen = worldToScreen(record.projectile.position, 1, (bounds.renderHeight ?? bounds.height));
           api.updateSprite2D(record.sprite, {
             positionPx: [screen.x, screen.y],
             rotation: record.deflection.startRotation + DEFLECT_ROTATION * progress,
@@ -253,7 +253,7 @@ export function createProjectileRenderer({ atlas, bounds, obstacles, api = DEFAU
           continue;
         }
 
-        const screen = worldToScreen(record.projectile.position, 1, bounds.height);
+        const screen = worldToScreen(record.projectile.position, 1, (bounds.renderHeight ?? bounds.height));
         record.gridSpot.update(record.projectile.position);
         const patch = {
           positionPx: [screen.x, screen.y - (record.projectile.height ?? 0)],
@@ -265,7 +265,7 @@ export function createProjectileRenderer({ atlas, bounds, obstacles, api = DEFAU
         }
         if (record.projectile.cropOnLanding && record.projectile.verticalVelocity < 0) {
           const angle = Math.atan2(-record.projectile.flightVelocity.y, record.projectile.flightVelocity.x);
-          const groundScreenY = bounds.height - (record.projectile.origin.y - record.projectile.landingDrop);
+          const groundScreenY = (bounds.renderHeight ?? bounds.height) - (record.projectile.origin.y - record.projectile.landingDrop);
           patch.color = getArrowGroundClip(angle, patch.positionPx[1], groundScreenY);
         }
         api.updateSprite2D(record.sprite, patch);

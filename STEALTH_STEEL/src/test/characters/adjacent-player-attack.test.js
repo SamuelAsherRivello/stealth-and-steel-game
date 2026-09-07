@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSpriteAnimationManager, updateSpriteAnimationManager } from '@babylonjs/lite';
 import { createEnemyAwarenessController } from '../../runtime/characters/enemies/enemy-awareness-controller.js';
-import { createEnemyPatrolController } from '../../runtime/characters/enemies/enemy-patrol-controller.js';
-import { createGoblinBehaviorController } from '../../runtime/characters/enemies/goblin/goblin-behavior-controller.js';
+import { createEnemyBrain } from "../../runtime/ai/enemy-brain.js";
+import { goblinProfile } from "../../runtime/characters/enemies/goblin/goblin-goap.js";
+import { warriorProfile } from "../../runtime/characters/enemies/warrior/warrior-goap.js";
+import { lancerProfile } from "../../runtime/characters/enemies/lancer/lancer-goap.js";
+import { archerProfile } from "../../runtime/characters/enemies/archer/archer-goap.js";
+import { monkProfile } from "../../runtime/characters/enemies/monk/monk-goap.js";
 import { createGoblin } from '../../runtime/characters/enemies/goblin/goblin.js';
 import { createWarrior } from '../../runtime/characters/enemies/warrior/warrior.js';
 import { createLancer } from '../../runtime/characters/enemies/lancer/lancer.js';
@@ -25,12 +29,11 @@ function setup(character, offset = offsets[0], options = {}) {
     initialPosition: { x: 224, y: 224 }, bounds: { width: 768, height: 768 }, obstacles: [],
     onAttack: () => attacks++, onHeal: () => heals++, onShoot: (...args) => shots.push(args) });
   const manager = createSpriteAnimationManager(); actor.playAnimation(manager);
-  const controller = character === 'goblin'
-    ? createGoblinBehaviorController(actor, { grid, spawnCell: { x: 3, y: 3 }, isWalkable: () => true,
-      getWorld: () => options.world ?? ({ characters: [], bushes: [] }), idleRange: [0, 0], bushChance: 0, random: () => 0 })
-    : createEnemyPatrolController(actor, { idleRange: [0, 0], random: () => 0 });
-  const awareness = createEnemyAwarenessController({ actor, character, controller, grid,
+  const profiles = { goblin: goblinProfile, warrior: warriorProfile, lancer: lancerProfile, archer: archerProfile, monk: monkProfile };
+  const awareness = createEnemyBrain({ id: character, actor, profile: profiles[character], grid,
+    getWorld: () => options.world ?? ({ characters: [], bushes: [] }), random: () => 0,
     getPlayer: () => player, isAlive: () => alive, isWalkable: options.isWalkable ?? (() => true) });
+  const controller = awareness;
   const tick = (delta = 0.016) => {
     awareness.update(delta); actor.update(delta, [], [], player);
     updateSpriteAnimationManager(manager, delta * 1000);
@@ -215,7 +218,7 @@ for (const character of ['goblin', 'warrior', 'lancer', 'archer']) {
 }
 
 test('Goblin player priority preserves the full recovery interval and committed alternate attacks', () => {
-  const sheep = { id: 'sheep', isAlive: true, cell: { x: 2, y: 3 }, position: { x: 160, y: 224 } };
+  const sheep = { id: 'sheep', character: 'sheep', isAlive: true, cell: { x: 2, y: 3 }, position: { x: 160, y: 224 } };
   const s = setup('goblin', offsets[0], { world: { characters: [sheep], bushes: [] } });
   const directions = [], attack = s.actor.attack;
   s.actor.attack = direction => { directions.push(direction); return attack(direction); };

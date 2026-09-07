@@ -43,15 +43,14 @@ export function createSharedCharacterActor({
   );
 
   function transform(size = definition.displaySize) {
-    const result = getCharacterArtTransform(position, definition, bounds.height, tileSize, size);
+    const result = getCharacterArtTransform(position, definition, (bounds.renderHeight ?? bounds.height), tileSize, size);
     result.positionPx[1] += artYOffset;
     return result;
   }
 
   function updateSprites(patch = {}) {
     const order = getCharacterLayerOrder(
-      getCharacterMovementCollider(position, definition),
-      bounds.height,
+      getCharacterMovementCollider(position, definition), bounds,
     );
     const visual = transform(patch.sizePx
       ? { width: patch.sizePx[0], height: patch.sizePx[1] }
@@ -68,7 +67,7 @@ export function createSharedCharacterActor({
   for (const [name, descriptor] of Object.entries(definition.animations ?? {})) {
     const layer = api.createSprite2DLayer(atlases[name], {
       capacity: 1,
-      order: getCharacterLayerOrder(getCharacterMovementCollider(position, definition), bounds.height),
+      order: getCharacterLayerOrder(getCharacterMovementCollider(position, definition), bounds),
       // The definition owns placement. Animation descriptors may retain
       // legacy atlas metadata, but must not move the runtime character.
       pivot: [0.5, 1 - tileSize / 2 / definition.frame.height],

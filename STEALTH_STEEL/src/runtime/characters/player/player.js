@@ -132,11 +132,10 @@ export function createPlayer({
   const getArtScreenPosition = (worldPosition) => worldToScreen({
     x: worldPosition.x + PLAYER_ART_OFFSET.x,
     y: worldPosition.y + PLAYER_ART_OFFSET.y,
-  }, 1, bounds.height);
+  }, 1, (bounds.renderHeight ?? bounds.height));
   const initialScreenPosition = getArtScreenPosition(position);
   const initialOrder = getCharacterLayerOrder(
-    getCharacterCollider(position, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER),
-    bounds.height,
+    getCharacterCollider(position, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER), bounds,
   );
   const layers = {};
   const sprites = {};
@@ -294,8 +293,7 @@ export function createPlayer({
   function updateSprites() {
     const screenPosition = getArtScreenPosition(position);
     const order = renderOrderOverride ?? getCharacterLayerOrder(
-      getCharacterCollider(position, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER),
-      bounds.height,
+      getCharacterCollider(position, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER), bounds,
     );
     for (const layer of Object.values(layers)) layer.order = order;
     for (const sprite of Object.values(sprites)) {
@@ -527,7 +525,7 @@ export function createPlayer({
         for (let step = 0; step < steps; step++) {
           const candidate = moveWithCollisions(position, direction, distance / steps, bounds, PLAYER_CHARACTER, activeObstacles);
           const collider = getCharacterCollider(candidate, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER);
-          if (isColliderWithinBounds(collider, bounds.width, bounds.height)) position = candidate;
+          if (isColliderWithinBounds(collider, bounds)) position = candidate;
         }
       } else if (bushGravity.movementLocked) {
         gridAlignedMovement.reset();
@@ -573,7 +571,7 @@ export function createPlayer({
       gridSpot.update(position);
 
       const screenPosition = getArtScreenPosition(position);
-      const order = renderOrderOverride ?? getCharacterLayerOrder(this.getMovementCollider(), bounds.height);
+      const order = renderOrderOverride ?? getCharacterLayerOrder(this.getMovementCollider(), bounds);
       for (const layer of Object.values(layers)) {
         layer.order = order;
       }

@@ -1,3 +1,5 @@
+import { createMenu } from "./menu.js";
+
 let windowSequence = 0;
 
 export class GameWindow {
@@ -13,8 +15,6 @@ export class GameWindow {
   }) {
     this.onClose = onClose;
     this.opener = opener;
-    this.backdrop = documentRef.createElement("div");
-    this.backdrop.className = "game-window-backdrop menu-backdrop";
     this.dimmer = screenLayer ? documentRef.createElement("div") : null;
     if (this.dimmer) {
       this.dimmer.className = "game-window-dimmer";
@@ -22,29 +22,18 @@ export class GameWindow {
       screenLayer.append(this.dimmer);
     }
 
-    this.panel = documentRef.createElement("section");
-    this.panel.className = "game-window menu-panel";
-    this.panel.setAttribute("role", "dialog");
-    this.panel.setAttribute("aria-modal", "true");
-
     const titleId = `game-window-title-${windowSequence += 1}`;
-    const heading = documentRef.createElement("h2");
-    heading.id = titleId;
-    heading.className = "game-window-title menu-title-text";
-    heading.textContent = title;
-    this.panel.setAttribute("aria-labelledby", titleId);
-
     this.closeButton = documentRef.createElement("button");
     this.closeButton.className = "game-window-close";
     this.closeButton.type = "button";
     this.closeButton.setAttribute("aria-label", closeLabel);
     this.closeButton.textContent = "";
 
-    const body = documentRef.createElement("div");
-    body.className = "game-window-body";
-    body.append(content);
-    this.panel.append(heading, this.closeButton, body);
-    this.backdrop.append(this.panel);
+    const menu = createMenu({ titleText: title, titleId, content, closeButton: this.closeButton, documentRef });
+    this.panel = menu.panel;
+    this.panel.className += " game-window";
+    this.backdrop = menu.backdrop;
+    this.backdrop.className += " game-window-backdrop";
 
     this.handleBackdrop = (event) => {
       if (event.target === this.backdrop) this.close();

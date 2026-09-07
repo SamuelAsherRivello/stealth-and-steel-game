@@ -12,6 +12,17 @@ The user supplied a visual reference and the asset folder `C:\Users\srive\Downlo
 
 ## Decisions
 
+Settings and outcome menu implementation is recorded in settings-outcomes-review.md.
+Shared SliderControl and ToggleControl factories accept labels, initial values
+and callbacks independently of any settings store. Settings adapters provide
+existing persistence and fullscreen integration; all current developer
+toggles, including Enemy AI Labels, share the toggle component.
+
+UI text selection is disabled globally, including startup, menus, HUD,
+and controller labels, per the user's latest interaction preference.
+This supersedes the earlier selectable-label direction; accessible DOM
+text and keyboard operation remain required.
+
 ### Latest implemented-HUD feedback
 
 Final HUD approved on 2026-09-07. Version uses 9.6px text (80% of 12px).
@@ -69,10 +80,10 @@ Alternative considered: finish the entire theme in one pass. The staged approach
 | Main menu | Stealth Grid title, instruction paragraph, Start | Parchment panel, ribbon heading, blue button/play icon | 03 |
 | End-level menus | Level Complete/You Lost titles, messages, Continue | Shared parchment layout with outcome-specific accent | 04 |
 | Settings | Gear-opened window, Music/SFX ranges, FullScreen checkbox, Developer Settings button, close/backdrop | Shared window, themed track/knob/toggle surfaces, red X | 04 |
-| Developer settings | Collider?, Crop Marks, Particle FX (Preview)?, Animated Tile (Preview), Reset, close/backdrop | Same window/control system, including scroll treatment | 04 |
+| Developer settings | Debug Draw: Coordinates, Enemy Perceptions, Enemy Tasks, Physics Colliders, Tile Map Info; Open GitHub, Clear All Settings, close/backdrop | Same window/control system, independent persistent toggles, including scroll treatment | 04 |
 | Startup | BABYLON.JS/loading text, spinner, startup failure, Retry, no-script message | Lightweight themed loading/error shell with legible fallback | 04 |
 | Runtime errors | Error alert surface | Matching readable error panel | 04 |
-| Developer overlays | Grid labels, selected-cell marker, collider/perception/grid-spot/crop marks and preview readouts | Coordinated text and selection treatment; geometrically exact diagnostic primitives | 04 |
+| Developer overlays | Grid labels, selected-cell marker, collider/perception/grid-spot markers and coordinate readouts | Coordinated text and selection treatment; geometrically exact diagnostic primitives. Crop marks and particle/animated-tile demos removed at user request. | 04 |
 | Shared presentation | Typography, backdrop, panel edges, focus, hover, pressed, disabled, cursors | One consistent theme; introduce per surface and complete the audit | 02-04 |
 
 ### 3. Curated assets and layout primitives

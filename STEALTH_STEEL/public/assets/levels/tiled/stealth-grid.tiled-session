@@ -1,22 +1,22 @@
 {
     "activeFile": "maps/Level01.tmj",
     "expandedProjectPaths": [
-        "maps",
         ".",
-        "tilesets"
+        "tilesets",
+        "maps"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "maps/Level01.tmj": {
             "expandedObjectLayers": [
-                6,
-                5
+                5,
+                6
             ],
-            "scale": 1,
-            "selectedLayer": 0,
+            "scale": 0.5,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 457.5,
-                "y": 651.5
+                "x": 506,
+                "y": 537
             }
         },
         "maps/Level01.tmj.bak.tmj": {
@@ -35,10 +35,15 @@
                 "y": 513.3879925945516
             }
         },
+        "tilesets/Bridge.tsj": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
         "tilesets/Bridge_All.tsj": {
             "scaleInDock": 1
         },
         "tilesets/GoldStoneObjects.tsj": {
+            "dynamicWrapping": true,
             "scaleInDock": 1
         },
         "tilesets/SpawnerTypes.tsj": {
@@ -46,6 +51,7 @@
             "scaleInDock": 1
         },
         "tilesets/Tilemap_Elevation.tsj": {
+            "dynamicWrapping": false,
             "scaleInDock": 1
         },
         "tilesets/Tilemap_color1.tsj": {
@@ -80,6 +86,16 @@
             "dynamicWrapping": false,
             "scaleInDock": 0.75,
             "scaleInEditor": 1
+        },
+        "tilesets/Water (Animated).tsj": {
+            "scaleInDock": 1
+        },
+        "tilesets/Water (Static).tsj": {
+            "scaleInDock": 1
+        },
+        "tilesets/Water.tsj": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
         }
     },
     "map.lastUsedFormat": "json",

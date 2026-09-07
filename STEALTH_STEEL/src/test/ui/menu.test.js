@@ -1,0 +1,46 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createMenu, createMenuButton } from "../../runtime/ui/menu.js";
+
+class Element extends EventTarget {
+  _text = "";
+  set textContent(value) { this._text = value; this.children = []; }
+  get textContent() { return this._text + this.children.map(child => child.textContent ?? "").join(""); }
+  children = [];
+  attributes = new Map();
+  append(...children) { this.children.push(...children); }
+  setAttribute(name, value) { this.attributes.set(name, value); }
+}
+const documentRef = { createElement: () => new Element() };
+
+test("menus accept independent content, unique accessible labels, and no logo by default", () => {
+  const first = createMenu({ titleText: "Example", bodyText: "Instructions", buttons: [{displayText: "Proceed"}], documentRef });
+  const second = createMenu({ titleText: "Another", bodyText: "Other instructions", documentRef });
+  assert.equal(first.title.textContent, "Example");
+  assert.equal(first.body.textContent, "Instructions");
+  assert.equal(first.buttons[0].textContent, "Proceed");
+  assert.equal(first.logo, null);
+  assert.equal(first.composition.children.length, 1);
+  assert.notEqual(first.title.id, second.title.id);
+  assert.equal(first.panel.attributes.get("aria-labelledby"), first.title.id);
+  assert.equal(first.panel.attributes.get("aria-describedby"), first.body.id);
+});
+
+test("a menu can explicitly opt into a logo without changing other instances", () => {
+  const menu = createMenu({ titleText: "Start Menu", bodyText: "Use bushes to hide.", logo: {src:"/logo.png",alt:"Game"}, documentRef });
+  assert.equal(menu.logo.src, "/logo.png");
+  assert.equal(menu.logo.alt, "Game");
+  assert.equal(menu.composition.children[0], menu.logo);
+  assert.equal(menu.composition.children[1], menu.panel);
+});
+
+test("reusable buttons retain caller text and native action events", () => {
+  const button = createMenuButton({ displayText: "Reset", documentRef });
+  let clicks = 0;
+  button.addEventListener("click", () => clicks++);
+  button.dispatchEvent(new Event("click"));
+  assert.equal(button.type, "button");
+  assert.equal(button.textContent, "Reset");
+  assert.equal(clicks, 1);
+  assert.equal(button.children[1].attributes.get("aria-hidden"), "true");
+});

@@ -22,16 +22,16 @@ Execute milestones in order. Begin milestone 01 only after a new request to appl
 
 ## 03 - Update the in-game main-menu art and get approval
 
-- [ ] 3.1 C061-T013 Add the remaining main-menu assets and theme the existing start prompt with reusable parchment/ribbon/button primitives; verify exact title, body, and Start text remain available and unrelated screens are not reskinned early.
-- [ ] 3.2 C061-T014 Verify the themed startup flow, Start action, focus, pause/input gating, and supported prompt-suppression path with relevant tests; document pre-existing discrepancies separately from regressions caused by C061.
-- [ ] 3.3 C061-T015 Build and inspect the main menu in a real browser at desktop and narrow portrait sizes; send actual screenshots and the live local URL, verifying legible text, reachable controls, and the Start-to-HUD transition.
-- [ ] 3.4 C061-T016 CHECKPOINT: obtain explicit user approval of the implemented main menu, addressing requested revisions first; verify the approval note identifies the reviewed result before starting milestone 04.
+- [x] 3.1 C061-T013 Add the remaining main-menu assets and theme the existing start prompt with reusable parchment/ribbon/button primitives; verify exact title, body, and Start text remain available and unrelated screens are not reskinned early.
+- [x] 3.2 C061-T014 Verify the themed startup flow, Start action, focus, pause/input gating, and supported prompt-suppression path with relevant tests; document pre-existing discrepancies separately from regressions caused by C061.
+- [x] 3.3 C061-T015 Build and inspect the main menu in a real browser at desktop and narrow portrait sizes; send actual screenshots and the live local URL, verifying legible text, reachable controls, and the Start-to-HUD transition.
+- [x] 3.4 C061-T016 CHECKPOINT: obtain explicit user approval of the implemented main menu, addressing requested revisions first; verify the approval note identifies the reviewed result before starting milestone 04.
 
 ## 04 - Finish the rest
 
-- [ ] 4.1 C061-T017 Theme both win and loss end-level menus with shared components and distinct outcome accents; verify exact messages, Continue behavior, focus, and overlay layering in tests and browser captures.
-- [ ] 4.2 C061-T018 Theme settings, Music/SFX sliders, FullScreen toggle, Developer Settings action, close button, and backdrop; verify input values, fullscreen synchronization, persistence, and pause/resume in relevant tests and browser interaction.
-- [ ] 4.3 C061-T019 Theme developer settings, all four toggles, Reset, navigation, and scroll treatment; verify each control remains reachable and retains its effect, including on narrow screens.
+- [x] 4.1 C061-T017 Theme both win and loss end-level menus with shared components and distinct outcome accents; verify exact messages, Continue behavior, focus, and overlay layering in tests and browser captures.
+- [x] 4.2 C061-T018 Theme settings, Music/SFX sliders, FullScreen toggle, Developer Settings action, close button, and backdrop; verify input values, fullscreen synchronization, persistence, and pause/resume in relevant tests and browser interaction.
+- [x] 4.3 C061-T019 Theme developer settings, all four toggles, Reset, navigation, and scroll treatment; verify each control remains reachable and retains its effect, including on narrow screens.
 - [ ] 4.4 C061-T020 Theme loading, startup failure, Retry, no-script messaging, and runtime errors; verify image-failure fallbacks and supported startup error paths remain readable and usable without misleading progress values.
 - [ ] 4.5 C061-T021 Complete diagnostic text/selection treatment and shared typography, cursors, hover, pressed, checked, disabled, focus, and backdrop states; verify every design inventory row is covered while diagnostic geometry and color meanings remain accurate.
 - [ ] 4.6 C061-T022 Audit production asset references and remove only obsolete application theme remnants after reference checks; verify selected assets resolve under the configured deployment base and no unused source pack or local filesystem dependency is shipped.
@@ -42,4 +42,4 @@ Execute milestones in order. Begin milestone 01 only after a new request to appl
 
 - **01 - Preview feedback:** v2 HUD, Start Menu, and Level Complete images delivered on 2026-09-07 incorporating the requested safe area, alignments, logo, thinner paper edges, raised blue banners, and removal of body artwork. See `preview-review.md` for exact decisions and image paths. Approved by the user with one correction: the logo appears only on Start Menu, never other menus. C061-T006 is complete.
 - **02 - HUD approval:** Approved on 2026-09-07: user said "done. sync the feature and commit those changes" and requested continued implementation after reviewing the latest live HUD, including labels lowered 20px and version font reduced to 9.6px. See `hud-review.md` for screenshots and verification. C061-T012 is complete.
-- **03 - Main-menu approval:** Pending. Record the reviewed runtime screenshots/version and explicit approval when received.
+- **03 - Main-menu approval:** Approved on 2026-09-07 when the user said "That looks good" and requested reusable title/body text, optional logo and shared menu buttons after the final text-position, banner, parchment and selection revisions. C061-T016 is complete. The reusable menu/button extraction is verified in main-menu-review.md; remaining full-surface milestone 04 tasks retain their own completion checks.

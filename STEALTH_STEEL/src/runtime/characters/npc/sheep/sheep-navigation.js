@@ -7,6 +7,7 @@ import {
 } from "../../../gameplay/game-logic.js";
 import { chebyshevDistance } from "./sheep-state.js";
 import { getColliderCenter } from "../../character-spatial.js";
+import { isCellInGrid } from "../../../systems/environment/grid-contract.js";
 
 const CARDINAL_NEIGHBORS = Object.freeze([
   { x: 1, y: 0 }, { x: -1, y: 0 },
@@ -30,10 +31,7 @@ export function gridCellCenter(cell, tileSize) {
 
 export function createGridWalkability({ bounds, character, grid, obstacles }) {
   const walkable = (cell, dynamicColliders = []) => {
-    if (
-      cell.x < 0 || cell.x >= grid.columns
-      || cell.y < 0 || cell.y >= grid.rows
-    ) {
+    if (!isCellInGrid(cell, grid)) {
       return false;
     }
     const desiredCenter = gridCellCenter(cell, grid.tileSizePx);
@@ -55,7 +53,7 @@ export function createGridWalkability({ bounds, character, grid, obstacles }) {
     );
     const dynamicObstacles = dynamicColliders
       .map(({ collider: dynamicCollider }) => dynamicCollider);
-    return isColliderWithinBounds(collider, bounds.width, bounds.height)
+    return isColliderWithinBounds(collider, bounds)
       && ![...obstacles, ...dynamicObstacles].some(
         (obstacle) => colliderOverlapsObstacle(collider, obstacle),
       );

@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createLevelCompleteUi } from "../../runtime/ui/level-complete-ui.js";
 
 class FakeElement extends EventTarget {
+  _text = "";
+  set textContent(value) { this._text = value; this.children = []; }
+  get textContent() { return this._text + this.children.map(child => child.textContent ?? "").join(""); }
   children = [];
   parentNode = null;
   hidden = false;

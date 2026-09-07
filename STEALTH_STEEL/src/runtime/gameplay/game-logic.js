@@ -427,14 +427,23 @@ export function isAabbWithinBounds(aabb, maxX, maxY) {
 }
 
 export function isColliderWithinBounds(collider, maxX, maxY) {
+  let minX = 0, minY = 0;
+  if (typeof maxX === "object") {
+    const bounds = maxX;
+    minX = bounds.x ?? 0;
+    minY = bounds.y ?? 0;
+    maxX = minX + bounds.width;
+    maxY = minY + bounds.height;
+  }
   if (collider.type === "circle") {
-    return collider.x - collider.radius >= 0
-      && collider.y - collider.radius >= 0
+    return collider.x - collider.radius >= minX
+      && collider.y - collider.radius >= minY
       && collider.x + collider.radius <= maxX
       && collider.y + collider.radius <= maxY;
   }
 
-  return isAabbWithinBounds(collider, maxX, maxY);
+  return collider.x >= minX && collider.y >= minY
+    && collider.x + collider.width <= maxX && collider.y + collider.height <= maxY;
 }
 
 export function moveWithCollisions(
@@ -516,7 +525,7 @@ export function moveWithCollisions(
       return colliderOverlapsObstacle(resolvedCollider, obstacle);
     });
 
-    if (!isBlocked) {
+    if (!isBlocked && (!bounds.enforce || isColliderWithinBounds(resolvedCollider, bounds))) {
       nextPosition = resolvedCandidate;
     }
   }

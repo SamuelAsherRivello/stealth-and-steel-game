@@ -8,6 +8,18 @@ function makeArcher() {
   return createArcher({ atlases: { idle: atlas, walking: atlas, shooting: atlas }, initialPosition: { x: 320, y: 320 }, bounds: { width: 1024, height: 1024 } });
 }
 
+test("archer depth updates during movement above the original screen height", () => {
+  const atlas = { frames: Array.from({ length: 6 }, () => ({ uvMin: [0, 0], uvMax: [1, 1], sourceSizePx: [192, 192] })) };
+  const actor = createArcher({ atlases: { idle: atlas, walking: atlas, shooting: atlas },
+    initialPosition: { x: 800, y: 1600 }, bounds: { width: 1920, height: 2560, renderHeight: 1024 }, autonomous: false });
+  const before = actor.layers[0].order;
+  actor.setMovementIntent({ x: 0, y: 1 });
+  for (let i = 0; i < 30; i++) actor.update(1 / 60);
+  assert.ok(actor.getPosition().y > 1600);
+  assert.ok(actor.layers[0].order < before);
+  actor.dispose();
+});
+
 function assertFacing(actor, heading) {
   assert.equal(actor.getHeading(), heading);
   for (const layer of actor.layers) {

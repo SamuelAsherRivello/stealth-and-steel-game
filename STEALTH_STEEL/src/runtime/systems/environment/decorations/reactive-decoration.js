@@ -44,6 +44,7 @@ export function createReactiveDecoration({
   atlas,
   animationManager,
   screenHeight,
+  depthBounds = screenHeight,
   tileSize = 64,
   fireEffect = null,
   leafAtlas = null,
@@ -53,7 +54,7 @@ export function createReactiveDecoration({
   const descriptor = object.decoration;
   const layer = api.createSprite2DLayer(atlas, {
     capacity: 1,
-    order: getYSortedLayerOrder(object.position.y, screenHeight),
+    order: getYSortedLayerOrder(object.position.y, depthBounds),
     pivot: [REACTIVE_DECORATION_PIVOT.x, REACTIVE_DECORATION_PIVOT.y],
   });
   const sprite = api.addSprite2D(layer, {

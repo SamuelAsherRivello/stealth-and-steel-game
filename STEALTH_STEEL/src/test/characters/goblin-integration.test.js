@@ -82,9 +82,10 @@ test("main owns the complete spawner-managed goblin lifecycle", async () => {
 
   assert.match(source, /loadGoblinAtlases/);
   assert.match(source, /createGoblin\(/);
-  assert.match(source, /createGoblinBehaviorController/);
+  assert.match(source, /createEnemyBrain/);
+  assert.match(source, /goblinProfile/);
   assert.match(source, /createGoblinRecord/);
-  assert.match(source, /addSpriteRendererLayer\(renderer, layer\)/);
+  assert.match(source, /addSpriteRendererLayer\(renderer, camera\.attachLayer\(layer\)\)/);
   assert.match(source, /record\.actor\.playAnimation\(animationManager\)/);
   assert.match(source, /record\.awareness\.update\(activeDelta\)/);
   assert.match(source, /record\.actor\.update\(activeDelta/);

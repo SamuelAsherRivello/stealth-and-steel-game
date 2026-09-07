@@ -116,11 +116,10 @@ export function createWarrior({
 
   const layers = {};
   const sprites = {};
-  const getArtScreenPosition = (worldPosition) => worldToScreen({ x: worldPosition.x + WARRIOR_ART_OFFSET.x, y: worldPosition.y + WARRIOR_ART_OFFSET.y }, 1, bounds.height);
+  const getArtScreenPosition = (worldPosition) => worldToScreen({ x: worldPosition.x + WARRIOR_ART_OFFSET.x, y: worldPosition.y + WARRIOR_ART_OFFSET.y }, 1, (bounds.renderHeight ?? bounds.height));
   const initialScreenPosition = getArtScreenPosition(position);
   const initialOrder = getCharacterLayerOrder(
-    getCharacterCollider(position, character.frame, character.pivot, character.collider),
-    bounds.height,
+    getCharacterCollider(position, character.frame, character.pivot, character.collider), bounds,
   );
   for (const name of WARRIOR_ANIMATION_NAMES) {
     const descriptor = WARRIOR_ANIMATION_CATALOG[name];
@@ -141,8 +140,7 @@ export function createWarrior({
   function updateSprites() {
     const screenPosition = getArtScreenPosition(position);
     const order = getCharacterLayerOrder(
-      getCharacterCollider(position, character.frame, character.pivot, character.collider),
-      bounds.height,
+      getCharacterCollider(position, character.frame, character.pivot, character.collider), bounds,
     );
     for (const layer of Object.values(layers)) {
       layer.order = order;

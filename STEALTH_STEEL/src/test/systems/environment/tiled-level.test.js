@@ -34,7 +34,7 @@ const COLOR_THREE_COLLIDABLE_IDS = [
   27, 28, 29, 30, 32, 33, 34, 36, 39, 41, 42, 43, 44, 45, 48, 50, 51, 52, 53,
 ];
 const LEVEL01_AUTHORED_CONTENT_SHA256 =
-  "87c2f86d0c7070da778e270886f2598fa9b7cc3f893c2a3b34b9abc1760df6b3";
+  "287cadc825c05b860a89dc1b6c5499318d368fb723dff22de9ef2ad0412152d4";
 
 async function readJson(url) {
   return JSON.parse(await readFile(url, "utf8"));
@@ -54,6 +54,19 @@ async function readLevelWithTilesets() {
   };
 }
 
+test("camera mode defaults to fixed and validates opt-in scrolling dimensions", async () => {
+  const { map, externalTilesets } = await readLevelWithTilesets();
+  assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "follow-player");
+  map.properties = (map.properties ?? []).filter(({ name }) => name !== "cameraMode");
+  assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "fixed");
+  map.properties = [{ name: "cameraMode", type: "string", value: "follow-player" }];
+  assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "follow-player");
+  map.width = 10;
+  assert.ok(validateTiledMap(map).some(message => /Invalid level.*11.*18/i.test(message)));
+  map.properties[0].value = "typo";
+  assert.ok(validateTiledMap(map).some(message => /cameraMode/.test(message)));
+});
+
 test("Level01 loads its authored visual layers without requiring a Terrain layer", async () => {
   const { map, externalTilesets } = await readLevelWithTilesets();
 
@@ -61,17 +74,19 @@ test("Level01 loads its authored visual layers without requiring a Terrain layer
   const level = normalizeTiledMap(map, externalTilesets);
   const tiles = collectTiledLayerTiles(level);
 
-  assert.equal(level.width, 11);
+  assert.equal(level.width, 13);
   assert.equal(level.height, 18);
   assert.deepEqual(level.layers.map(({ name }) => name), [
     "Background",
     "Midground",
     "Foreground",
+    "Water (Static)",
+    "Water (Animated)",
   ]);
   assert.equal(tiles.length, level.layers.reduce((total, layer) => total + layer.tiles.length, 0));
   assert.ok(tiles.length > 0);
   assert.equal(tiles[0].layerName, "Background");
-  assert.equal(tiles.at(-1).layerName, "Midground");
+  assert.equal(tiles.at(-1).layerName, "Water (Animated)");
 });
 
 test("Level01 normalizes the lower-left origin cell to game tile zero zero", async () => {
@@ -82,24 +97,24 @@ test("Level01 normalizes the lower-left origin cell to game tile zero zero", asy
   assert.deepEqual(level.layers[0].tiles.find(({ gameCell }) => gameCell.x === 8 && gameCell.y === 0).gameCell, { x: 8, y: 0 });
 });
 
-test("Level01 authors a full-cell blocking perimeter without shifting the playable screen", async () => {
+test("Level01 authors a full-cell blocking perimeter around its larger interior", async () => {
   const { map, externalTilesets } = await readLevelWithTilesets();
   const level = normalizeTiledMap(map, externalTilesets);
   const boundary = collectTiledLayerTiles(level).filter(({ gameCell }) => (
-    gameCell.x < 0 || gameCell.x >= 9 || gameCell.y < 0 || gameCell.y >= 16
+    gameCell.x < 0 || gameCell.x >= level.width - 2 || gameCell.y < 0 || gameCell.y >= level.height - 2
   ));
 
-  assert.equal(boundary.length, 54);
+  assert.equal(boundary.length, 2 * level.width + 2 * (level.height - 2));
   assert.deepEqual(level.origin, { x: 1, y: 1 });
   assert.deepEqual(boundary.find(({ gameCell }) => gameCell.x === -1 && gameCell.y === -1).gameCell, { x: -1, y: -1 });
-  assert.deepEqual(boundary.find(({ gameCell }) => gameCell.x === 9 && gameCell.y === 15).gameCell, { x: 9, y: 15 });
+  assert.deepEqual(boundary.find(({ gameCell }) => gameCell.x === 11 && gameCell.y === 15).gameCell, { x: 11, y: 15 });
   assert.deepEqual(boundary[0].collisionShapes, [{
     type: "rectangle", x: 0, y: 0, width: 1, height: 1,
   }]);
   assert.deepEqual(level.layers[0].tiles.find(({ gameCell }) => gameCell.x === 0 && gameCell.y === 0).gameCell, { x: 0, y: 0 });
 });
 
-test("Level01 migration preserves authored content and color-three global ids", async () => {
+test("Level01 matches the authored scrolling layout and color-three global ids", async () => {
   const map = await readJson(LEVEL_PATH);
   const authoredContent = {
     width: map.width,

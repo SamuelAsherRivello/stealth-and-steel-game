@@ -51,10 +51,14 @@ test("every active Tiled image and external tileset resolves inside the public a
   assert.ok(references > 20, "Check the maps and the entire tileset palette");
 });
 
-test("image sources sit beside their exports and all public images use the images folder", () => {
+test("image sources sit beside their exports and public images use the game or themed UI folders", () => {
   assert.deepEqual(readdirSync(assets).sort(), ["audio", "images", "levels"]);
   for (const file of walk(join(app, "public"))) {
-    if (/\.(png|svg|aseprite|jpe?g|webp)$/i.test(file)) assert.ok(file.startsWith(join(assets, "images")), file);
+    if (/\.(png|svg|aseprite|jpe?g|webp)$/i.test(file)) {
+      const inGameImages = file.startsWith(join(assets, "images") + "/") || file.startsWith(join(assets, "images") + "\\");
+      const inThemedUi = dirname(file) === join(app, "public/ui/tiny-swords") && file.endsWith(".png");
+      assert.ok(inGameImages || inThemedUi, file);
+    }
     if (file.endsWith(".aseprite")) {
       const bytes = readFileSync(file);
       assert.equal(bytes.readUInt16LE(4), 0xa5e0);

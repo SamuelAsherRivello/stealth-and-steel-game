@@ -20,10 +20,10 @@ export function chooseNineGridDestinations(origin, count, isValid = () => true, 
   return choices.slice(0, Math.min(count, choices.length)).map((offset) => ({ x: origin.x + offset.x, y: origin.y + offset.y }));
 }
 
-export function createPickup({ type = "pickup", id = "pickup", object = { id }, atlas = null, startPosition, destination, screenHeight = 1024, api = DEFAULT_API }) {
+export function createPickup({ type = "pickup", id = "pickup", object = { id }, atlas = null, startPosition, destination, screenHeight = 1024, depthBounds = screenHeight, api = DEFAULT_API }) {
   const layer = api.createSprite2DLayer(atlas, {
     capacity: 1,
-    order: getYSortedLayerOrder(startPosition.y, screenHeight),
+    order: getYSortedLayerOrder(startPosition.y, depthBounds),
     pivot: [0.5, 0.5],
   });
   const sprite = api.addSprite2D(layer, { positionPx: getSpritePosition(startPosition, screenHeight), sizePx: [64, 64], frame: 0, alpha: 0, scaleX: 0.1, scaleY: 0.1 });

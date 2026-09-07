@@ -1,3 +1,11 @@
+export function getColumnAnimationOffset(frames, column) {
+  const index = (((column * 3) % frames.length) + frames.length) % frames.length;
+  return {
+    frame: frames[index].tileid,
+    elapsed: frames.slice(0, index).reduce((sum, frame) => sum + frame.duration, 0),
+  };
+}
+
 export function createLevelTerrainTiles(
   placements,
   tileSize,
@@ -27,6 +35,10 @@ export function createLevelTerrainTiles(
       collisionShapes,
       colliders,
       screenPosition,
+      spritePosition: {
+        x: screenPosition.x + (tileSize - (placement.frameSize?.[0] ?? tileSize)) / 2,
+        y: screenPosition.y + (tileSize - (placement.frameSize?.[1] ?? tileSize)) / 2,
+      },
       valid,
       blocked: colliders.length > 0,
       collider: colliders[0] ?? null,

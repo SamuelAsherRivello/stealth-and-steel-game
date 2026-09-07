@@ -28,4 +28,4 @@ The executable source of truth is `GRID` in `STEALTH_STEEL/src/runtime/systems/e
 
 An animation atlas frame can be larger than one grid cell. Its native frame size must be preserved so its artwork is not incorrectly shrunk. Place the frame by centering it on its target grid cell; transparent frame padding and visible artwork may extend beyond the cell.
 
-`Water Foam.png` uses sixteen 192 × 192 frames. The preview keeps that native three-cell frame size and centers it on origin cell (0,0). The frame therefore starts at screen position (-64, 896), while the target cell itself spans screen X 0–64 and Y 960–1024.
+The temporary animated-tile preview has been removed. Gameplay animations continue to use their authored frame dimensions.

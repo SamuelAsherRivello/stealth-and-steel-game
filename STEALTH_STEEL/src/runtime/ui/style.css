@@ -141,44 +141,6 @@ body {
   aspect-ratio: var(--game-logical-aspect-ratio);
 }
 
-#viewportQaMarkers {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-}
-
-.viewport-qa-marker {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border: 2px solid #090c16;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 80%);
-}
-
-.viewport-qa-marker[data-layer="tilemap"] {
-  width: 16px;
-  height: 16px;
-  background: transparent !important;
-  border-color: #22d3ee;
-}
-
-.viewport-qa-marker[data-layer="debug"] {
-  width: 22px;
-  height: 22px;
-  background: transparent !important;
-  border-color: #fb7185;
-}
-
-.viewport-qa-marker[data-layer="dom"] {
-  width: 28px;
-  height: 28px;
-  background: transparent !important;
-  border-color: #c084fc;
-}
-
 .coordinate-guide {
   position: absolute;
   z-index: var(--z-coordinate-guide);
@@ -199,7 +161,8 @@ body {
   pointer-events: none;
 }
 .runtime-goal-marker { position:absolute; width:max-content; height:max-content; transform:translate(-50%,-50%); pointer-events:none; }
-.runtime-goal-marker img { display:block; width:32px; height:32px; image-rendering:pixelated; }
+.runtime-goal-marker img { display:block; width:64px; height:64px; image-rendering:pixelated; }
+.game-frame > .runtime-goal-marker img { width:11.111111cqw; height:11.111111cqw; }
 .level-complete-backdrop { position:absolute; inset:0; z-index:2500; display:grid; place-items:center; padding:24px; background:rgb(0 0 0 / 62%); pointer-events:auto; }
 .level-complete-backdrop[hidden] { display:none; }
 .level-complete-panel { width:min(86%,360px); margin-bottom:50px; padding:34px 28px 28px; border:2px solid rgb(255 255 255 / 75%); border-radius:22px; background:linear-gradient(155deg,#17213b,#0b1020); box-shadow:0 20px 60px rgb(0 0 0 / 60%); text-align:center; color:#eef6ff; }

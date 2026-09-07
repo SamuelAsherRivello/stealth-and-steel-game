@@ -1,10 +1,8 @@
+import { isCellInGrid } from "../environment/grid-contract.js";
+
 export function createSelectionSystem(grid) {
   let selectedGridSpot = null;
-  const isValid = (cell) => cell
-    && Number.isInteger(cell.x)
-    && Number.isInteger(cell.y)
-    && cell.x >= 0 && cell.x < grid.columns
-    && cell.y >= 0 && cell.y < grid.rows;
+  const isValid = (cell) => isCellInGrid(cell, grid);
 
   return {
     getSelectedGridSpot() {
@@ -23,11 +21,13 @@ export function createSelectionSystem(grid) {
 }
 
 export function gridSpotFromLogicalPoint(point, grid) {
+  return gridSpotFromWorldPoint({ x: point.x, y: grid.heightPx - point.y }, grid);
+}
+
+export function gridSpotFromWorldPoint(point, grid) {
   const cell = {
     x: Math.floor(point.x / grid.tileSizePx),
-    y: Math.floor((grid.heightPx - point.y) / grid.tileSizePx),
+    y: Math.floor(point.y / grid.tileSizePx),
   };
-  return cell.x >= 0 && cell.x < grid.columns && cell.y >= 0 && cell.y < grid.rows
-    ? cell
-    : null;
+  return isCellInGrid(cell, grid) ? cell : null;
 }

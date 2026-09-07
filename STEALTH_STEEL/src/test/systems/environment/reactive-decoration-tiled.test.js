@@ -59,11 +59,11 @@ test("bush tileset exposes exactly one placeable reactive decoration item", asyn
   assert.equal(tileset.tiles[0].objectgroup.objects[1].class, "CombatCollider");
 });
 
-test("Level01 normalizes five independent authored bushes", async () => {
+test("Level01 normalizes six independent authored bushes", async () => {
   const { map, external } = await readLevelFixture();
   assert.deepEqual(validateTiledMap(map, external), []);
   const level = normalizeTiledMap(map, external);
-  assert.equal(level.reactiveDecorations.length, 5);
+  assert.equal(level.reactiveDecorations.length, 6);
   const object = level.reactiveDecorations[0];
   assert.equal(object.name, "Bush 1");
   assert.equal(object.layerName, "Y-Sorted Props");

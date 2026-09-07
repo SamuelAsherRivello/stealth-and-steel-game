@@ -5,84 +5,46 @@ import {
 } from "../runtime-settings/runtime-settings-store.js";
 import { applyFullscreenPreference } from "./fullscreen-settings.js";
 import { GameWindow } from "./game-window.js";
+import { createMenuButton } from "./menu.js";
+import { createSliderControl, createToggleControl } from "./menu-controls.js";
 
 const ASSET_BASE = import.meta.env?.BASE_URL ?? "/";
-const PROJECT_GITHUB_URL = "https://github.com/SamuelAsherRivello/babylon-lite-stealth-grid";
+const PROJECT_GITHUB_URL = "https://github.com/SamuelAsherRivello/stealth-and-steel-game";
 
 function createVolumeControl(documentRef, store, labelText, key) {
-  const row = documentRef.createElement("label");
-  row.className = "volume-control";
-  const label = documentRef.createElement("span");
-  label.className = "volume-label menu-label-text";
-  label.textContent = labelText;
-  const scale = documentRef.createElement("span");
-  scale.className = "volume-scale";
-  const minimum = documentRef.createElement("span");
-  minimum.className = "menu-body-text";
-  minimum.textContent = "0";
-  const slider = documentRef.createElement("input");
-  slider.type = "range";
-  slider.min = "0";
-  slider.max = "100";
-  slider.step = "1";
-  slider.value = String(store.get(key));
-  slider.setAttribute("aria-label", `${labelText} volume`);
-  const maximum = documentRef.createElement("span");
-  maximum.className = "menu-body-text";
-  maximum.textContent = "100";
-  slider.addEventListener("input", () => store.set(key, Number(slider.value)));
-  scale.append(minimum, slider, maximum);
-  row.append(label, scale);
-  return { row, slider };
+  const control = createSliderControl({ labelText, value: store.get(key),
+    onChange: value => store.set(key, value), documentRef });
+  control.slider.setAttribute("aria-label", `${labelText} volume`);
+  return control;
 }
 
 export function createDebugControl(documentRef, store, labelText, key) {
-  const row = documentRef.createElement("label");
-  row.className = "collider-control";
-  const label = documentRef.createElement("span");
-  label.className = "menu-label-text";
-  label.textContent = labelText;
-  const checkbox = documentRef.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.checked = store.get(key);
-  checkbox.addEventListener("change", () => {
-    store.set(key, checkbox.checked);
-  });
-  row.append(label, checkbox);
-  return { row, checkbox };
+  const control = createToggleControl({ labelText, checked: store.get(key),
+    onChange: checked => store.set(key, checked), documentRef });
+  control.row.className += " collider-control";
+  return control;
 }
-
-export function syncDebugPreviewControls(
-  store,
-  particleFxCheckbox,
-  animatedTileCheckbox,
-) {
-  particleFxCheckbox.checked = store.get(RUNTIME_DEBUG_SETTING_KEYS.showParticleFxPreview);
-  animatedTileCheckbox.checked = store.get(RUNTIME_DEBUG_SETTING_KEYS.showAnimatedTilePreview);
-}
-
 function createFullscreenControl(documentRef, applyFullscreen) {
-  const row = documentRef.createElement("label");
-  row.className = "fullscreen-control";
-  const label = documentRef.createElement("span");
-  label.className = "menu-label-text";
-  label.textContent = "FullScreen";
-  const checkbox = documentRef.createElement("input");
-  checkbox.type = "checkbox";
+  const control = createToggleControl({ labelText: "FullScreen", documentRef,
+    onChange: async checked => {
+      await applyFullscreen(checked, documentRef);
+      syncWithDocument();
+    },
+  });
+  const { row, checkbox } = control;
+  row.className += " fullscreen-control";
   const syncWithDocument = () => {
     checkbox.checked = Boolean(documentRef.fullscreenElement);
   };
   syncWithDocument();
-  checkbox.addEventListener("change", async () => {
-    await applyFullscreen(checkbox.checked, documentRef);
-    syncWithDocument();
-  });
   documentRef.addEventListener?.("fullscreenchange", syncWithDocument);
-  row.append(label, checkbox);
   return {
     row,
     checkbox,
-    dispose: () => documentRef.removeEventListener?.("fullscreenchange", syncWithDocument),
+    dispose() {
+      control.dispose();
+      documentRef.removeEventListener?.("fullscreenchange", syncWithDocument);
+    },
   };
 }
 
@@ -130,40 +92,31 @@ export function createSettingsUi({
     const fullscreenControl = createFullscreenControl(documentRef, applyFullscreen);
     const musicSlider = musicControl.slider;
     const sfxSlider = sfxControl.slider;
-    const developerButton = documentRef.createElement("button");
-    developerButton.className = "developer-settings-button menu-button-text";
-    developerButton.type = "button";
-    developerButton.textContent = "Developer Settings";
+    const developerButton = createMenuButton({ displayText: "Developer", className: "developer-settings-button", documentRef });
 
     const developerContent = documentRef.createElement("div");
     developerContent.className = "settings-controls developer-settings-controls";
-    const colliderControl = createDebugControl(documentRef, store, "Collider?", RUNTIME_DEBUG_SETTING_KEYS.showColliders);
-    const cropMarksControl = createDebugControl(documentRef, store, "Crop Marks", RUNTIME_DEBUG_SETTING_KEYS.showCropMarks);
-    const particleFxControl = createDebugControl(documentRef, store, "Particle FX (Preview)?", RUNTIME_DEBUG_SETTING_KEYS.showParticleFxPreview);
-    const animatedTileControl = createDebugControl(documentRef, store, "Animated Tile (Preview)", RUNTIME_DEBUG_SETTING_KEYS.showAnimatedTilePreview);
-    const githubButton = documentRef.createElement("button");
-    githubButton.className = "settings-github-button menu-button-text";
-    githubButton.type = "button";
-    githubButton.textContent = "Open GitHub";
+    const debugHeading = documentRef.createElement("h3");
+    debugHeading.className = "debug-visualizations-heading menu-label-text";
+    debugHeading.textContent = "Debug Draw";
+    const debugControls = [
+      ["Coordinates", RUNTIME_DEBUG_SETTING_KEYS.showCoordinates],
+      ["Enemy Perceptions", RUNTIME_DEBUG_SETTING_KEYS.showEnemyPerceptions],
+      ["Enemy Tasks", RUNTIME_DEBUG_SETTING_KEYS.showEnemyAiLabels],
+      ["Physics Colliders", RUNTIME_DEBUG_SETTING_KEYS.showColliders],
+      ["Tile Map Info", RUNTIME_DEBUG_SETTING_KEYS.showTileMapInfo],
+    ].map(([label, key]) => ({ key, ...createDebugControl(documentRef, store, label, key) }));
+    const githubButton = createMenuButton({ displayText: "Open GitHub", className: "settings-github-button", documentRef });
     githubButton.addEventListener("click", () => {
       openExternal(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer");
     });
-    const resetButton = documentRef.createElement("button");
-    resetButton.className = "settings-reset menu-button-text";
-    resetButton.type = "button";
-    resetButton.textContent = "Reset";
-    developerContent.append(colliderControl.row, cropMarksControl.row, particleFxControl.row, animatedTileControl.row, githubButton, resetButton);
-    const colliderCheckbox = colliderControl.checkbox;
-    const cropMarksCheckbox = cropMarksControl.checkbox;
-    const particleFxCheckbox = particleFxControl.checkbox;
-    const animatedTileCheckbox = animatedTileControl.checkbox;
+    const resetButton = createMenuButton({ displayText: "Clear All Settings", className: "settings-reset", documentRef });
+    developerContent.append(debugHeading, ...debugControls.map(control => control.row), githubButton, resetButton);
     resetButton.addEventListener("click", () => {
       store.reset();
       musicSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.music));
       sfxSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.sfx));
-      colliderCheckbox.checked = store.get(RUNTIME_DEBUG_SETTING_KEYS.showColliders);
-      cropMarksCheckbox.checked = store.get(RUNTIME_DEBUG_SETTING_KEYS.showCropMarks);
-      syncDebugPreviewControls(store, particleFxCheckbox, animatedTileCheckbox);
+      for (const control of debugControls) control.checkbox.checked = store.get(control.key);
     });
 
     const openDeveloperSettings = () => {
@@ -171,7 +124,7 @@ export function createSettingsUi({
       activeWindow?.setVisible(false);
       developerWindow = new GameWindow({
         host: modalHost,
-        title: "Developer Settings",
+        title: "Developer",
         content: developerContent,
         documentRef,
         opener: developerButton,
@@ -193,13 +146,9 @@ export function createSettingsUi({
       musicControl.row,
       sfxControl.row,
       fullscreenControl.row,
-      developerButton,
     );
     if (openAccount) {
-      accountButton = documentRef.createElement("button");
-      accountButton.type = "button";
-      accountButton.className = "settings-account-button";
-      accountButton.textContent = "⚡ Account";
+      accountButton = createMenuButton({ displayText: "⚡ Account", className: "settings-account-button", documentRef });
       accountButton.addEventListener("click", event => {
         event.stopPropagation();
         if (accountActive) return;
@@ -207,8 +156,9 @@ export function createSettingsUi({
         activeWindow?.setVisible(false);
         void openAccount();
       });
-      content.prepend(accountButton);
+      content.append(accountButton);
     }
+    content.append(developerButton);
     pauseController.pause('settings');
     gear.setAttribute("aria-label", "Close settings");
     activeWindow = new GameWindow({

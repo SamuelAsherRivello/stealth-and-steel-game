@@ -45,7 +45,7 @@ export function createPerceptionSquare(cell, tileSize, size = tileSize) {
   return [{ x, y }, { x: x + size, y }, { x: x + size, y: y + size }, { x, y: y + size }];
 }
 
-export function createPerceptionDrawCommands(snapshot, tileSize, now = 0) {
+export function createPerceptionDrawCommands(snapshot, tileSize, now = 0, visionOptions = {}) {
   const detections = snapshot?.detections ?? [];
   const activeKeys = new Set(detections.map((d) => `${d.detectorId}:${d.type}:${d.cell.x},${d.cell.y}`));
   for (const key of activeStartByKey.keys()) if (!activeKeys.has(key)) activeStartByKey.delete(key);
@@ -58,7 +58,7 @@ export function createPerceptionDrawCommands(snapshot, tileSize, now = 0) {
     .filter(hasValidVisualGeometry)
     .map((actor) => ({
       ...actor,
-      visualCells: getVisualCells(actor.cell, actor.heading, actor.visualRange ?? 4), id: actor.id,
+      visualCells: getVisibleVisualCells(actor, tileSize, visionOptions), id: actor.id,
       audioCells: getAudioCells(actor.cell),
       activeVisualCells: detections.filter((d) => d.detectorId === actor.id && d.type === "visual").map(({ cell }) => cell),
       activeAudioCells: detections.filter((d) => d.detectorId === actor.id && d.type === "audio").map(({ cell }) => cell),

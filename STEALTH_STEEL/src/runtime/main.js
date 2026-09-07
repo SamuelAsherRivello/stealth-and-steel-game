@@ -1,7 +1,17 @@
+import { enemyAiLabel, drawEnemyAiLabels } from "./ai/enemy-ai-labels.js";
+import { createEnemyBrain } from "./ai/enemy-brain.js";
+import { createPlanningScheduler } from "./ai/planning-scheduler.js";
+import { goblinProfile } from "./characters/enemies/goblin/goblin-goap.js";
+import { warriorProfile } from "./characters/enemies/warrior/warrior-goap.js";
+import { lancerProfile } from "./characters/enemies/lancer/lancer-goap.js";
+import { archerProfile } from "./characters/enemies/archer/archer-goap.js";
+import { monkProfile } from "./characters/enemies/monk/monk-goap.js";
 import { resolveEnemyArrowPlayerHit, resolveMeleeImpacts } from "./gameplay/player-damage.js";
 import { createCombatActorState } from "./gameplay/combat-actor.js";
 import { getColliderCenter } from "./characters/character-spatial.js";
 import { GridSpot, getQuantizedGridCell } from "./systems/environment/grid-spot.js";
+import { GrassDecorationsEnabled, GRASS_SET, planDecorationSet, collectDecorationGroundCells } from "./systems/environment/decorations/decoration-object-sets.js";
+import { createDecorationObjects } from "./systems/environment/decorations/decoration-objects.js";
 import { playSfx, playPerceptionSfx } from "./audio/sfx.js";
 import {
   addSpriteRendererLayer,
@@ -12,26 +22,28 @@ import {
   createSpriteRenderer,
   loadSpriteAtlas,
   removeSprite2D,
-  playSprite2DAnimation,
+  setSprite2DFrame,
   registerSpriteRenderer,
   removeSpriteRendererLayer,
   startEngine,
   updateSpriteAnimationManager,
 } from "@babylonjs/lite";
 
-import { gridCellToScreenForFrame, collidersOverlap, getOtherCharacterGridOccupancyColliders, getOtherCharacterColliders, separateOverlappingCharacterColliders } from "./gameplay/game-logic.js";
+import { collidersOverlap, getOtherCharacterGridOccupancyColliders, getOtherCharacterColliders, separateOverlappingCharacterColliders } from "./gameplay/game-logic.js";
 import { createGameStateMachine, GameState } from "./gameplay/game-state.js";
 import { gridCellToWorldCenter } from "./gameplay/world-viewport.js";
-import { GAME_VIEWPORT, formatViewportDiagnostics, logicalPointFromClient, measureGameViewport, renderViewportQaMarkers } from "./gameplay/game-viewport.js";
+import { GAME_VIEWPORT, formatViewportDiagnostics, logicalPointFromClient, measureGameViewport } from "./gameplay/game-viewport.js";
 import {
   collectTiledLayerTiles,
   formatLevelCellLabel,
   loadTiledMap,
 } from "../../plugins/tiled-babylon-lite/index.js";
-import { GRID } from "./systems/environment/grid-contract.js";
+import { GRID, isCellInGrid } from "./systems/environment/grid-contract.js";
+import { createLevelCamera, getLevelWorld } from "./gameplay/level-camera.js";
 import { getCharacterGridCell, getCharacterLayerOrder } from "./characters/character-spatial.js";
 import { getYSortedLayerOrder } from "./systems/environment/render-depth.js";
 import { createLevelTerrainTiles } from "../../plugins/tiled-babylon-lite/index.js";
+import { getColumnAnimationOffset } from "../../plugins/tiled-babylon-lite/terrain-runtime.js";
 import {
   PLAYER_FRAME,
   PLAYER_MOVEMENT_COLLIDER,
@@ -46,8 +58,6 @@ import {
   createGoblin,
   loadGoblinAtlases,
 } from "./characters/enemies/goblin/goblin.js";
-import { createGoblinBehaviorController } from "./characters/enemies/goblin/goblin-behavior-controller.js";
-import { createEnemyPatrolController } from "./characters/enemies/enemy-patrol-controller.js";
 import { createCharacterLockupWatchdog } from "./gameplay/character-lockup-watchdog.js";
 import { ARCHER_FRAME, ARCHER_MOVEMENT_COLLIDER, ARCHER_PIVOT, createArcher, loadArcherAtlases } from "./characters/enemies/archer/archer.js";
 import { createGridWalkability } from "./characters/npc/sheep/sheep-navigation.js";
@@ -75,7 +85,7 @@ import {
 import { CharacterType } from "./characters/npc/sheep/sheep-state.js";
 import { createSheepContactCoordinator } from "./characters/npc/sheep/sheep-flock.js";
 import { createCharacterPerception, PerceptionTargetState } from "./systems/perception/character-perception.js";
-import { createEnemyAwarenessController } from "./characters/enemies/enemy-awareness-controller.js";
+import { createTerrainVision } from "./systems/perception/terrain-vision.js";
 import { getEnemyExpression } from "./systems/perception/enemy-expression.js";
 import { getPlayerHidingBush, isPlayerHidden, stepHiddenOpacity, canEnemyTargetPlayer, getOccupiedBushBlockers } from "./systems/perception/player-hidden.js";
 import {
@@ -85,12 +95,7 @@ import {
 import { resolveProjectileHit } from "./systems/objects/projectile-combat.js";
 import { createPauseController } from "./ui/pause-controller.js";
 import { createStartGamePrompt, shouldShowStartGamePrompt, shouldSkipIntro } from "./ui/start-game-prompt.js";
-import {
-  applyAnimatedTilePreviewSetting,
-  applyParticleFxPreviewSetting,
-} from "./runtime-settings/runtime-preview-settings.js";
-import { Fire03ParticleEffect, PARTICLE_FX_CLASS_BY_KEY } from "./particle-fx/index.js";
-import { createParticleFxPreviewLayout } from "./particle-fx/preview-layout.js";
+import { Fire03ParticleEffect } from "./particle-fx/index.js";
 import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
@@ -120,7 +125,7 @@ import {
   createInitialSpawnerConfigs,
 } from "./systems/spawners/spawner-catalog.js";
 import { createSpawnerMarker } from "./systems/spawners/spawner-marker.js";
-import { createSelectionSystem, gridSpotFromLogicalPoint } from "./systems/selection/selection-system.js";
+import { createSelectionSystem, gridSpotFromWorldPoint } from "./systems/selection/selection-system.js";
 import {
   createReactiveDecoration,
   getCenteredEffectPosition,
@@ -146,9 +151,6 @@ const TEMPORARILY_FREEZE_ENEMY_AI = false;
 const TEMPORARILY_DISABLE_GREEN_GREEN_COLLISIONS = false;
 // Diagnostic switch: isolate the player/world loop from enemy updates.
 const TEMPORARILY_DISABLE_ENEMY_UPDATES = false;
-const WATER_FOAM_FRAME_SIZE = 192;
-const WATER_FOAM_FRAME_COUNT = 16;
-const WATER_FOAM_FRAME_DURATION_MS = 100;
 const PLAYER_HIDDEN_FADE_SECONDS = 0.2;
 const ENEMY_EXPRESSION_FADE_SECONDS = 0.25;
 const ENEMY_EXPRESSION_INSTANCE_FADE_SECONDS = ENEMY_EXPRESSION_FADE_SECONDS / 2;
@@ -181,16 +183,14 @@ const uiLayer = document.querySelector("#uiLayer");
 const gameFrame = document.querySelector(".game-frame");
 const viewportSafeArea = createViewportSafeArea({ element: uiLayer, frameElement: gameFrame });
 const coordinatesUi = createCoordinatesUi();
-const selectionSystem = createSelectionSystem(GRID);
+
 let latestGameViewport = null;
-let showCropMarks = false;
 
 function refreshGameViewportDiagnostics() {
   latestGameViewport = measureGameViewport(GAME_VIEWPORT);
   canvas.dataset.viewport = formatViewportDiagnostics(latestGameViewport);
   debugCanvas.dataset.viewport = formatViewportDiagnostics(latestGameViewport);
   if (GAME_VIEWPORT.qaDiagnostics) {
-    renderViewportQaMarkers(latestGameViewport, showCropMarks);
   }
   return latestGameViewport;
 }
@@ -242,13 +242,17 @@ export async function start({ showStartPrompt = true } = {}) {
   refreshGameViewportDiagnostics();
   const animationManager = createSpriteAnimationManager();
   const level = await loadTiledMap(`${import.meta.env.BASE_URL}assets/levels/tiled/maps/Level01.tmj`);
+  const world = getLevelWorld(level);
+  const worldBounds = world.bounds;
+  const worldGrid = world.grid;
+  const camera = createLevelCamera(world);
+  const selectionSystem = createSelectionSystem(worldGrid);
   const terrainImages = new Set(collectTiledLayerTiles(level).map(({ image }) => image));
   const [
     terrainAtlasEntries,
     archerAtlas,
     archerEnemyAtlases,
     arrowAtlas,
-    waterFoamAtlas,
     visionShadowAtlas,
     sheepAtlases,
     goblinAtlases,
@@ -260,17 +264,13 @@ export async function start({ showStartPrompt = true } = {}) {
     Promise.all([...terrainImages].map(async (image) => [
       image,
       await loadSpriteAtlas(engine, image, {
-        gridSize: [TILE_SIZE, TILE_SIZE],
+        gridSize: collectTiledLayerTiles(level).find(tile => tile.image === image).frameSize,
         sampling: "nearest",
       }),
     ])),
     loadPlayerAtlases(engine),
     loadArcherAtlases(engine),
     loadArrowAtlas(engine),
-    loadSpriteAtlas(engine, "./assets/images/terrain/Water Foam.png", {
-      gridSize: [WATER_FOAM_FRAME_SIZE, WATER_FOAM_FRAME_SIZE],
-      sampling: "nearest",
-    }),
     loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/terrain/tile-shadow.png`, {
       gridSize: [TILE_SIZE, TILE_SIZE],
       sampling: "nearest",
@@ -291,6 +291,7 @@ export async function start({ showStartPrompt = true } = {}) {
     EMPTY_TERRAIN_FRAMES,
   );
   const obstacleColliders = terrainTiles.flatMap(({ colliders }) => colliders);
+  const terrainVision = createTerrainVision(terrainTiles);
   const decorationDescriptorsByImage = new Map(
     level.reactiveDecorations.map(({ decoration }) => [decoration.image, decoration]),
   );
@@ -315,7 +316,7 @@ export async function start({ showStartPrompt = true } = {}) {
   const goldPickupDefinition = {
     create: ({ position, index }) => {
       const image = goldPickupImages[Math.floor(Math.random() * goldPickupImages.length)];
-      const pickup = createGoldPickup({ object: { id: `gold-${index}` }, atlas: goldPickupAtlases.get(image), startPosition: position.start, destination: position.destination, screenHeight: SCREEN_HEIGHT });
+      const pickup = createGoldPickup({ object: { id: `gold-${index}` }, atlas: goldPickupAtlases.get(image), startPosition: position.start, destination: position.destination, screenHeight: SCREEN_HEIGHT, depthBounds: worldBounds });
       pickup.destination = position.cell;
       return pickup;
     },
@@ -327,9 +328,9 @@ export async function start({ showStartPrompt = true } = {}) {
   }
   const goldStoneObjects = level.goldStones.map((object) => {
     const image = object.goldStone.variantImages[Math.floor(Math.random() * object.goldStone.variantImages.length)];
-    return createGoldStone({ object: { ...object, goldStone: { ...object.goldStone, image } }, atlas: goldStoneAtlases.get(image), animationManager, screenHeight: SCREEN_HEIGHT, onDeathComplete: (position) => {
+    return createGoldStone({ object: { ...object, goldStone: { ...object.goldStone, image } }, atlas: goldStoneAtlases.get(image), animationManager, screenHeight: SCREEN_HEIGHT, depthBounds: worldBounds, onDeathComplete: (position) => {
       const origin = getQuantizedGridCell(position, { width: TILE_SIZE, height: TILE_SIZE });
-      const destinations = chooseNineGridDestinations(origin, Math.random() < 0.5 ? 2 : 3, (cell) => cell.x >= 0 && cell.x < GRID.columns && cell.y >= 0 && cell.y < GRID.rows && !pickupSystem.pickups.some((pickup) => pickup.destination?.x === cell.x && pickup.destination?.y === cell.y));
+      const destinations = chooseNineGridDestinations(origin, Math.random() < 0.5 ? 2 : 3, (cell) => isCellInGrid(cell, worldGrid) && !pickupSystem.pickups.some((pickup) => pickup.destination?.x === cell.x && pickup.destination?.y === cell.y));
       for (const cell of destinations) {
         pickupSystem.spawn(goldPickupDefinition, { start: position, cell, destination: { x: (cell.x + 0.5) * TILE_SIZE, y: (cell.y + 0.5) * TILE_SIZE } });
       }
@@ -362,6 +363,7 @@ export async function start({ showStartPrompt = true } = {}) {
       animationManager,
       screenHeight: SCREEN_HEIGHT,
       tileSize: TILE_SIZE,
+      depthBounds: worldBounds,
       fireEffect: bushFireEffects[index],
       leafAtlas: bushLeafAtlas,
       onCharacterEnter: (character) => {
@@ -385,22 +387,22 @@ export async function start({ showStartPrompt = true } = {}) {
     pivot: [0.5, 0.5],
   });
   let visionShadowSprites = [];
-  function syncVisionShadows(snapshot) {
-    for (const sprite of visionShadowSprites) removeSprite2D(sprite);
-    const terrainBlockers = obstacleColliders.map((collider) => ({
-      x: Math.floor(collider.x / TILE_SIZE),
-      y: Math.floor(collider.y / TILE_SIZE),
-    }));
+  function getVisionOptions(snapshot) {
     const characterBlockers = snapshot.actors
       .filter((actor) => actor.isAlive !== false && actor.type !== "player")
       .map((actor) => actor.cell);
     const bushBlockers = reactiveDecorations
       .filter((decoration) => !decoration.isDead)
       .map((decoration) => decoration.cell);
-    const commands = createEnemyVisionShadowDrawCommands(snapshot, TILE_SIZE, {
-      blockers: [...terrainBlockers, ...characterBlockers, ...bushBlockers],
+    return {
+      isWalkable: terrainVision,
+      blockers: [...characterBlockers, ...bushBlockers],
       screenHeight: SCREEN_HEIGHT,
-    });
+    };
+  }
+  function syncVisionShadows(snapshot) {
+    for (const sprite of visionShadowSprites) removeSprite2D(sprite);
+    const commands = createEnemyVisionShadowDrawCommands(snapshot, TILE_SIZE, getVisionOptions(snapshot));
     visionShadowSprites = commands.map((command) => addSprite2D(visionShadowLayer, {
       positionPx: command.positionPx,
       sizePx: command.sizePx,
@@ -409,21 +411,31 @@ export async function start({ showStartPrompt = true } = {}) {
     }));
   }
 
+  const animatedTerrain = [];
   for (const tile of terrainTiles) {
     if (!tile.valid) {
       continue;
     }
 
-    addSprite2D(terrainLayerByImage.get(tile.image), {
-      positionPx: [tile.screenPosition.x, tile.screenPosition.y],
-      sizePx: [TILE_SIZE, TILE_SIZE],
+    const sprite = addSprite2D(terrainLayerByImage.get(tile.image), {
+      positionPx: [tile.spritePosition.x, tile.spritePosition.y],
+      sizePx: tile.frameSize,
       frame: tile.frame,
     });
+    if (tile.animation.length) animatedTerrain.push({ sprite, frames: tile.animation, elapsed: 0, tile });
+  }
+
+  // Once terrain sprites exist, phase water playback by the logical world column.
+  for (const animation of animatedTerrain) {
+    if (!animation.tile.source.endsWith("/Water.tsj")) continue;
+    const offset = getColumnAnimationOffset(animation.frames, animation.tile.gameCell.x);
+    animation.elapsed = offset.elapsed;
+    setSprite2DFrame(animation.sprite, offset.frame);
   }
 
   const projectiles = createProjectileRenderer({
     atlas: arrowAtlas,
-    bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+    bounds: worldBounds,
     obstacles: obstacleColliders,
     onPickup: () => playSfx("bush"),
   });
@@ -431,6 +443,7 @@ export async function start({ showStartPrompt = true } = {}) {
   let nextActorId = 1;
   const sheepContactCoordinator = createSheepContactCoordinator();
   const characterPerception = createCharacterPerception({
+    isWalkable: terrainVision,
     getBlockers: () => [
       ...reactiveDecorations.map((decoration) => ({
         id: decoration.id,
@@ -447,10 +460,13 @@ export async function start({ showStartPrompt = true } = {}) {
     ],
   });
 
+  const enemyPlanningScheduler = createPlanningScheduler();
+  const enemyProfiles = { goblin: goblinProfile, warrior: warriorProfile, lancer: lancerProfile, archer: archerProfile, monk: monkProfile };
+
   function attachActor(record) {
     if (renderer) {
       for (const layer of record.actor.layers) {
-        addSpriteRendererLayer(renderer, layer);
+        addSpriteRendererLayer(renderer, camera.attachLayer(layer));
       }
       record.actor.playAnimation(animationManager);
     }
@@ -477,22 +493,30 @@ export async function start({ showStartPrompt = true } = {}) {
         [SpawnerCharacter.LANCER]: { frame: LANCER_FRAME, pivot: LANCER_PIVOT, collider: LANCER_MOVEMENT_COLLIDER },
         [SpawnerCharacter.MONK]: { frame: MONK_FRAME, pivot: MONK_PIVOT, collider: MONK_MOVEMENT_COLLIDER },
       }[record.character];
-      record.awareness = createEnemyAwarenessController({
-        actor: record.actor, controller: record.controller, grid: GRID,
-        character: record.character,
+      record.brain = createEnemyBrain({
+        id: record.combat.label, actor: record.actor, grid: worldGrid,
+        profile: enemyProfiles[record.character], scheduler: enemyPlanningScheduler,
         getPlayer: () => {
           const player = getRecordsByType(SpawnerType.PLAYER).find(({ combat }) => combat.isAlive);
           return player ? {
             id: player.combat.label, isAlive: true,
+            detected: characterPerception.getSnapshot().detections.some(event => event.detectorId === record.combat.label),
             hidden: isPlayerHidden(player.combat.getCombatCollider(), reactiveDecorations),
             position: player.actor.getPosition(), cell: player.actor.getGridPosition(TILE_SIZE),
           } : null;
         },
+        getWorld: () => ({
+          characters: getRecordsByType(SpawnerType.SHEEP).filter(target => target.combat.isAlive).map(target => ({
+            id: target.combat.label, character: "sheep", isAlive: true, position: target.actor.getPosition(), cell: target.actor.getGridPosition(TILE_SIZE),
+          })),
+          bushes: reactiveDecorations.filter(decoration => !decoration.isDead).map(decoration => decoration.getSnapshot()),
+        }),
         isWalkable: createActorWalkability(record.actor, geometry),
         isAlive: () => record.combat.isAlive,
         onStateChange: (state) => playPerceptionSfx(state),
       });
-      record.reaction = record.awareness.reaction;
+      record.controller = record.awareness = record.brain;
+      record.reaction = record.brain.reaction;
     }
     if ([SpawnerType.PLAYER, SpawnerType.ENEMY].includes(record.type)) {
       characterPerception.register({
@@ -522,7 +546,7 @@ export async function start({ showStartPrompt = true } = {}) {
   function createPlayerRecord(position) {
     const actor = createPlayer({
       atlases: archerAtlas,
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+      bounds: worldBounds,
       obstacles: obstacleColliders,
       initialPosition: position,
       onShoot: (spawnPosition, direction) => projectiles.shoot(spawnPosition, direction),
@@ -533,8 +557,8 @@ export async function start({ showStartPrompt = true } = {}) {
           : { x: 1, y: 0 };
         const length = Math.hypot(direction.x, direction.y) || 1;
         const destination = {
-          x: Math.max(0, Math.min(GRID.columns - 1, Math.floor(startPosition.x / TILE_SIZE + direction.x / length))) + 0.5,
-          y: Math.max(0, Math.min(GRID.rows - 1, Math.floor(startPosition.y / TILE_SIZE + direction.y / length))) + 0.5,
+          x: Math.max(worldGrid.minColumn, Math.min(worldGrid.minColumn + worldGrid.columns - 1, Math.floor(startPosition.x / TILE_SIZE + direction.x / length))) + 0.5,
+          y: Math.max(worldGrid.minRow, Math.min(worldGrid.minRow + worldGrid.rows - 1, Math.floor(startPosition.y / TILE_SIZE + direction.y / length))) + 0.5,
         };
         pickupSystem.spawn(goldPickupDefinition, {
           start: startPosition,
@@ -567,9 +591,9 @@ export async function start({ showStartPrompt = true } = {}) {
     const actor = createSheep({
       atlases: sheepAtlases,
       initialPosition: position,
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+      bounds: worldBounds,
       obstacles: obstacleColliders,
-      grid: GRID,
+      grid: worldGrid,
       scareDistanceCells: 3,
       frighteningTypes: [CharacterType.PLAYER],
       minimumFleeDistanceCells: 1,
@@ -607,7 +631,7 @@ export async function start({ showStartPrompt = true } = {}) {
 
   function createActorWalkability(actor, character) {
     const terrain = createGridWalkability({
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }, character, grid: GRID, obstacles: obstacleColliders,
+      bounds: worldBounds, character, grid: worldGrid, obstacles: obstacleColliders,
     });
     const walkable = cell => {
       const blockers = getNavigationColliders(actor);
@@ -624,25 +648,16 @@ export async function start({ showStartPrompt = true } = {}) {
     return walkable;
   }
 
-  function createEnemyPatrolWalkability(actor, character) {
-    const walkable = createActorWalkability(actor, character);
-    return (direction, _position, targetCell) => {
-      const current = getCharacterGridCell(actor.getMovementCollider(), TILE_SIZE);
-      const target = targetCell ?? { x: current.x + direction.x, y: current.y + direction.y };
-      return walkable.canTraverse(current, target);
-    };
-  }
-
   function createArcherRecord(position) {
     const ownerId = `archer-${nextActorId++}`;
-    const actor = createArcher({ atlases: archerEnemyAtlases, initialPosition: position, bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }, obstacles: obstacleColliders, onShoot: (spawnPosition, target, options) => {
+    const actor = createArcher({ atlases: archerEnemyAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders, onShoot: (spawnPosition, target, options) => {
       playSfx("archer");
       const dx = target.x - spawnPosition.x; const dy = target.y - spawnPosition.y;
       const length = Math.hypot(dx, dy) || 1;
       return projectiles.shoot(spawnPosition, options.initialVelocityDirection ?? { x: dx / length, y: dy / length }, ownerId, { target, speedMultiplier: 0.5, collisionEnabled: true, rotationEnabled: true, ...options });
     } });
     const combat = createCombatActorState({ label: ownerId, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, ARCHER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [ARCHER_FRAME.width * value, ARCHER_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: () => {} });
-    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.ARCHER, actor, combat, controller: createEnemyPatrolController(actor, { isDirectionWalkable: createEnemyPatrolWalkability(actor, { frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }) }) });
+    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.ARCHER, actor, combat, controller: null });
   }
 
   function createGoblinRecord(position) {
@@ -650,7 +665,7 @@ export async function start({ showStartPrompt = true } = {}) {
       onAttack: () => playSfx("goblin"),
       atlases: goblinAtlases,
       initialPosition: position,
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+      bounds: worldBounds,
       obstacles: obstacleColliders,
     });
     const combat = createCombatActorState({
@@ -675,35 +690,6 @@ export async function start({ showStartPrompt = true } = {}) {
       combat,
       controller: null,
     };
-    const isWalkable = createActorWalkability(actor, {
-      frame: GOBLIN_FRAME, pivot: GOBLIN_PIVOT, collider: GOBLIN_MOVEMENT_COLLIDER,
-    });
-    record.controller = createGoblinBehaviorController(actor, {
-      grid: GRID,
-      spawnCell: getCharacterGridCell(actor.getMovementCollider(), TILE_SIZE),
-      isWalkable,
-      bushChance: 0.25,
-      idleRange: [3, 5],
-      prioritizeBushes: false,
-      getWorld: () => ({
-        characters: [
-          ...getRecordsByType(SpawnerType.PLAYER),
-          ...getRecordsByType(SpawnerType.SHEEP),
-        ].filter(({ combat: targetCombat }) => targetCombat.isAlive).map((target) => ({
-          id: target.combat.label,
-          character: target.type === SpawnerType.PLAYER ? 'player' : 'sheep',
-          isAlive: target.combat.isAlive,
-          targetable: target.type !== SpawnerType.PLAYER || canEnemyTargetPlayer({
-            isAlive: target.combat.isAlive,
-            hidden: isPlayerHidden(target.combat.getCombatCollider(), reactiveDecorations),
-          }, record.reaction),
-          position: target.actor.getPosition(),
-          cell: getCharacterGridCell(target.actor.getMovementCollider(), TILE_SIZE),
-        })),
-        bushes: reactiveDecorations.filter((decoration) => !decoration.isDead)
-          .map((decoration) => decoration.getSnapshot()),
-      }),
-    });
     return attachActor(record);
   }
 
@@ -712,7 +698,7 @@ export async function start({ showStartPrompt = true } = {}) {
       onAttack: () => playSfx("warrior"),
       atlases: warriorAtlases,
       initialPosition: position,
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+      bounds: worldBounds,
       obstacles: obstacleColliders,
     });
     const combat = createCombatActorState({
@@ -739,20 +725,20 @@ export async function start({ showStartPrompt = true } = {}) {
       character: SpawnerCharacter.WARRIOR,
       actor,
       combat,
-      controller: createEnemyPatrolController(actor, { isDirectionWalkable: createEnemyPatrolWalkability(actor, { frame: WARRIOR_FRAME, pivot: WARRIOR_PIVOT, collider: WARRIOR_MOVEMENT_COLLIDER }) }),
+      controller: null,
     });
   }
 
   function createLancerRecord(position) {
-    const actor = createLancer({ onAttack: () => playSfx("lancer"), atlases: lancerAtlases, initialPosition: position, bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }, obstacles: obstacleColliders });
+    const actor = createLancer({ onAttack: () => playSfx("lancer"), atlases: lancerAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders });
     const combat = createCombatActorState({ label: `lancer-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, LANCER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [LANCER_FRAME.width * value, LANCER_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
-    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.LANCER, actor, combat, controller: createEnemyPatrolController(actor, { isDirectionWalkable: createEnemyPatrolWalkability(actor, { frame: LANCER_FRAME, pivot: LANCER_PIVOT, collider: LANCER_MOVEMENT_COLLIDER }) }) });
+    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.LANCER, actor, combat, controller: null });
   }
 
   function createMonkRecord(position) {
-    const actor = createMonk({ onHeal: () => playSfx("monk"), atlases: monkAtlases, initialPosition: position, bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }, obstacles: obstacleColliders });
+    const actor = createMonk({ onHeal: () => playSfx("monk"), atlases: monkAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders });
     const combat = createCombatActorState({ label: `monk-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, MONK_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [MONK_FRAME.width * value, MONK_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: () => {} });
-    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.MONK, actor, combat, controller: createEnemyPatrolController(actor, { isDirectionWalkable: createEnemyPatrolWalkability(actor, { frame: MONK_FRAME, pivot: MONK_PIVOT, collider: MONK_MOVEMENT_COLLIDER }) }) });
+    return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.MONK, actor, combat, controller: null });
   }
 
   const spawnerConfigs = createInitialSpawnerConfigs({
@@ -818,9 +804,9 @@ export async function start({ showStartPrompt = true } = {}) {
   };
   const spawnWalkability = Object.fromEntries(Object.entries(spawnCharacterShapes)
     .map(([character, shape]) => [character, createGridWalkability({
-      bounds: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+      bounds: worldBounds,
       character: shape,
-      grid: GRID,
+      grid: worldGrid,
       obstacles: obstacleColliders,
     })]));
   const spawnerMarkers = spawnerConfigs.map((config) => createSpawnerMarker({
@@ -842,8 +828,8 @@ export async function start({ showStartPrompt = true } = {}) {
         .filter((record) => record.combat.isAlive)
         .map((record) => ({ collider: record.actor.getMovementCollider() }))),
     ),
-    getWalkableCells: () => Array.from({ length: GRID.rows }, (_, y) => y)
-      .flatMap((y) => Array.from({ length: GRID.columns }, (_, x) => ({ x, y }))),
+    getWalkableCells: () => Array.from({ length: worldGrid.rows }, (_, y) => y + worldGrid.minRow)
+      .flatMap((y) => Array.from({ length: worldGrid.columns }, (_, x) => ({ x: x + worldGrid.minColumn, y }))),
     getActorPosition: (record) => record.actor.getPosition(),
     createActor: actorFactories[config.character],
     disposeActor: disposeActorRecord,
@@ -876,47 +862,28 @@ export async function start({ showStartPrompt = true } = {}) {
         })),
     });
   globalThis.bushBurningDebug = Object.freeze({ snapshot: getBushBurningSnapshot });
+  const grassAtlases = new Map(await Promise.all((GrassDecorationsEnabled ? GRASS_SET.images : []).map(async image => [image,
+    await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}${image}`, { gridSize: GRASS_SET.frameSize, sampling: "nearest" }),
+  ])));
+  const grassWalkability = createGridWalkability({ bounds: worldBounds, grid: worldGrid, obstacles: obstacleColliders,
+    character: { frame: PLAYER_FRAME, pivot: PLAYER_PIVOT, collider: PLAYER_MOVEMENT_COLLIDER } });
+  const grassPlacements = planDecorationSet({ enabled: GrassDecorationsEnabled, set: GRASS_SET, grid: worldGrid,
+    groundCells: collectDecorationGroundCells(terrainTiles),
+    occupiedCells: [
+      ...(level.decorationOccupiedCells ?? []),
+      ...[...level.spawners, ...level.goldPickupSpawners, ...level.goals].map(object => object.gameCell),
+      ...reactiveDecorations.map(object => object.getGridSpot().cell),
+      ...spawners.flatMap(spawner => spawner.actors.map(record => getCharacterGridCell(record.actor.getMovementCollider(), TILE_SIZE))),
+    ], isWalkable: grassWalkability });
+  const grassDecorations = createDecorationObjects({ placements: grassPlacements, atlases: grassAtlases,
+    screenHeight: SCREEN_HEIGHT, tileSize: TILE_SIZE });
+  if (import.meta.env.DEV) canvas.dataset.grassDecorations = JSON.stringify(grassPlacements);
   let activeTouchPairs = new Set();
-
-  // Temporary preview layer: keep animated terrain isolated until the final
-  // terrain-layering strategy is decided.
-  const animatedTerrainLayer = createSprite2DLayer(waterFoamAtlas, {
-    capacity: 1,
-    order: TILE_MAP_SUB_Z.animatedWaterFoam,
-    pivot: [0, 0],
-    visible: false,
-  });
-  const waterFoamPosition = gridCellToScreenForFrame(
-    { x: 0, y: 0 },
-    TILE_SIZE,
-    WATER_FOAM_FRAME_SIZE,
-    SCREEN_HEIGHT,
-  );
-  const waterFoam = addSprite2D(animatedTerrainLayer, {
-    positionPx: [waterFoamPosition.x, waterFoamPosition.y],
-    sizePx: [WATER_FOAM_FRAME_SIZE, WATER_FOAM_FRAME_SIZE],
-    frame: 0,
-  });
-
-  const particleFxLayout = createParticleFxPreviewLayout(
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT,
-  );
-  const particleEffects = await Promise.all(
-    particleFxLayout.map(({ key, position, order }) => (
-      PARTICLE_FX_CLASS_BY_KEY[key].create({
-        engine,
-        animationManager,
-        position,
-        order: GAME_DEPTH.effects + order,
-        visible: false,
-      })
-    )),
-  );
 
   renderer = createSpriteRenderer(engine, {
     layers: [
       ...terrainLayers,
+      ...grassDecorations.layers,
       visionShadowLayer,
       ...reactiveDecorations.flatMap((decoration) => decoration.layers),
       ...goldStoneObjects.map((object) => object.layer),
@@ -927,18 +894,17 @@ export async function start({ showStartPrompt = true } = {}) {
         spawner.actors.flatMap((record) => record.actor.layers)
       )),
       projectiles.layer,
-      animatedTerrainLayer,
-      ...particleEffects.map((effect) => effect.layer),
-    ],
+    ].map(layer => camera.attachLayer(layer)),
     clearValue: { r: 0.25, g: 0.48, b: 0.22, a: 1 },
   });
+  camera.initialize(level.cameraFocus ?? getRecordsByType(SpawnerType.PLAYER)[0]?.actor.getPosition() ?? spawnerConfigs.find(config => config.type === SpawnerType.PLAYER).position);
   registerSpriteRenderer(renderer);
-  pickupSystem.setRenderer({ add: (layer) => addSpriteRendererLayer(renderer, layer), remove: (layer) => removeSpriteRendererLayer(renderer, layer) });
+  pickupSystem.setRenderer({ add: (layer) => addSpriteRendererLayer(renderer, camera.attachLayer(layer)), remove: (layer) => removeSpriteRendererLayer(renderer, layer) });
 
   const handleGridSelection = (event) => {
     const viewport = latestGameViewport ?? refreshGameViewportDiagnostics();
     const logicalPoint = logicalPointFromClient({ x: event.clientX, y: event.clientY }, viewport);
-    const selectedGridSpot = gridSpotFromLogicalPoint(logicalPoint, GRID);
+    const selectedGridSpot = gridSpotFromWorldPoint(camera.screenToWorld(logicalPoint), worldGrid);
     if (selectedGridSpot) selectionSystem.toggleGridSpot(selectedGridSpot);
   };
   canvas.addEventListener("pointerup", handleGridSelection);
@@ -948,52 +914,12 @@ export async function start({ showStartPrompt = true } = {}) {
       record.actor.playAnimation(animationManager);
     }
   }
-  const waterFoamAnimation = playSprite2DAnimation(
-    animationManager,
-    waterFoam,
-    0,
-    WATER_FOAM_FRAME_COUNT - 1,
-    true,
-    WATER_FOAM_FRAME_DURATION_MS,
-  );
-  const setParticleFxPreview = (enabled) => {
-    applyParticleFxPreviewSetting(particleEffects, enabled);
-  };
-  const setAnimatedTilePreview = (enabled) => {
-    applyAnimatedTilePreviewSetting(
-      animatedTerrainLayer,
-      waterFoamAnimation,
-      enabled,
-      undefined,
-      {
-        from: 0,
-        to: WATER_FOAM_FRAME_COUNT - 1,
-        loop: true,
-        frameDurationMs: WATER_FOAM_FRAME_DURATION_MS,
-      },
-    );
-  };
-  setParticleFxPreview(
-    runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showParticleFxPreview),
-  );
-  setAnimatedTilePreview(
-    runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showAnimatedTilePreview),
-  );
-  const unsubscribeParticleFxPreview = runtimeSettingsStore.subscribe(
-    RUNTIME_DEBUG_SETTING_KEYS.showParticleFxPreview,
-    setParticleFxPreview,
-  );
-  const unsubscribeAnimatedTilePreview = runtimeSettingsStore.subscribe(
-    RUNTIME_DEBUG_SETTING_KEYS.showAnimatedTilePreview,
-    setAnimatedTilePreview,
-  );
-  globalThis.particleFxPreview = Object.freeze({
-    effects: Object.freeze([...particleEffects]),
-  });
-
   let previousTime = performance.now();
   let showColliders = runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showColliders);
-  coordinatesUi.setVisible(showColliders);
+  coordinatesUi.setVisible(runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showCoordinates));
+  const unsubscribeCoordinates = runtimeSettingsStore.subscribe(
+    RUNTIME_DEBUG_SETTING_KEYS.showCoordinates, value => coordinatesUi.setVisible(value),
+  );
   for (const marker of spawnerMarkers) {
     marker.setVisible(showColliders);
   }
@@ -1001,7 +927,6 @@ export async function start({ showStartPrompt = true } = {}) {
     RUNTIME_DEBUG_SETTING_KEYS.showColliders,
     (value) => {
       showColliders = value;
-      coordinatesUi.setVisible(value);
       for (const marker of spawnerMarkers) {
         marker.setVisible(value);
       }
@@ -1025,18 +950,25 @@ export async function start({ showStartPrompt = true } = {}) {
     onClose: () => settingsUi.returnFromAccount(),
   });
   const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: () => accountHost.open() });
-  showCropMarks = runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showCropMarks);
-  if (latestGameViewport) renderViewportQaMarkers(latestGameViewport, showCropMarks);
-  const unsubscribeCropMarks = runtimeSettingsStore.subscribe(
-    RUNTIME_DEBUG_SETTING_KEYS.showCropMarks,
-    (value) => {
-      showCropMarks = value;
-      if (latestGameViewport) renderViewportQaMarkers(latestGameViewport, value);
-    },
-  );
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
-  const goal = createGoal({ host: gameUi, artworkUrl: "./assets/images/goals/Goal.png", position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
+  const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, artworkUrl: "./assets/images/goals/StepsDown.png", position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
+  goal.updateView(camera);
+  if (import.meta.env.DEV) globalThis.levelCameraDebug = Object.freeze({
+    snapshot: () => ({ mode: world.mode, bounds: { ...worldBounds }, grid: { ...worldGrid },
+      offset: camera.getOffset(), view: { positionPx: [...camera.view.positionPx] },
+      player: getRecordsByType(SpawnerType.PLAYER)[0]?.actor.getPosition(),
+      actors: spawners.flatMap(spawner => spawner.actors).map(record => ({
+        id: record.combat.label, position: record.actor.getPosition(),
+        screen: camera.worldToScreen(record.actor.getPosition()),
+        orders: record.actor.layers.map(layer => layer.order),
+        sharesView: record.actor.layers.every(layer => layer.view === camera.view),
+      })),
+      goal: { position: goal.position, screen: camera.worldToScreen(goal.position) },
+      selected: selectionSystem.getSelectedGridSpot(), paused: pauseController.isPaused,
+      state: gameStateMachine.state,
+    }),
+  });
   const levelCompleteUi = createLevelCompleteUi({ host: domBody, onContinue: () => window.location.reload() });
   const gameStateMachine = createGameStateMachine();
   const levelLostUi = createLevelCompleteUi({ host: domBody, outcome: "loss", onContinue: () => window.location.reload() });
@@ -1063,6 +995,15 @@ export async function start({ showStartPrompt = true } = {}) {
     }
 
     updateSpriteAnimationManager(animationManager, activeDelta * 1000);
+    for (const animation of animatedTerrain) {
+      const duration = animation.frames.reduce((sum, frame) => sum + frame.duration, 0);
+      animation.elapsed = (animation.elapsed + activeDelta * 1000) % duration;
+      let remaining = animation.elapsed;
+      for (const frame of animation.frames) {
+        if (remaining < frame.duration) { setSprite2DFrame(animation.sprite, frame.tileid); break; }
+        remaining -= frame.duration;
+      }
+    }
     if (activeDelta > 0) {
       const nextTouchPairs = new Set();
       for (const spawner of spawners) {
@@ -1116,6 +1057,7 @@ export async function start({ showStartPrompt = true } = {}) {
       }));
 
       let playerMovement = { x: 0, y: 0 };
+      const playerPositionBeforeUpdate = playerRecord?.actor.getPosition();
       if (playerRecord?.combat.isAlive) {
         const dynamicColliders = [
           ...sheepMovementColliders.filter(({ collider }) => collider)
@@ -1145,6 +1087,9 @@ export async function start({ showStartPrompt = true } = {}) {
       for (const record of [playerRecord, ...enemyRecords]) {
         if (record) characterPerception.updateActor(record.combat.label, {
           isAlive: record.combat.isAlive,
+          isMoving: record === playerRecord && playerPositionBeforeUpdate != null
+            && (record.actor.getPosition().x !== playerPositionBeforeUpdate.x
+              || record.actor.getPosition().y !== playerPositionBeforeUpdate.y),
           targetState: record === playerRecord && isPlayerHidden(playerCombatCollider, reactiveDecorations)
             ? PerceptionTargetState.Hidden
             : PerceptionTargetState.Default,
@@ -1200,6 +1145,7 @@ export async function start({ showStartPrompt = true } = {}) {
         }
       }
 
+      if (activeDelta > 0 && !TEMPORARILY_FREEZE_ENEMY_AI && !TEMPORARILY_DISABLE_ENEMY_UPDATES) enemyPlanningScheduler.beginFrame();
       for (const record of enemyRecords) {
         if (!record.combat.isAlive) {
           record.awareness?.dispose();
@@ -1461,6 +1407,10 @@ export async function start({ showStartPrompt = true } = {}) {
         }
       }
     }
+    const trackedPlayer = getRecordsByType(SpawnerType.PLAYER)[0];
+    const cameraDelta = gameStateMachine.state === GameState.LEVEL_PLAYING ? pauseController.getDelta(activeDelta) : 0;
+    camera.update(trackedPlayer?.actor.getPosition(), cameraDelta);
+    goal.updateView(camera);
     syncVisionShadows(characterPerception.getSnapshot());
     const diagnosticCharacters = [
       ...spawnerByType.get(SpawnerType.PLAYER).actors,
@@ -1506,6 +1456,7 @@ export async function start({ showStartPrompt = true } = {}) {
         gridSpot: decoration.getGridSpot?.() ?? new GridSpot({ x: centerX, y: centerY }, { width: TILE_SIZE, height: TILE_SIZE }),
         };
       }).filter(Boolean));
+    diagnosticCharacters.push(...grassDecorations.instances.map(({ gridSpot }) => ({ gridSpot, movementCollider: null, combatCollider: null })));
     diagnosticCharacters.push(...goldStoneObjects
       .filter((object) => !object.isDead)
       .map((object) => ({
@@ -1540,8 +1491,20 @@ export async function start({ showStartPrompt = true } = {}) {
       characterPerception.getSnapshot(),
       pickupSystem.pickups,
       selectionSystem.getSelectedGridSpot(),
+      camera,
+      runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showEnemyAiLabels)
+        ? getRecordsByType(SpawnerType.ENEMY).filter(record => record.combat.isAlive).map(record => enemyAiLabel({
+            position: record.actor.getPosition(), snapshot: record.brain.getNavigationSnapshot(), jumpOffset: record.expressionJumpOffset,
+          }, SCREEN_HEIGHT)) : [],
+      {
+        coordinates: runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showCoordinates),
+        perceptions: runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showEnemyPerceptions),
+        visionOptions: getVisionOptions(characterPerception.getSnapshot()),
+        tileMapInfo: runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showTileMapInfo),
+      },
     );
     canvas.dataset.bushDebug = JSON.stringify(getBushBurningSnapshot());
+    if (import.meta.env.DEV) canvas.dataset.aiWork = JSON.stringify(enemyPlanningScheduler.snapshot());
     if (import.meta.env.DEV) canvas.dataset.navigationDebug = JSON.stringify(
       [SpawnerType.ENEMY, SpawnerType.SHEEP].flatMap(type => getRecordsByType(type))
         .filter(record => record.combat.isAlive)
@@ -1554,22 +1517,15 @@ export async function start({ showStartPrompt = true } = {}) {
 
   requestAnimationFrame(update);
   window.addEventListener("pagehide", () => {
+    grassDecorations.dispose();
     accountHost.dispose();
     canvas.removeEventListener("pointerup", handleGridSelection);
     viewportSafeArea.dispose();
     viewportResizeObserver.disconnect();
     promptBodyResizeObserver.disconnect();
     window.removeEventListener("resize", refreshGameViewportDiagnostics);
-    unsubscribeCropMarks();
+    unsubscribeCoordinates();
     unsubscribeColliders();
-    unsubscribeParticleFxPreview();
-    unsubscribeAnimatedTilePreview();
-    applyParticleFxPreviewSetting(particleEffects, false);
-    applyAnimatedTilePreviewSetting(
-      animatedTerrainLayer,
-      waterFoamAnimation,
-      false,
-    );
     for (const spawner of spawners) {
       spawner.dispose();
     }
@@ -1674,15 +1630,17 @@ function drawCharacterCollider(
   drawAabb(collider, fillStyle, strokeStyle);
 }
 
-function drawGridLines() {
+function drawGridLines(offset = { x: 0, y: 0 }) {
+  const left = Math.floor(offset.x / TILE_SIZE) * TILE_SIZE;
+  const top = Math.floor(-offset.y / TILE_SIZE) * TILE_SIZE;
   debugContext.beginPath();
-  for (let x = 0; x <= SCREEN_WIDTH; x += TILE_SIZE) {
-    debugContext.moveTo(x + 0.5, 0);
-    debugContext.lineTo(x + 0.5, SCREEN_HEIGHT);
+  for (let x = left; x <= offset.x + SCREEN_WIDTH; x += TILE_SIZE) {
+    debugContext.moveTo(x + 0.5, -offset.y);
+    debugContext.lineTo(x + 0.5, SCREEN_HEIGHT - offset.y);
   }
-  for (let y = 0; y <= SCREEN_HEIGHT; y += TILE_SIZE) {
-    debugContext.moveTo(0, y + 0.5);
-    debugContext.lineTo(SCREEN_WIDTH, y + 0.5);
+  for (let y = top; y <= SCREEN_HEIGHT - offset.y; y += TILE_SIZE) {
+    debugContext.moveTo(offset.x, y + 0.5);
+    debugContext.lineTo(offset.x + SCREEN_WIDTH, y + 0.5);
   }
   debugContext.strokeStyle = "rgb(80 86 92 / 48%)";
   debugContext.lineWidth = 1;
@@ -1697,8 +1655,14 @@ function drawDiagnostics(
   perceptionSnapshot = [],
   goldPickups = [],
   selectedGridSpot = null,
+  camera = null,
+  enemyAiLabels = [],
+  { coordinates = false, perceptions = false, tileMapInfo = false, visionOptions = {} } = {},
 ) {
   debugContext.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+  const offset = camera?.getOffset() ?? { x: 0, y: 0 };
+  debugContext.save();
+  debugContext.translate(-offset.x, offset.y);
   for (const character of diagnosticCharacters) {
     if (!character.movementCollider || !Array.isArray(character.expressionInstances)) continue;
     const collider = character.movementCollider;
@@ -1741,11 +1705,9 @@ function drawDiagnostics(
       debugContext.globalAlpha = 1;
     }
   }
-  if (!enabled) {
-    return;
-  }
-  drawGridLines();
-  if (selectedGridSpot) {
+  drawEnemyAiLabels(debugContext, enemyAiLabels, { x: offset.x, y: -offset.y, width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
+  if (tileMapInfo) drawGridLines(offset);
+  if (tileMapInfo && selectedGridSpot) {
     drawAabb({
       x: selectedGridSpot.x * TILE_SIZE,
       y: selectedGridSpot.y * TILE_SIZE,
@@ -1757,10 +1719,11 @@ function drawDiagnostics(
   debugContext.textBaseline = "middle";
 
   for (const tile of terrainTiles) {
-    for (const collider of tile.colliders) {
+    if (enabled) for (const collider of tile.colliders) {
       drawTerrainCollider(collider);
     }
 
+    if (!tileMapInfo) continue;
     const label = formatLevelCellLabel(tile.gameCell);
     const labelWidth = debugContext.measureText(label).width + 8;
     const labelX = tile.screenPosition.x + TILE_SIZE - labelWidth;
@@ -1781,7 +1744,7 @@ function drawDiagnostics(
     );
   }
 
-  for (const { collider, style } of createCharacterColliderDrawCommands(
+  if (enabled) for (const { collider, style } of createCharacterColliderDrawCommands(
     diagnosticCharacters,
   )) {
     drawCharacterCollider(
@@ -1792,13 +1755,13 @@ function drawDiagnostics(
   }
   // Draw the black live-center marker first so the white logical marker
   // remains visually closer to the camera when both occupy the same area.
-  for (const marker of createPlayerCenterMarkerCommands(diagnosticCharacters)) {
+  if (coordinates) for (const marker of createPlayerCenterMarkerCommands(diagnosticCharacters)) {
     drawGridSpotMarker(debugContext, marker, SCREEN_HEIGHT);
   }
-  for (const marker of createGridSpotMarkerCommands(diagnosticCharacters)) {
+  if (coordinates) for (const marker of createGridSpotMarkerCommands(diagnosticCharacters)) {
     drawGridSpotMarker(debugContext, marker, SCREEN_HEIGHT);
   }
-  for (const command of createPerceptionDrawCommands(perceptionSnapshot, TILE_SIZE, performance.now())) {
+  if (perceptions) for (const command of createPerceptionDrawCommands(perceptionSnapshot, TILE_SIZE, performance.now(), visionOptions)) {
     debugContext.beginPath();
     const points = command.points.map((point) => ({ x: point.x, y: SCREEN_HEIGHT - point.y }));
     debugContext.moveTo(points[0].x, points[0].y);
@@ -1809,7 +1772,7 @@ function drawDiagnostics(
       : command.style.fillStyle;
     debugContext.fill();
   }
-  for (const marker of createActivePerceptionMarkerCommands(perceptionSnapshot, TILE_SIZE)) {
+  if (perceptions) for (const marker of createActivePerceptionMarkerCommands(perceptionSnapshot, TILE_SIZE)) {
     const screenY = SCREEN_HEIGHT - marker.y;
     const halfSize = marker.style.size / 2;
     debugContext.beginPath();
@@ -1821,9 +1784,10 @@ function drawDiagnostics(
     debugContext.lineWidth = marker.style.lineWidth;
     debugContext.stroke();
   }
-  for (const { collider } of projectileColliders) {
+  if (enabled) for (const { collider } of projectileColliders) {
     drawAabb(collider, "rgb(255 220 64 / 38%)", "#ffe066");
   }
+  debugContext.restore();
 }
 
 function drawCharacterCenterMarker(center) {

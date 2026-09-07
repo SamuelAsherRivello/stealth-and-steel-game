@@ -30,7 +30,7 @@ test("perception snapshot uses the detector's updated heading", () => {
 test("visual is blocked by terrain while audio is not", () => {
   const args = { detector: { cell: { x: 0, y: 0 }, heading: "right" }, target: { cell: { x: 3, y: 0 } }, isWalkable: (cell) => cell.x !== 1 };
   assert.deepEqual(evaluatePerception(args), []);
-  assert.equal(evaluatePerception({ ...args, target: { cell: { x: 1, y: 1 } } })[0].type, "audio");
+  assert.equal(evaluatePerception({ ...args, target: { isMoving: true, cell: { x: 1, y: 1 } } })[0].type, "audio");
 });
 
 test("visual blockers negate their own cell and block cells beyond", () => {
@@ -43,7 +43,7 @@ test("visual blockers negate their own cell and block cells beyond", () => {
 
 test("audio is negated by an enemy but not by a bush", () => {
   const detector = { cell: { x: 0, y: 0 }, heading: "right" };
-  const target = { cell: { x: 1, y: 1 } };
+  const target = { isMoving: true, cell: { x: 1, y: 1 } };
   assert.deepEqual(evaluatePerception({ detector, target, blockers: [{ type: "bush", isAlive: true, cell: target.cell }] }).map(({ type }) => type), ["audio"]);
   assert.deepEqual(evaluatePerception({ detector, target, blockers: [{ type: "enemy", isAlive: true, cell: target.cell }] }), []);
 });
@@ -53,7 +53,7 @@ test("dead visual and audio blockers are transparent", () => {
   const deadBush = { type: "bush", isAlive: false, cell: { x: 1, y: 0 } };
   const deadEnemy = { type: "enemy", isAlive: false, cell: { x: 1, y: 1 } };
   assert.equal(evaluatePerception({ detector, target: { cell: { x: 2, y: 0 } }, blockers: [deadBush] })[0].type, "visual");
-  assert.equal(evaluatePerception({ detector, target: { cell: { x: 1, y: 1 } }, blockers: [deadEnemy] })[0].type, "audio");
+  assert.equal(evaluatePerception({ detector, target: { isMoving: true, cell: { x: 1, y: 1 } }, blockers: [deadEnemy] })[0].type, "audio");
 });
 
 test("a bush at the detector origin does not block its visual ray", () => {
@@ -66,7 +66,7 @@ test("a bush at the detector origin does not block its visual ray", () => {
 test("manager registers, deregisters, snapshots, and accepts one alert until recovery", () => {
   const events = [];
   const perception = createCharacterPerception();
-  perception.register({ id: "player", type: "player", cell: { x: 1, y: 0 } });
+  perception.register({ id: "player", type: "player", isMoving: true, cell: { x: 1, y: 0 } });
   perception.register({ id: "goblin", type: "enemy", cell: { x: 0, y: 0 }, heading: "right", onDetection: (event) => events.push(event) });
   assert.equal(perception.update().length, 2);
   perception.update();
@@ -79,7 +79,7 @@ test("manager registers, deregisters, snapshots, and accepts one alert until rec
 
 test("walking the player through perception cells produces the current visual and audio detections", () => {
   const perception = createCharacterPerception();
-  perception.register({ id: "player", type: "player", cell: { x: 1, y: 0 } });
+  perception.register({ id: "player", type: "player", isMoving: true, cell: { x: 1, y: 0 } });
   perception.register({ id: "enemy", type: "enemy", cell: { x: 0, y: 0 }, heading: "right" });
 
   assert.deepEqual(perception.update().map(({ type, cell }) => ({ type, cell })), [
@@ -95,7 +95,7 @@ test("walking the player through perception cells produces the current visual an
 test("hidden players produce neither visual nor audio detections", () => {
   const perception = createCharacterPerception();
   const events = [];
-  perception.register({ id: "player", type: "player", cell: { x: 1, y: 0 }, targetState: PerceptionTargetState.Hidden });
+  perception.register({ id: "player", type: "player", isMoving: true, cell: { x: 1, y: 0 }, targetState: PerceptionTargetState.Hidden });
   perception.register({ id: "goblin", type: "enemy", cell: { x: 0, y: 0 }, heading: "right", onDetection: (event) => events.push(event) });
   assert.deepEqual(perception.update(), []);
   assert.deepEqual(events, []);
@@ -103,7 +103,7 @@ test("hidden players produce neither visual nor audio detections", () => {
 
 test("perceived cells remain known for five seconds after current detection ends", () => {
   const perception = createCharacterPerception();
-  perception.register({ id: "player", type: "player", cell: { x: 1, y: 0 } });
+  perception.register({ id: "player", type: "player", isMoving: true, cell: { x: 1, y: 0 } });
   perception.register({ id: "enemy", type: "enemy", cell: { x: 0, y: 0 }, heading: "right" });
 
   perception.update();
@@ -118,7 +118,7 @@ test("perceived cells remain known for five seconds after current detection ends
 
 test("each detector remembers only its latest perceived cell", () => {
   const perception = createCharacterPerception();
-  perception.register({ id: "player", type: "player", cell: { x: 1, y: 0 } });
+  perception.register({ id: "player", type: "player", isMoving: true, cell: { x: 1, y: 0 } });
   perception.register({ id: "enemy", type: "enemy", cell: { x: 0, y: 0 }, heading: "right" });
 
   perception.update();
@@ -128,4 +128,23 @@ test("each detector remembers only its latest perceived cell", () => {
   assert.deepEqual(perception.getSnapshot().knownDetections, [{
     detectorId: "enemy", cell: { x: 2, y: 0 },
   }]);
+});
+
+
+test("audio requires player movement and stops when the player stops", () => {
+  const perception = createCharacterPerception();
+  perception.register({ id: "player", type: "player", cell: { x: 1, y: 1 } });
+  perception.register({ id: "enemy", type: "enemy", cell: { x: 0, y: 0 }, heading: "right" });
+  assert.deepEqual(perception.update(), []);
+  perception.updateActor("player", { isMoving: true });
+  assert.deepEqual(perception.update().map(({ type }) => type), ["audio"]);
+  perception.updateActor("player", { isMoving: false });
+  assert.deepEqual(perception.update(), []);
+});
+
+test("a stationary player remains visible without producing audio", () => {
+  assert.deepEqual(evaluatePerception({
+    detector: { cell: { x: 0, y: 0 }, heading: "right" },
+    target: { cell: { x: 1, y: 0 }, isMoving: false },
+  }).map(({ type }) => type), ["visual"]);
 });

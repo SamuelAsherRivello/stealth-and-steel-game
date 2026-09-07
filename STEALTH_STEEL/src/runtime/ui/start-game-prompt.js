@@ -1,4 +1,6 @@
-const START_PROMPT_BODY = "Use bushes to hide. Reach the flag to win. Collect gold for fun.";
+import { createMenu } from "./menu.js";
+
+const START_PROMPT_BODY = "Collect gold. Reach the dungeon steps to win.\n\n Avoid enemies. Use bushes to hide.";
 
 export function shouldShowStartGamePrompt({ showStartPrompt = true } = {}) {
   return showStartPrompt !== false;
@@ -9,38 +11,31 @@ export function shouldSkipIntro({ isDevelopment = false, search = "" } = {}) {
 }
 
 export function createStartGamePrompt({ host, onStart, documentRef = globalThis.document }) {
-  const backdrop = documentRef.createElement("div");
-  backdrop.className = "start-game-prompt-backdrop menu-backdrop";
+  const menu = createMenu({
+    titleText: "Start Menu", bodyText: START_PROMPT_BODY,
+    titleId: "start-game-prompt-title",
+    logo: {
+      src: `${import.meta.env?.BASE_URL ?? "/"}ui/tiny-swords/stealth-and-steel-logo-transparent.png`,
+      alt: "Stealth & Steel",
+    },
+    buttons: [{ displayText: "Start", className: "start-game-prompt-start" }],
+    documentRef,
+  });
+  const { backdrop, panel } = menu;
+  const [startButton] = menu.buttons;
+  backdrop.className += " start-game-prompt-backdrop";
   backdrop.setAttribute("data-start-game-prompt", "true");
-
-  const panel = documentRef.createElement("section");
-  panel.className = "start-game-prompt-panel menu-panel";
-  panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-modal", "true");
-
-  const title = documentRef.createElement("h2");
-  title.className = "game-window-title menu-title-text";
-  title.textContent = "Stealth Grid";
-  const titleId = "start-game-prompt-title";
-  title.id = titleId;
-  panel.setAttribute("aria-labelledby", titleId);
-
-  const body = documentRef.createElement("p");
-  body.className = "menu-subtitle-text start-game-prompt-body";
-  body.textContent = START_PROMPT_BODY;
-
-  const startButton = documentRef.createElement("button");
-  startButton.type = "button";
-  startButton.className = "start-game-prompt-start menu-button-text";
-  startButton.textContent = "Start";
+  panel.className += " start-game-prompt-panel";
+  menu.body.className += " start-game-prompt-body";
+  menu.body.style.whiteSpace = "pre-line";
+  menu.composition.className += " start-game-prompt-composition";
+  menu.logo.className += " start-game-prompt-logo";
   const handleStart = () => {
     onStart?.();
     prompt.close();
   };
   startButton.addEventListener("click", handleStart);
 
-  panel.append(title, body, startButton);
-  backdrop.append(panel);
   const closeOnClick = (event) => {
     if (event.target === backdrop) prompt.close();
   };

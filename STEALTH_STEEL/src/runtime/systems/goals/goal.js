@@ -20,6 +20,12 @@ export function createGoal({ host, position, screenWidth, screenHeight, artworkU
     position,
     combatCollider: { x: position.x - colliderSize / 2, y: position.y - colliderSize / 2, width: colliderSize, height: colliderSize },
     getGridSpot() { return gridSpot; },
+    updateView(camera) {
+      const point = camera.worldToScreen(position);
+      marker.style.left = `${point.x / screenWidth * 100}%`;
+      marker.style.top = `${point.y / screenHeight * 100}%`;
+      marker.hidden = point.x < -64 || point.x > screenWidth + 64 || point.y < -64 || point.y > screenHeight + 64;
+    },
     dispose() { marker.remove(); },
   };
 }

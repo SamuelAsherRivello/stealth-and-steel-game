@@ -1,6 +1,6 @@
 {
   "columns": 3,
-  "image": "../../../images/terrain/tilesets/Bridge_All.png",
+  "image": "../../../images/terrain/tilesets/Bridge.png",
   "imageheight": 256,
   "imagewidth": 192,
   "margin": 0,

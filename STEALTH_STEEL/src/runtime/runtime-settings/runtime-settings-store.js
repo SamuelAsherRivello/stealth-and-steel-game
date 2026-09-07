@@ -7,10 +7,11 @@ export const RUNTIME_AUDIO_SETTING_KEYS = Object.freeze({
 });
 
 export const RUNTIME_DEBUG_SETTING_KEYS = Object.freeze({
+  showCoordinates: "debug.showCoordinates",
+  showEnemyPerceptions: "debug.showEnemyPerceptions",
+  showTileMapInfo: "debug.showTileMapInfo",
   showColliders: "debug.showColliders",
-  showCropMarks: "debug.showCropMarks",
-  showParticleFxPreview: "debug.showParticleFxPreview",
-  showAnimatedTilePreview: "debug.showAnimatedTilePreview",
+  showEnemyAiLabels: "debug.showEnemyAiLabels",
 });
 
 const DEBUG_BOOLEAN_KEYS = Object.freeze(Object.values(RUNTIME_DEBUG_SETTING_KEYS));

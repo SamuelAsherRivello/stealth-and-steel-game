@@ -5,9 +5,11 @@ import { createGoblin } from '../../runtime/characters/enemies/goblin/goblin.js'
 import { createWarrior } from '../../runtime/characters/enemies/warrior/warrior.js';
 import { createLancer } from '../../runtime/characters/enemies/lancer/lancer.js';
 import { createArcher } from '../../runtime/characters/enemies/archer/archer.js';
-import { createEnemyAwarenessController } from '../../runtime/characters/enemies/enemy-awareness-controller.js';
-import { createEnemyPatrolController } from '../../runtime/characters/enemies/enemy-patrol-controller.js';
-import { createGoblinBehaviorController } from '../../runtime/characters/enemies/goblin/goblin-behavior-controller.js';
+import { createEnemyBrain } from "../../runtime/ai/enemy-brain.js";
+import { goblinProfile } from "../../runtime/characters/enemies/goblin/goblin-goap.js";
+import { warriorProfile } from "../../runtime/characters/enemies/warrior/warrior-goap.js";
+import { lancerProfile } from "../../runtime/characters/enemies/lancer/lancer-goap.js";
+import { archerProfile } from "../../runtime/characters/enemies/archer/archer-goap.js";
 import { getPlayerAttackPreparationSnapshot } from '../../runtime/characters/enemies/player-attack-preparation.js';
 
 const factories = { goblin: createGoblin, warrior: createWarrior, lancer: createLancer, archer: createArcher };
@@ -52,15 +54,12 @@ function setup(character, { initial = { x: 204, y: 212 }, autonomous = false, ti
   const attack = actor[method].bind(actor);
   actor[method] = (...args) => { const accepted = attack(...args); if (accepted) events.push({ kind: 'attack', position: actor.getPosition(), args }); return accepted; };
   const manager = createSpriteAnimationManager(); actor.playAnimation(manager);
-  const controller = character === 'goblin'
-    ? createGoblinBehaviorController(actor, { grid, spawnCell: { x: 3, y: 3 }, isWalkable: () => true,
-      getWorld: () => ({ characters: player ? [player] : [], bushes: [] }), bushChance: 0, idleRange: [0, 0], random: () => 0 })
-    : createEnemyPatrolController(actor, { idleRange: [0, 0], random: () => 0 });
-  const awareness = createEnemyAwarenessController({ actor, character, controller, grid, isWalkable: () => true,
-    getPlayer: () => player, isAlive: () => alive });
+  const profiles = { goblin: goblinProfile, warrior: warriorProfile, lancer: lancerProfile, archer: archerProfile };
+  const awareness = createEnemyBrain({ id: character, actor, profile: profiles[character], grid, isWalkable: () => true,
+    getPlayer: () => player, isAlive: () => alive, random: () => 0 });
+  const controller = awareness;
   const tick = (delta = .016, colliders = []) => {
-    if (!autonomous) awareness.update(delta);
-    else if (character === 'goblin') controller.update(delta);
+    awareness.update(delta);
     actor.update(delta, colliders, [], player);
     updateSpriteAnimationManager(manager, delta * 1000);
   };

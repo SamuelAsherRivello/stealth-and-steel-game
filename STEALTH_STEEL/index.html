@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <link rel="icon" href="data:," />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
     <title>Babylon Lite Stealth Grid</title>
     <style>
+      * { -webkit-user-select: none; user-select: none; }
       #startup-preloader { position: fixed; inset: 0; z-index: 10000; display: grid; place-content: center; justify-items: center; gap: 1rem; padding: 2rem; background: #090c16; color: #fff; font: 1rem system-ui, sans-serif; text-align: center; }
       #startup-preloader[hidden], #startup-preloader [hidden] { display: none; }
       #startup-preloader p { max-width: 36rem; margin: 0; }
@@ -17,6 +18,7 @@
     <link rel="stylesheet" href="./src/runtime/ui/style.css" />
     <link rel="stylesheet" href="./plugins/virtual-controller-babylon-lite/virtual-controller.css" />
     <link rel="stylesheet" href="./src/runtime/ui/tiny-swords-hud.css" />
+    <link rel="stylesheet" href="./src/runtime/ui/tiny-swords-menu.css" />
   </head>
   <body>
     <div id="startup-preloader" role="status" aria-live="polite" aria-busy="true">

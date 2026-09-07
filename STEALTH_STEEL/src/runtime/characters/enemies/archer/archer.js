@@ -1,9 +1,9 @@
 import { addSprite2D, createSprite2DLayer, loadSpriteAtlas, playSprite2DAnimation, removeSprite2D, removeSpriteAnimation, updateSprite2D } from "@babylonjs/lite";
 import { createGridAlignedMovementController, getCharacterCollider, worldToScreen } from "../../../gameplay/game-logic.js";
 import { getYSortedLayerOrder } from "../../../systems/environment/render-depth.js";
-import { chooseArcherAction, ARCHER_RECOVERY_SECONDS } from "./archer-ai.js";
+import { ARCHER_RECOVERY_SECONDS } from "./archer-ai.js";
 import { getQuantizedGridCell } from "../../../systems/environment/grid-spot.js";
-import { requestPlayerAttack, updatePlayerAttackPreparation, hasPlayerAttackPreparation, cancelPlayerAttackPreparation } from '../player-attack-preparation.js';
+import { updatePlayerAttackPreparation, cancelPlayerAttackPreparation } from '../player-attack-preparation.js';
 
 export const ARCHER_FRAME = Object.freeze({ width: 192, height: 192 });
 export const ARCHER_PIVOT = Object.freeze({ x: 0.5, y: 0.84 });
@@ -23,17 +23,18 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
   let position = { ...initialPosition }; let artYOffset = 0; let disposed = false; let manager = null; let active = null; let state = "idle";
   let facing = 1; let target = null; let recovery = 0; let released = false; let shootElapsed = 0;
   let movementIntent = { x: 0, y: 0 };
-  let latestPlayer = null;
   const gridMovement = createGridAlignedMovementController({ frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }, 64);
   const layers = {}; const sprites = {};
-  const getArtScreenPosition = (worldPosition) => worldToScreen({ x: worldPosition.x + ARCHER_ART_OFFSET.x, y: worldPosition.y + ARCHER_ART_OFFSET.y }, 1, bounds.height);
+  const getArtScreenPosition = (worldPosition) => worldToScreen({ x: worldPosition.x + ARCHER_ART_OFFSET.x, y: worldPosition.y + ARCHER_ART_OFFSET.y }, 1, (bounds.renderHeight ?? bounds.height));
   const updateSprites = (transform = {}) => {
+    const order = getYSortedLayerOrder(position.y, bounds);
+    Object.values(layers).forEach(layer => { layer.order = order; });
     const screen = getArtScreenPosition(position);
     const positionPx = transform.positionPx ?? [screen.x, screen.y + artYOffset];
     Object.values(sprites).forEach((sprite) => updateSprite2D(sprite, { ...transform, positionPx }));
   };
   for (const [name] of Object.entries(ANIMS)) {
-    const layer = createSprite2DLayer(atlases[name], { capacity: 1, order: getYSortedLayerOrder(position.y, bounds.height), pivot: [0.5, 0.84], visible: name === "idle" });
+    const layer = createSprite2DLayer(atlases[name], { capacity: 1, order: getYSortedLayerOrder(position.y, bounds), pivot: [0.5, 0.84], visible: name === "idle" });
     layers[name] = layer; const screen = getArtScreenPosition(position); sprites[name] = addSprite2D(layer, { positionPx: [screen.x, screen.y + artYOffset], sizePx: [192, 192], frame: 0 });
   }
   function play(name) { state = name; if (!manager || disposed) return; if (active) { active.stop?.(); removeSpriteAnimation(manager, active); active = null; } Object.entries(layers).forEach(([key, layer]) => { layer.visible = key === name; }); const [, count, loop] = ANIMS[name]; active = playSprite2DAnimation(manager, sprites[name], 0, count - 1, loop, 100, loop ? undefined : { onEnd: () => { if (name === "shooting") { recovery = ARCHER_RECOVERY_SECONDS; state = "recovering"; } else play("idle"); } }); }
@@ -89,7 +90,6 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       if (disposed) return;
       const delta = Math.max(0, deltaSeconds);
       if (delta <= 0) return;
-      latestPlayer = player;
       if (recovery > 0) {
         recovery = Math.max(0, recovery - delta);
         if (recovery === 0) play("idle");
@@ -111,12 +111,6 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
         }
         return;
       }
-      if (!hasPlayerAttackPreparation(this) && chooseArcherAction(position, player, 'ready').state === 'shooting') {
-        requestPlayerAttack(this, { getTarget: () => latestPlayer,
-          eligible: value => chooseArcherAction(position, value, 'ready').state === 'shooting',
-          commit: value => this.shootAt(value.position) });
-      }
-      if (state === 'shooting') return;
       const preparing = updatePlayerAttackPreparation(this, delta, center => {
         position = gridMovement.moveTo(position, center, 120 * delta, bounds, [...obstacles, ...dynamicColliders.map(({ collider }) => collider)]);
       });
@@ -125,11 +119,10 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       const locomotion = movementIntent.x || movementIntent.y ? "walking" : "idle";
       if (state !== locomotion) play(locomotion);
       updateSprites();
-      const action = preparing ? { facing: 0 } : chooseArcherAction(position, player, "ready");
       // Commit facing once per update, after shooting/recovery have returned.
       // These animations have horizontal facing only; queued patrol requests
       // must not rotate perception independently of the displayed sprite.
-      const nextFacing = action.facing || Math.sign(movementIntent.x) || facing;
+      const nextFacing = preparing ? facing : Math.sign(movementIntent.x) || facing;
       if (nextFacing !== facing) {
         facing = nextFacing;
         Object.values(sprites).forEach((sprite) => updateSprite2D(sprite, { flipX: facing < 0 }));

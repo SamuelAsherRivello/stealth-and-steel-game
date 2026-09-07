@@ -21,40 +21,61 @@ function createStorage(initial = {}) {
   };
 }
 
-test("settings default to music 100, SFX 100, and debug previews off", () => {
+test("all visualization preferences persist independently and obsolete previews are ignored", () => {
+  const obsolete = ["debug.showCropMarks", "debug.showParticleFxPreview", "debug.showAnimatedTilePreview"];
+  const storage = createStorage({
+    [SETTINGS_STORAGE_KEY]: JSON.stringify({ version: SETTINGS_VERSION,
+      values: Object.fromEntries(obsolete.map(key => [key, true])) }),
+  });
+  const store = createSettingsStore(storage);
+  const keys = Object.values(DEBUG_SETTING_KEYS);
+  assert.equal(keys.length, 5);
+  for (const key of obsolete) assert.equal(store.get(key), undefined);
+  for (const key of keys) {
+    store.reset();
+    store.set(key, true);
+    const reloaded = createSettingsStore(storage);
+    for (const other of keys) assert.equal(reloaded.get(other), other === key);
+    for (const removed of obsolete) assert.equal(Object.hasOwn(JSON.parse(storage.read(SETTINGS_STORAGE_KEY)).values, removed), false);
+  }
+  store.reset();
+  for (const key of keys) assert.equal(store.get(key), false);
+});
+
+test("settings default to music 100, SFX 100, and debug visualizations off", () => {
   const store = createSettingsStore(createStorage());
   assert.equal(store.get(AUDIO_SETTING_KEYS.music), 100);
   assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 100);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
-  assert.equal(store.get(DEBUG_SETTING_KEYS.showParticleFxPreview), false);
-  assert.equal(store.get(DEBUG_SETTING_KEYS.showAnimatedTilePreview), false);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showCoordinates), false);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyPerceptions), false);
 });
 
-test("preview debug settings persist independently and notify subscribers", () => {
+test("visualization settings persist independently and notify subscribers", () => {
   const storage = createStorage();
   const store = createSettingsStore(storage);
   const observed = [];
   store.subscribe(
-    DEBUG_SETTING_KEYS.showParticleFxPreview,
-    (value) => observed.push(["particles", value]),
+    DEBUG_SETTING_KEYS.showCoordinates,
+    (value) => observed.push(["coordinates", value]),
   );
   store.subscribe(
-    DEBUG_SETTING_KEYS.showAnimatedTilePreview,
-    (value) => observed.push(["animated-tile", value]),
+    DEBUG_SETTING_KEYS.showEnemyPerceptions,
+    (value) => observed.push(["perceptions", value]),
   );
 
-  assert.equal(store.set(DEBUG_SETTING_KEYS.showParticleFxPreview, true), true);
-  assert.equal(store.get(DEBUG_SETTING_KEYS.showAnimatedTilePreview), false);
-  assert.equal(store.set(DEBUG_SETTING_KEYS.showAnimatedTilePreview, true), true);
+  assert.equal(store.set(DEBUG_SETTING_KEYS.showCoordinates, true), true);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyPerceptions), false);
+  assert.equal(store.set(DEBUG_SETTING_KEYS.showEnemyPerceptions, true), true);
   assert.deepEqual(observed, [
-    ["particles", true],
-    ["animated-tile", true],
+    ["coordinates", true],
+    ["perceptions", true],
   ]);
   assert.deepEqual(JSON.parse(storage.read(SETTINGS_STORAGE_KEY)), {
     version: SETTINGS_VERSION,
     values: {
-      [DEBUG_SETTING_KEYS.showParticleFxPreview]: true,
-      [DEBUG_SETTING_KEYS.showAnimatedTilePreview]: true,
+      [DEBUG_SETTING_KEYS.showCoordinates]: true,
+      [DEBUG_SETTING_KEYS.showEnemyPerceptions]: true,
     },
   });
 });
@@ -98,15 +119,15 @@ test("invalid, malformed, and wrong-version settings recover per key", () => {
       [AUDIO_SETTING_KEYS.music]: -1,
       [AUDIO_SETTING_KEYS.sfx]: 75,
       [DEBUG_SETTING_KEYS.showColliders]: "yes",
-      [DEBUG_SETTING_KEYS.showParticleFxPreview]: "yes",
-      [DEBUG_SETTING_KEYS.showAnimatedTilePreview]: 1,
+      [DEBUG_SETTING_KEYS.showCoordinates]: "yes",
+      [DEBUG_SETTING_KEYS.showEnemyPerceptions]: 1,
     } }),
   }));
   assert.equal(invalidValues.get(AUDIO_SETTING_KEYS.music), 100);
   assert.equal(invalidValues.get(AUDIO_SETTING_KEYS.sfx), 75);
   assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showColliders), false);
-  assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showParticleFxPreview), false);
-  assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showAnimatedTilePreview), false);
+  assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showCoordinates), false);
+  assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showEnemyPerceptions), false);
 });
 
 test("unavailable storage falls back to an authoritative in-memory session", () => {
@@ -128,14 +149,14 @@ test("reset removes only game settings, restores defaults, and notifies", () => 
   store.set(AUDIO_SETTING_KEYS.music, 10);
   store.set(AUDIO_SETTING_KEYS.sfx, 20);
   store.set(DEBUG_SETTING_KEYS.showColliders, true);
-  store.set(DEBUG_SETTING_KEYS.showParticleFxPreview, true);
-  store.set(DEBUG_SETTING_KEYS.showAnimatedTilePreview, true);
+  store.set(DEBUG_SETTING_KEYS.showCoordinates, true);
+  store.set(DEBUG_SETTING_KEYS.showEnemyPerceptions, true);
   const observed = [];
   store.subscribe(AUDIO_SETTING_KEYS.music, (value) => observed.push(["music", value]));
   store.subscribe(AUDIO_SETTING_KEYS.sfx, (value) => observed.push(["sfx", value]));
   store.subscribe(DEBUG_SETTING_KEYS.showColliders, (value) => observed.push(["debug", value]));
-  store.subscribe(DEBUG_SETTING_KEYS.showParticleFxPreview, (value) => observed.push(["particles", value]));
-  store.subscribe(DEBUG_SETTING_KEYS.showAnimatedTilePreview, (value) => observed.push(["animated-tile", value]));
+  store.subscribe(DEBUG_SETTING_KEYS.showCoordinates, (value) => observed.push(["coordinates", value]));
+  store.subscribe(DEBUG_SETTING_KEYS.showEnemyPerceptions, (value) => observed.push(["perceptions", value]));
 
   store.reset();
 
@@ -144,14 +165,14 @@ test("reset removes only game settings, restores defaults, and notifies", () => 
   assert.equal(store.get(AUDIO_SETTING_KEYS.music), 100);
   assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 100);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
-  assert.equal(store.get(DEBUG_SETTING_KEYS.showParticleFxPreview), false);
-  assert.equal(store.get(DEBUG_SETTING_KEYS.showAnimatedTilePreview), false);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showCoordinates), false);
+  assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyPerceptions), false);
   assert.deepEqual(observed, [
     ["music", 100],
     ["sfx", 100],
+    ["coordinates", false],
+    ["perceptions", false],
     ["debug", false],
-    ["particles", false],
-    ["animated-tile", false],
   ]);
 });
 
