@@ -6,7 +6,7 @@ const capturePath = name => fileURLToPath(new URL(name, captureDirectory));
 // Fresh browser profile, guest movement only; no live account creation.
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import assert from 'node:assert/strict';
-const b=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-unsafe-webgpu','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface']});
+const b=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:process.platform === 'linux' ? ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-unsafe-webgpu','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface'] : ['--enable-unsafe-webgpu']});
 try{const p=await b.newPage({viewport:{width:1000,height:900}});const warnings=[];p.on('console',m=>{if(m.type()==='error')warnings.push(m.text().slice(0,400));});await p.goto(process.argv[2] ?? 'http://127.0.0.1:5175/');await p.getByRole('button',{name:'Start',exact:true}).click({timeout:60000});
 const pos=()=>p.locator('#coordinates-ui-pixel').textContent();
 console.log('initial',await pos());

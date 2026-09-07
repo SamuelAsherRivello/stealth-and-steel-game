@@ -5,7 +5,7 @@ mkdirSync(captureDirectory, { recursive: true });
 const capturePath = name => fileURLToPath(new URL(name, captureDirectory));
 // Fresh browser profiles only; this script never creates a live account or handles recovery words.
 const {chromium} = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
-const browser=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-unsafe-webgpu','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface']});
+const browser=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:process.platform === 'linux' ? ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-unsafe-webgpu','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface'] : ['--enable-unsafe-webgpu']});
 const page=await browser.newPage({viewport:{width:1000,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try {
  await page.goto(process.argv[2]??'http://127.0.0.1:5175/');

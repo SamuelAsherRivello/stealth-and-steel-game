@@ -1,6 +1,6 @@
 // Fresh browser profiles only; this script never creates a live account or handles recovery words.
 const {chromium} = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');import assert from 'node:assert/strict';
-const browser=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:['--enable-unsafe-webgpu','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface']});
+const browser=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:process.platform === 'linux' ? ['--enable-unsafe-webgpu','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface'] : ['--enable-unsafe-webgpu']});
 try{for(const mode of ['failure','slow']){
  const context=await browser.newContext();const page=await context.newPage();
  await page.route(/\/assets\/integration-.*\.js/,async r=>{if(mode==='slow')await new Promise(resolve=>setTimeout(resolve,17000));try{await r.abort();}catch{}});
