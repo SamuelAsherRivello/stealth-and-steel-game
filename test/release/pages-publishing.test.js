@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), "utf8");
-const demoUrl = "https://samuelasherrivello.github.io/babylon-lite-stealth-grid/";
+const demoUrl = "https://samuelasherrivello.github.io/stealth-and-steel-game/";
 
-test("README screenshot links directly to the renamed live game", async () => {
+test("README screenshot opens the image and demo links to the renamed live game", async () => {
   const readme = await read("README.md");
-  assert.ok(readme.includes(`<a href="${demoUrl}">`));
-  assert.ok(readme.includes(`[Play the live demo](${demoUrl})`));
+  assert.match(readme, /<a href="(documentation\/images\/output-arrow-check\.png)"><img src="\1" width="400" alt="[^"]+"\s*\/><\/a>/);
+  assert.ok(readme.includes(`[${demoUrl}](${demoUrl})`));
   const image = await readFile(new URL("../../documentation/images/output-arrow-check.png", import.meta.url));
   assert.equal(image.subarray(1, 4).toString(), "PNG");
   assert.deepEqual({ width: image.readUInt32BE(16), height: image.readUInt32BE(20) },
