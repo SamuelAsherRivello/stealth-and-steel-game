@@ -10,7 +10,7 @@ Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype f
 ## Images
 
 <!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
-<a href="STEALTH_STEEL/documentation/images/output-arrow-check.png"><img src="STEALTH_STEEL/documentation/images/output-arrow-check.png" width="400" alt="Stealth and Steel portrait gameplay with Babylon.js Lite and WebGPU" /></a>
+<a href="STEALTH_STEEL/documentation/images/stealth-and-steel-gameplay.png"><img src="STEALTH_STEEL/documentation/images/stealth-and-steel-gameplay.png" width="400" alt="Stealth and Steel gameplay with the updated HUD and virtual controller" /></a>
 
 ## Demo
 

@@ -15,7 +15,7 @@ export function createGoal({ host, position, screenWidth, screenHeight, artworkU
   marker.style.top = `${(1 - position.y / screenHeight) * 100}%`;
   host.append(marker);
   const gridSpot = new GridSpot(position, GRID);
-  const colliderSize = GRID.tileSizePx * 0.5;
+  const colliderSize = 10;
   return {
     position,
     combatCollider: { x: position.x - colliderSize / 2, y: position.y - colliderSize / 2, width: colliderSize, height: colliderSize },

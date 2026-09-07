@@ -5,7 +5,7 @@ import { collidersOverlap } from "../../../runtime/gameplay/game-logic.js";
 import { GRID } from "../../../runtime/systems/environment/grid-contract.js";
 import { createLevelCamera, getLevelWorld } from "../../../runtime/gameplay/level-camera.js";
 
-test("goal completion requires overlap with the centered inner half of its cell", () => {
+test("goal completion requires overlap with the centered 10x10 pixel collider", () => {
   const documentRef = {
     createElement: () => ({ style: {}, setAttribute() {}, append() {}, remove() {} }),
   };
@@ -15,14 +15,14 @@ test("goal completion requires overlap with the centered inner half of its cell"
     screenWidth: GRID.widthPx, screenHeight: GRID.heightPx, documentRef });
 
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const outerContact = { x: position.x + dx * size * 0.4 - 1,
-      y: position.y + dy * size * 0.4 - 1, width: 2, height: 2 };
+    const outerContact = { x: position.x + dx * 7 - 1,
+      y: position.y + dy * 7 - 1, width: 2, height: 2 };
     assert.equal(collidersOverlap(outerContact, goal.combatCollider), false,
       `outer cell contact (${dx}, ${dy}) must not complete the level`);
   }
   assert.deepEqual(goal.combatCollider, {
-    x: position.x - size * 0.25, y: position.y - size * 0.25,
-    width: size * 0.5, height: size * 0.5,
+    x: position.x - 5, y: position.y - 5,
+    width: 10, height: 10,
   });
   assert.equal(collidersOverlap({ x: position.x - 1, y: position.y - 1,
     width: 2, height: 2 }, goal.combatCollider), true);

@@ -6,7 +6,7 @@ const README_URL = new URL("../../../../README.md", import.meta.url);
 
 test("README screenshot reference resolves to an existing project file", async () => {
   const readme = await readFile(README_URL, "utf8");
-  const screenshotPath = readme.match(/src="([^"]*output-arrow-check\.png)"/)?.[1];
+  const screenshotPath = readme.match(/src="([^"]*stealth-and-steel-gameplay\.png)"/)?.[1];
 
   assert.ok(screenshotPath, "README must reference the gameplay screenshot");
   await assert.doesNotReject(access(new URL(screenshotPath, README_URL)));

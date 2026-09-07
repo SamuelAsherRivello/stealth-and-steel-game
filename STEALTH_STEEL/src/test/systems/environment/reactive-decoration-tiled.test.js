@@ -72,7 +72,7 @@ test("Level01 normalizes six independent authored bushes", async () => {
   assert.ok(placed.width > 0);
   assert.ok(placed.height > 0);
   assert.deepEqual(object.position, {
-    x: 224,
+    x: 288,
     y: 480,
   });
   assert.deepEqual(object.decoration.frameSize, { width: 128, height: 128 });

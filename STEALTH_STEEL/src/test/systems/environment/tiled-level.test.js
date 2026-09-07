@@ -34,7 +34,7 @@ const COLOR_THREE_COLLIDABLE_IDS = [
   27, 28, 29, 30, 32, 33, 34, 36, 39, 41, 42, 43, 44, 45, 48, 50, 51, 52, 53,
 ];
 const LEVEL01_AUTHORED_CONTENT_SHA256 =
-  "287cadc825c05b860a89dc1b6c5499318d368fb723dff22de9ef2ad0412152d4";
+  "6b4fd7d51d7ea9de2fd626fb92c864b78780a30f56e39f1b870f8093813a2108";
 
 async function readJson(url) {
   return JSON.parse(await readFile(url, "utf8"));
@@ -77,16 +77,15 @@ test("Level01 loads its authored visual layers without requiring a Terrain layer
   assert.equal(level.width, 13);
   assert.equal(level.height, 18);
   assert.deepEqual(level.layers.map(({ name }) => name), [
+    "Underground",
     "Background",
     "Midground",
     "Foreground",
-    "Water (Static)",
-    "Water (Animated)",
   ]);
   assert.equal(tiles.length, level.layers.reduce((total, layer) => total + layer.tiles.length, 0));
   assert.ok(tiles.length > 0);
-  assert.equal(tiles[0].layerName, "Background");
-  assert.equal(tiles.at(-1).layerName, "Water (Animated)");
+  assert.equal(tiles[0].layerName, "Underground");
+  assert.equal(tiles.at(-1).layerName, "Midground");
 });
 
 test("Level01 normalizes the lower-left origin cell to game tile zero zero", async () => {
@@ -282,10 +281,10 @@ test("Level01 exposes the current authored enemy roster and player placement", a
   const { map, externalTilesets } = await readLevelWithTilesets();
   const level = normalizeTiledMap(map, externalTilesets);
   assert.deepEqual(level.spawners.map(({ type, gameCell }) => ({ type, gameCell })), [
-    { type: "MONK", gameCell: { x: 5, y: 12 } },
+    { type: "MONK", gameCell: { x: 2, y: 14 } },
     { type: "PLAYER", gameCell: { x: 3, y: 3 } },
     { type: "GOBLIN", gameCell: { x: 0, y: 11 } },
-    { type: "WARRIOR", gameCell: { x: 0, y: 5 } },
+    { type: "WARRIOR", gameCell: { x: 9, y: 4 } },
     { type: "ARCHER", gameCell: { x: 1, y: 8 } },
     { type: "LANCER", gameCell: { x: 8, y: 10 } },
   ]);

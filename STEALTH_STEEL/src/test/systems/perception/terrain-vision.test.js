@@ -68,7 +68,7 @@ test('Level01 marked cliff cells, including the upper central pair, block using 
   const level=normalizeTiledMap(map,sets);
   const placements=collectTiledLayerTiles(level);
   const vision=createTerrainVision(runtime(placements));
-  for (const [x,y] of [[4,2],[5,2],[1,4],[3,4],[6,5],[7,5],[8,5],[2,6]]) {
+  for (const [x,y] of [[4,2],[5,2],[1,4],[3,4],[6,5],[7,5],[2,6]]) {
     const tiles=placements.filter(t=>t.tiledCell.x===x&&t.tiledCell.y===y);
     assert.ok(tiles.length);
     assert.equal(vision(tiles[0].gameCell),false,`map cell ${x},${y}`);
