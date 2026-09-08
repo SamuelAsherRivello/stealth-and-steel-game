@@ -179,3 +179,43 @@ test('deferred alternate attacks cannot commit before fresh adjacent-player prio
   f.tick(); assert.equal(f.attacks.length, 1);
   assert.deepEqual(f.attacks[0].args[0], { x: 1, y: 0 }); f.brain.dispose();
 });
+
+test('all five live profiles publish isolated immutable patrol intent and clear it on every exit', () => {
+  for (const profile of [goblinProfile, warriorProfile, lancerProfile, archerProfile, monkProfile]) {
+    for (const exit of ['cancel', 'dispose', 'death', 'defense', 'awareness', 'attack', 'blocked', 'completion', 'displacement']) {
+      if (exit === 'attack' && profile === monkProfile) continue;
+      let walkable = true;
+      const f = fixture(createEnemyProfile({ ...profile, idleSeconds: [0,0], bushChance: 0 }), {
+        isWalkable: () => walkable, getPatrolPeers: () => [{ id: 'other', cell: { x: 0, y: 0 } }],
+      }); f.player = null;
+      f.brain.update(.1); f.brain.update(.1);
+      const destination = f.brain.getPatrolDestination(); assert.ok(destination, `${profile.id} ${exit}`);
+      const snapshot = f.brain.getNavigationSnapshot(); assert.ok(Object.isFrozen(snapshot.patrolDestination));
+      destination.x = -100; assert.notEqual(f.brain.getPatrolDestination().x, -100);
+      if (exit === 'cancel') f.brain.cancelNavigation();
+      if (exit === 'dispose') f.brain.dispose();
+      if (exit === 'death') { f.alive = false; assert.equal(f.brain.getPatrolDestination(), null); f.brain.update(.1); }
+      if (exit === 'defense') { f.defending = true; f.brain.update(.1); }
+      if (exit === 'displacement') { f.actor.isMovementLocked = () => true; f.brain.update(.1); }
+      if (exit === 'awareness') { f.brain.reaction.forceState('SUSPICIOUS'); assert.equal(f.brain.getPatrolDestination(), null); f.brain.update(.1); }
+      if (exit === 'attack') { f.player = { id: 'p', isAlive: true, cell: { x: 3, y: 2 }, position: { x: 224, y: 160 } }; f.brain.update(.1); assert.equal(f.attacks.length, 1); }
+      if (exit === 'blocked') { walkable = false; f.brain.update(.1); }
+      if (exit === 'completion') {
+        for (let i = 0; i < 500 && f.brain.getPatrolDestination(); i++) f.tick(.025);
+      }
+      assert.equal(f.brain.getPatrolDestination(), null, `${profile.id} ${exit}`); f.brain.dispose();
+    }
+  }
+});
+
+test('later brains see earlier intent in the same update without acquiring player knowledge', () => {
+  let peers = [];
+  const profile = createEnemyProfile({ ...warriorProfile, idleSeconds: [0,0] });
+  const a = fixture(profile, { id:'a', getPatrolPeers: () => peers.map(f => ({ id: f.id, cell: f.actor.getGridPosition(64), patrolDestination: f.brain.getPatrolDestination() })) });
+  const b = fixture(profile, { id:'b', getPatrolPeers: () => [{ id:'a', cell: a.actor.getGridPosition(64), patrolDestination: a.brain.getPatrolDestination() }] });
+  a.id = 'a'; b.id = 'b'; a.player = b.player = null; peers = [a,b];
+  a.brain.update(.1); b.brain.update(.1); a.brain.update(.1); b.brain.update(.1);
+  assert.notDeepEqual(a.brain.getPatrolDestination(), b.brain.getPatrolDestination());
+  assert.equal(b.brain.reaction.getSnapshot().lastKnownCell, null);
+  a.brain.dispose(); b.brain.dispose();
+});

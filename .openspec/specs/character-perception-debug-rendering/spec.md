@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Makes centralized Character Perception visible during Collider mode so developers can inspect each detector's grid-relative Visual and Audio Perception and see active detection locations.
+Makes centralized Character Perception visible through the Enemy Perceptions debug setting so developers can inspect each detector's grid-relative Visual and Audio Perception and see active detection locations.
 
 ## Requirements
 
-### Requirement: Collider mode renders all detector perception
-When Collider mode is enabled, the debug view SHALL render perception indicators for every living registered detector using its current grid location, facing, and configured ranges. When Collider mode is disabled, these indicators SHALL not render.
+### Requirement: Enemy Perceptions toggle renders all detector perception
+When Enemy Perceptions is enabled, the debug view SHALL render perception indicators for every living registered detector using its current grid location, facing, and configured ranges. When Enemy Perceptions is disabled, these indicators SHALL not render. This setting SHALL operate independently of Physics Colliders.
 
-#### Scenario: Collider mode enabled
-- **WHEN** the player enables Collider mode
+#### Scenario: Enemy Perceptions enabled
+- **WHEN** the player enables Enemy Perceptions
 - **THEN** all living registered detectors show their Visual and Audio Perception indicators
 
-#### Scenario: Collider mode disabled
-- **WHEN** Collider mode is disabled
+#### Scenario: Enemy Perceptions disabled
+- **WHEN** Enemy Perceptions is disabled
 - **THEN** perception indicators are absent from the debug view
 
 ### Requirement: Visual and Audio indicators use distinct centered squares
@@ -33,15 +33,15 @@ When the centralized perception snapshot reports an active detection at a grid s
 
 #### Scenario: Player enters Visual Perception
 - **WHEN** the player occupies a Visual Perception grid spot
-- **THEN** that spot's Visual square blinks to 80% purple
+- **THEN** that spot's Visual square blinks to 100% purple
 
 #### Scenario: Player enters Audio Perception
 - **WHEN** the player occupies an Audio Perception grid spot
-- **THEN** that spot's Audio square blinks to 80% purple
+- **THEN** that spot's Audio square blinks to 100% purple
 
 #### Scenario: Player leaves perception
 - **WHEN** the player leaves the relevant perception grid spot
-- **THEN** its indicator returns to the inactive 40% purple fill
+- **THEN** its indicator returns to its inactive purple fill: 40% for Audio and the distance-scaled 40%, 30%, 20%, or 10% for Visual
 
 ### Requirement: Debug rendering follows moving geometry
 The debug visualization SHALL update when a detector changes grid location or Visual Perception facing, and SHALL use the canonical grid coordinate conversion for rendering.

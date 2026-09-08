@@ -21,7 +21,7 @@ export function drawStatusBadge(context, image, { x, y, icon, flash }) {
     context.fill();
     context.stroke();
   }
-  context.font = "700 28px Georgia, serif";
+  context.font = "700 22.4px Georgia, serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = flash === "red" ? "#ff6b6b"

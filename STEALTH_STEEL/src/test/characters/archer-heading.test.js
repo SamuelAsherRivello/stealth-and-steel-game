@@ -47,15 +47,16 @@ test("archer locks perception to shot facing despite changing movement requests,
   actor.dispose();
 });
 
-test("archer perception follows displayed locomotion facing and preserves it when idle or moving vertically", () => {
+test("archer vertical perception changes independently of horizontal artwork and persists while idle", () => {
   const actor = makeArcher();
   actor.setMovementIntent({ x: -1, y: 0 });
   actor.update(0.016);
   assertFacing(actor, "left");
-  for (const movement of [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: 0, y: 0 }]) {
+  for (const [movement, heading] of [[{ x: 0, y: -1 }, 'up'], [{ x: 0, y: 1 }, 'down'], [{ x: 0, y: 0 }, 'down']]) {
     actor.setMovementIntent(movement);
     actor.update(0.016);
-    assertFacing(actor, "left");
+    assert.equal(actor.getHeading(), heading);
+    for (const layer of actor.layers) assert.equal(layer._instanceData[4] > layer._instanceData[6], true);
   }
   actor.setMovementIntent({ x: 1, y: 0 });
   actor.update(0.016);

@@ -1,4 +1,5 @@
 // The game consumes only the public BIS package. Loading is independent of game startup.
+import gameWallet from './game-wallet-public.json' with {type:'json'};
 const loadPackage = () => Promise.all([import('@bis/integration'), import('@bis/integration/style.css')]).then(([api]) => api);
 
 export function createBisAccount({host, pauseController, restartGame, documentRef = globalThis.document,
@@ -69,7 +70,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     if (initialization) return initialization;
     initialization = (async () => {
       const api = await load(); if (disposed) return;
-      const current = {context: api.createBisContext(), api}; session = current;
+      const current = {context: api.createBisContext({continueRecipient: gameWallet.continueRecipient || import.meta.env?.VITE_BIS_GAME_WALLET_ADDRESS}), api}; session = current;
       current.unsubscribeEvents = current.context.onEvent(event => {
         if (disposed || event.type !== 'restartRequested' || restarts.has(event.logoutId)) return;
         restarts.add(event.logoutId); restarting = true;
@@ -130,3 +131,4 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     cleanup(session); overlay.remove();
   }};
 }
+

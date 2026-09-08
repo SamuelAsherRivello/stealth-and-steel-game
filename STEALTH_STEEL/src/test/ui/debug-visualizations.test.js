@@ -20,7 +20,8 @@ test("debug canvas switches coordinates, perceptions, colliders, tiles and tasks
       drawTerrainCollider: record("colliders"), drawCharacterCollider: record("colliders"),
       createCharacterColliderDrawCommands: record("colliders"),
       createPlayerCenterMarkerCommands: record("coordinates"), createGridSpotMarkerCommands: record("coordinates"),
-      createPerceptionDrawCommands: record("perceptions"), createActivePerceptionMarkerCommands: record("perceptions"),
+      drawPerceptionDiagnostics: (_context, _snapshot, _size, _height, _now, { enabled }) => { if (enabled) calls.add("perceptions"); return []; },
+      createActivePerceptionMarkerCommands: record("perceptions"),
       drawAabb: record("colliders"),
     });
     draw([{colliders: [{}], gameCell: {x: 0, y: 0}, screenPosition: {x: 0, y: 0}, valid: true}], [], [], Boolean(mask & 4), [], [], null, null,

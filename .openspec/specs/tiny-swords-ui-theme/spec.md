@@ -28,7 +28,7 @@ The game SHALL present all existing UI surfaces using a coherent visual theme ba
 #### Scenario: Diagnostic overlays are enabled
 - **WHEN** the user enables diagnostics or selects a grid cell
 - **THEN** their labels and selection treatment are coordinated with the theme
-- **AND** collider, grid-spot, perception, and crop-mark geometry remains precise and distinguishable
+- **AND** collider, grid-spot, and perception geometry remains precise and distinguishable
 
 ### Requirement: Fullscreen visual review deliverables
 
@@ -105,3 +105,42 @@ The game SHALL keep loading/error text and Retry usable if themed images fail to
 #### Scenario: Hosted beneath a path prefix
 - **WHEN** the built game is served beneath its configured non-root base path
 - **THEN** the themed artwork loads from the deployed application assets without local filesystem dependencies
+
+### Requirement: Reusable menu presentation
+
+Menus SHALL support configurable title text, body text and button display
+text using the approved shared presentation. The logo SHALL be optional,
+omitted by default, and used only by Start Menu. All game-owned text action
+buttons within menus SHALL share the approved blue button appearance.
+Button display text SHALL remain on one line, automatically reducing its
+font size to fit the available width and restoring it when space permits.
+UI text SHALL not be selectable, while retaining accessible names and
+keyboard operation.
+
+#### Scenario: A menu uses different content
+- **WHEN** a menu is supplied its title, body and action text
+- **THEN** that text appears using the shared banner, parchment and buttons
+- **AND** a menu without a logo reserves no empty logo area
+
+### Requirement: Independent developer visualizations
+
+Developer SHALL contain a Debug Draw heading and five independent,
+persistent toggles in this order: Coordinates, Enemy Perceptions, Enemy Tasks,
+Physics Colliders, Tile Map Info. Coordinates SHALL control position readouts
+and center/grid-spot markers; Enemy Perceptions SHALL control perception areas
+and active-target markers; Enemy Tasks SHALL control enemy goal/action labels;
+Physics Colliders SHALL control collider geometry and spawner markers; Tile Map
+Info SHALL control grid lines, cell labels, and selected-cell highlighting.
+All five SHALL default off. Clear All Settings SHALL restore settings defaults
+and synchronize the displayed controls. Open GitHub SHALL open
+https://github.com/SamuelAsherRivello/stealth-and-steel-game.
+
+#### Scenario: Optional visualizations are independent
+- **WHEN** the user enables one visualization
+- **THEN** only its diagnostic presentation is enabled
+- **AND** gameplay perception, particle effects, and animations retain their behavior
+
+#### Scenario: Obsolete previews are removed
+- **WHEN** the game starts, including with previously saved preview preferences
+- **THEN** Crop Marks, Particle FX Preview, and Animated Tile Preview have no controls, subscriptions, preview layers, or public preview handle
+- **AND** obsolete preview preferences are ignored

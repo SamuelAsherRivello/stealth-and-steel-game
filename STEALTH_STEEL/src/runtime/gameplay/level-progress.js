@@ -11,12 +11,15 @@ export function createLevelProgress(catalog, storage, reload) {
   let current = 1, completed = 0;
   try {
     const saved = JSON.parse(storage.getItem(RUN_STORAGE_KEY) ?? 'null');
-    if (saved && Number.isInteger(saved.current) && catalog.some(level => level.number === saved.current) && saved.completed === saved.current-1) {
+    if (saved?.pendingTransition === true && Number.isInteger(saved.current) && catalog.some(level => level.number === saved.current) && saved.completed === saved.current-1) {
+      // Continue reloads the page; consume its destination once so manual refresh starts over.
+      storage.setItem(RUN_STORAGE_KEY, 'null');
+      if (storage.getItem(RUN_STORAGE_KEY) !== 'null') throw Error('Level transition could not be consumed.');
       current = saved.current; completed = saved.completed;
     }
   } catch { /* Unreadable game progress starts a guest run, never touches wallet data. */ }
   const save = (next, count) => {
-    const value = JSON.stringify({current: next, completed: count});
+    const value = JSON.stringify({current: next, completed: count, pendingTransition: true});
     storage.setItem(RUN_STORAGE_KEY, value);
     if (storage.getItem(RUN_STORAGE_KEY) !== value) throw Error('Game progress could not be saved. Enable browser storage and try again.');
     reload();

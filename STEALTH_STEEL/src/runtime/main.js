@@ -1,5 +1,6 @@
 import { resolvePlayerKnifeImpact } from "./gameplay/player-melee.js";
 import { enemyAiLabel, drawEnemyAiLabels } from "./ai/enemy-ai-labels.js";
+import { snapshotPatrolPeers } from "./ai/patrol-selection.js";
 import { createEnemyBrain } from "./ai/enemy-brain.js";
 import { createPlanningScheduler } from "./ai/planning-scheduler.js";
 import { goblinProfile } from "./characters/enemies/goblin/goblin-goap.js";
@@ -145,7 +146,7 @@ import {
   drawGridSpotMarker,
   createCharacterColliderDrawCommands,
   createActivePerceptionMarkerCommands,
-  createPerceptionDrawCommands,
+  drawPerceptionDiagnostics,
   createEnemyVisionShadowDrawCommands,
   TERRAIN_COLLIDER_STYLE,
 } from "./ui/collider-diagnostics.js";
@@ -491,6 +492,7 @@ export async function start({ showStartPrompt = true } = {}) {
             position: player.actor.getPosition(), cell: player.actor.getGridPosition(TILE_SIZE),
           } : null;
         },
+        getPatrolPeers: () => snapshotPatrolPeers(getRecordsByType(SpawnerType.ENEMY), TILE_SIZE),
         getWorld: () => ({
           characters: getRecordsByType(SpawnerType.SHEEP).filter(target => target.combat.isAlive).map(target => ({
             id: target.combat.label, character: "sheep", isAlive: true, position: target.actor.getPosition(), cell: target.actor.getGridPosition(TILE_SIZE),
@@ -1100,19 +1102,6 @@ export async function start({ showStartPrompt = true } = {}) {
               .map(({ detectorId }) => detectorId),
           }
         : null;
-      for (const record of [playerRecord, ...enemyRecords]) {
-        if (record) characterPerception.updateActor(record.combat.label, {
-          isAlive: record.combat.isAlive,
-          isMoving: record === playerRecord && playerPositionBeforeUpdate != null
-            && (record.actor.getPosition().x !== playerPositionBeforeUpdate.x
-              || record.actor.getPosition().y !== playerPositionBeforeUpdate.y),
-          targetState: record === playerRecord && isPlayerHidden(playerCombatCollider, reactiveDecorations)
-            ? PerceptionTargetState.Hidden
-            : PerceptionTargetState.Default,
-          cell: record.actor.getGridPosition(TILE_SIZE),
-          heading: record.actor.getHeading?.() ?? "right",
-        });
-      }
       for (const record of enemyRecords) record.reaction?.update(activeDelta);
       const sheepDynamicColliders = playerMovementCollider
         ? [{ type: CharacterType.PLAYER, collider: playerMovementCollider }]
@@ -1182,6 +1171,19 @@ export async function start({ showStartPrompt = true } = {}) {
               && (playerSnapshot.detectedBy.includes(record.combat.label)
                 || (playerSnapshot.hidden && record.reaction.canTrackHiddenPlayer())) }
           : null);
+      }
+      for (const record of [playerRecord, ...enemyRecords]) {
+        if (record) characterPerception.updateActor(record.combat.label, {
+          isAlive: record.combat.isAlive,
+          isMoving: record === playerRecord && playerPositionBeforeUpdate != null
+            && (record.actor.getPosition().x !== playerPositionBeforeUpdate.x
+              || record.actor.getPosition().y !== playerPositionBeforeUpdate.y),
+          targetState: record === playerRecord && isPlayerHidden(playerCombatCollider, reactiveDecorations)
+            ? PerceptionTargetState.Hidden
+            : PerceptionTargetState.Default,
+          cell: record.actor.getGridPosition(TILE_SIZE),
+          heading: record.actor.getHeading?.() ?? "right",
+        });
       }
       characterPerception.update(activeDelta);
       if (playerRecord?.combat.isAlive && playerCombatCollider) {
@@ -1721,17 +1723,9 @@ function drawDiagnostics(
   if (coordinates) for (const marker of createGridSpotMarkerCommands(diagnosticCharacters)) {
     drawGridSpotMarker(debugContext, marker, SCREEN_HEIGHT);
   }
-  if (perceptions) for (const command of createPerceptionDrawCommands(perceptionSnapshot, TILE_SIZE, performance.now(), visionOptions)) {
-    debugContext.beginPath();
-    const points = command.points.map((point) => ({ x: point.x, y: SCREEN_HEIGHT - point.y }));
-    debugContext.moveTo(points[0].x, points[0].y);
-    for (const point of points.slice(1)) debugContext.lineTo(point.x, point.y);
-    debugContext.closePath();
-    debugContext.fillStyle = command.active && command.blinking
-      ? command.style.blinkFillStyle
-      : command.style.fillStyle;
-    debugContext.fill();
-  }
+  drawPerceptionDiagnostics(debugContext, perceptionSnapshot, TILE_SIZE, SCREEN_HEIGHT, performance.now(), {
+    enabled: perceptions, visionOptions,
+  });
   if (perceptions) for (const marker of createActivePerceptionMarkerCommands(perceptionSnapshot, TILE_SIZE)) {
     const screenY = SCREEN_HEIGHT - marker.y;
     const halfSize = marker.style.size / 2;

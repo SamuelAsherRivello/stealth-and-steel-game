@@ -19,15 +19,16 @@ wording.
 
 ## Collaboration mode
 
-- Start or resume the interview in the current collaboration mode. Plan Mode
-  is optional; do not require a mode switch to conduct the interview.
-- Use the question format below where permitted by higher-priority instructions
-  and the available question tools. Adapt the presentation when necessary
-  without pausing the interview solely because of the collaboration mode.
-- If Plan Mode is active, prepare artifact revisions in conversation only and
-  defer file writes until that mode has ended. In Default Mode, reconcile
-  confirmed conclusions using the workflow below. Neither mode authorizes
-  implementation through this skill.
+- This skill works in any collaboration mode. Never require, request, or wait
+  for a switch to Plan Mode, Default Mode, or any other mode to start or
+  continue the interview.
+- Adapt question presentation to the tools available in the current mode;
+  unavailable question tools must not prevent the interview from continuing.
+- Follow the current mode's higher-priority tool and file-write constraints.
+  When artifact writes are unavailable, prepare the exact revisions in the
+  conversation and continue the interview without requiring a mode change.
+- Planning-only describes this skill's scope, not a required collaboration
+  mode. Never implement application code through this skill.
 
 ## Establish Context
 

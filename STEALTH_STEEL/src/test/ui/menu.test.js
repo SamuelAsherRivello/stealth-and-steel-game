@@ -13,6 +13,16 @@ class Element extends EventTarget {
 }
 const documentRef = { createElement: () => new Element() };
 
+test("window title and close control share the ribbon layout", () => {
+  const closeButton = documentRef.createElement("button");
+  const menu = createMenu({ titleText: "Settings Menu", content: new Element(), closeButton, documentRef });
+  const header = menu.panel.children[0];
+  assert.ok(header.className.includes("game-window-header"));
+  assert.ok(header.children.includes(menu.title));
+  assert.ok(header.children.includes(closeButton));
+  assert.ok(!menu.panel.children.includes(closeButton));
+});
+
 test("menus accept independent content, unique accessible labels, and no logo by default", () => {
   const first = createMenu({ titleText: "Example", bodyText: "Instructions", buttons: [{displayText: "Proceed"}], documentRef });
   const second = createMenu({ titleText: "Another", bodyText: "Other instructions", documentRef });

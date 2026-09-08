@@ -23,6 +23,7 @@ export async function loadArcherAtlases(engine) {
 export function createArcher({ atlases, initialPosition, bounds, obstacles = [], onShoot = () => {} }) {
   let position = { ...initialPosition }; let artYOffset = 0; let disposed = false; let manager = null; let active = null; let state = "idle";
   let facing = 1; let target = null; let recovery = 0; let released = false; let shootElapsed = 0;
+  let heading = "right";
   let movementIntent = { x: 0, y: 0 };
   const gridMovement = createGridAlignedMovementController({ frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }, 64);
   const knockback = createEnemyKnockback({ character: { frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }, bounds, obstacles });
@@ -64,7 +65,7 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       return state === "shooting";
     },
     getHeading() {
-      return facing < 0 ? "left" : "right";
+      return heading;
     },
     getPosition() {
       return { ...position };
@@ -84,6 +85,7 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
     faceDirection(direction) {
       if (this.isMovementLocked() || !direction.x) return;
       facing = Math.sign(direction.x);
+      heading = facing < 0 ? "left" : "right";
       updateSprites({ flipX: facing < 0 });
     },
     setMovementIntent(movement) {
@@ -130,9 +132,12 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       const locomotion = movementIntent.x || movementIntent.y ? "walking" : "idle";
       if (state !== locomotion) play(locomotion);
       updateSprites();
-      // Commit facing once per update, after shooting/recovery have returned.
-      // These animations have horizontal facing only; queued patrol requests
-      // must not rotate perception independently of the displayed sprite.
+      // Commit locomotion heading after shooting/recovery have returned.
+      // Cardinal perception is independent of the artwork's horizontal flip.
+      if (!preparing) {
+        if (Math.abs(movementIntent.y) > Math.abs(movementIntent.x)) heading = movementIntent.y < 0 ? "up" : "down";
+        else if (movementIntent.x !== 0) heading = movementIntent.x < 0 ? "left" : "right";
+      }
       const nextFacing = preparing ? facing : Math.sign(movementIntent.x) || facing;
       if (nextFacing !== facing) {
         facing = nextFacing;

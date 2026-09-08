@@ -11,6 +11,7 @@ import {
   VISUAL_PERCEPTION_STYLE,
   createPerceptionSquare,
   createPerceptionDrawCommands,
+  drawPerceptionDiagnostics,
   createActivePerceptionMarkerCommands,
   getPerceptionBlinkState,
   getVisibleVisualCells,
@@ -181,7 +182,17 @@ test("perception commands keep overlapping visual and audio squares independent"
   assert.equal(commands[1].active, false);
 });
 
-test("perception styling uses requested fills and three-second blink", () => {
+test("audio squares stay above visual squares from every overlapping detector", () => {
+  const commands = createPerceptionDrawCommands({ actors: [
+    { id: 'first', type: 'enemy', cell: { x: 2, y: 2 }, heading: 'right' },
+    { id: 'second', type: 'enemy', cell: { x: 2, y: 2 }, heading: 'right' },
+  ], detections: [] }, 64);
+  assert.deepEqual(commands.map(({ channel }) => channel), [
+    ...Array(8).fill('visual'), ...Array(16).fill('audio'),
+  ]);
+});
+
+test("perception styling uses requested fills and a 300ms blink cycle", () => {
   assert.equal(VISUAL_PERCEPTION_STYLE.fillStyle, "rgb(160 80 255 / 40%)");
   assert.equal(AUDIO_PERCEPTION_STYLE.fillStyle, "rgb(160 80 255 / 40%)");
   assert.equal(VISUAL_PERCEPTION_STYLE.blinkFillStyle, "rgb(160 80 255 / 100%)");
@@ -208,4 +219,26 @@ test("simultaneous detections blink independently for every grid cell", () => {
   assert.equal(createPerceptionDrawCommands(snapshot, 64, 1200).filter(({ blinking }) => blinking).length, 0);
   assert.equal(createPerceptionDrawCommands(snapshot, 64, 1300).filter(({ blinking }) => blinking).length, 2);
   assert.equal(commands.find(({ channel }) => channel === "visual").blinking, true);
+});
+
+test('perception canvas pass gates drawing, inverts world Y and returns to inactive fill after detection', () => {
+  const snapshot = { actors: [{ id: 'canvas-test', type: 'enemy', cell: { x: 2, y: 2 }, heading: 'right' }],
+    detections: [{ detectorId: 'canvas-test', type: 'visual', cell: { x: 3, y: 2 } }] };
+  const fills = [], paths = [];
+  const context = { beginPath() { paths.push([]); }, moveTo(x, y) { paths.at(-1).push([x, y]); },
+    lineTo(x, y) { paths.at(-1).push([x, y]); }, closePath() {}, fill() { fills.push(this.fillStyle); } };
+  assert.deepEqual(drawPerceptionDiagnostics(context, snapshot, 64, 640, 1000), []);
+  assert.equal(fills.length, 0);
+  const before = structuredClone(snapshot);
+  drawPerceptionDiagnostics(context, snapshot, 64, 640, 1000, { enabled: true });
+  assert.deepEqual(paths[0], [[208, 496], [240, 496], [240, 464], [208, 464]]);
+  assert.equal(fills[0], 'rgb(160 80 255 / 100%)');
+  assert.deepEqual(snapshot, before, 'rendering does not mutate perception state');
+  fills.length = 0;
+  drawPerceptionDiagnostics(context, snapshot, 64, 640, 1200, { enabled: true });
+  assert.equal(fills[0], 'rgb(160 80 255 / 40%)');
+  snapshot.detections = [];
+  fills.length = 0;
+  drawPerceptionDiagnostics(context, snapshot, 64, 640, 1300, { enabled: true });
+  assert.equal(fills[0], 'rgb(160 80 255 / 40%)');
 });

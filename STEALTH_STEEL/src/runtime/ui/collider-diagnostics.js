@@ -72,9 +72,25 @@ export function createPerceptionDrawCommands(snapshot, tileSize, now = 0, vision
       channel: "audio", points: createPerceptionSquare(cell, tileSize, tileSize / 4),
       style: AUDIO_PERCEPTION_STYLE, active: (detector.activeAudioCells ?? []).some((active) => active.x === cell.x && active.y === cell.y), activeSince: activeStartByKey.get(`${detector.id}:audio:${cell.x},${cell.y}`),
     })),
-  ]).filter(({ points }) => points.length === 4).map((command) => ({
+  ]).filter(({ points }) => points.length === 4)
+    .sort((a, b) => Number(a.channel === 'audio') - Number(b.channel === 'audio')).map((command) => ({
     ...command, blinking: command.active && getPerceptionBlinkState(command.activeSince, now),
   }));
+}
+
+export function drawPerceptionDiagnostics(context, snapshot, tileSize, screenHeight, now, { enabled = false, visionOptions = {} } = {}) {
+  if (!enabled) return [];
+  const commands = createPerceptionDrawCommands(snapshot, tileSize, now, visionOptions);
+  for (const command of commands) {
+    context.beginPath();
+    command.points.forEach((point, index) => {
+      context[index === 0 ? 'moveTo' : 'lineTo'](point.x, screenHeight - point.y);
+    });
+    context.closePath();
+    context.fillStyle = command.blinking ? command.style.blinkFillStyle : command.style.fillStyle;
+    context.fill();
+  }
+  return commands;
 }
 
 export function getVisibleVisualCells(actor, tileSize, { isWalkable = () => true, blockers = [] } = {}) {

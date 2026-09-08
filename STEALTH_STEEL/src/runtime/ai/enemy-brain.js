@@ -10,7 +10,7 @@ import { senseEnemy } from './enemy-facts.js';
 import { actionLibrary } from './actions/index.js';
 
 export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlayer = () => null,
-  getWorld = () => ({ characters: [], bushes: [] }), isAlive = () => true, onStateChange = () => {}, random = Math.random, scheduler = null }) {
+  getWorld = () => ({ characters: [], bushes: [] }), getPatrolPeers = () => [], isAlive = () => true, onStateChange = () => {}, random = Math.random, scheduler = null }) {
   validateCapabilities(profile, actor);
   const executor = createExecutor(), navigation = createNavigation({ actor, grid, isWalkable, scheduler, retrySeconds: profile.retrySeconds });
   const spawnCell = actor.getGridPosition(grid.tileSizePx);
@@ -19,11 +19,13 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
   let failureKey = null, failureRemaining = 0, lastReason = 'spawn', lastPlan = [], expanded = 0, evidence = null;
   let escapeAttempted = false;
   let readyPlan = null;
+  let patrolDestination = null;
   const stop = () => actor.setMovementIntent({ x: 0, y: 0 });
   const choose = values => values[Math.min(values.length - 1, Math.floor(Math.max(0, Math.min(1, random())) * values.length))];
   const duration = range => range[0] + Math.max(0, Math.min(1, random())) * (range[1] - range[0]);
   const reaction = createEnemyPerceptionReaction({ profile: profile.perception, random,
     onStateChange(next, previous) {
+      patrolDestination = null;
       dirty = true; entryStop = next !== 'NONE'; bushScan = null;
       if (next === 'NONE') { normalStage = 'idle'; sampledDuration = null; bushRoll = null; evidence = null; }
       onStateChange(next, previous);
@@ -58,7 +60,9 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
     return candidates.filter(x => cardinalDistance(x.cell, target.cell) < cardinalDistance(ownCell(), target.cell))
       .sort((a, b) => cardinalDistance(a.cell, target.cell) - cardinalDistance(b.cell, target.cell) || a.route.length - b.route.length)[0];
   };
-  const context = { actor, grid, profile, spawnCell, reaction, navigation, choose, resolveTarget, attackEligible, bindingValid, selectDestination,
+  const context = { id, actor, grid, profile, spawnCell, reaction, navigation, choose, random, getPatrolPeers,
+    setPatrolDestination(cell) { patrolDestination = cell ? { ...cell } : null; },
+    resolveTarget, attackEligible, bindingValid, selectDestination,
     onAttackCommitted(value) { if (value.type === 'sheep') suppressedSheep = value.id; } };
   const cost = action => profile.costs[action] ?? 1;
   function actionsFor(next) {
@@ -152,6 +156,7 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
   }
   const brain = {
     reaction,
+    getPatrolDestination() { return !disposed && isAlive() && patrolDestination ? { ...patrolDestination } : null; },
     get mode() { return executor.snapshot().phase ?? goal?.name ?? 'idle'; },
     cancelNavigation() { executor.cancel('navigation-cancel'); navigation.cancel(); scheduler?.cancel(id); goalKey = null; },
     cancel() { this.cancelNavigation(); },
@@ -193,6 +198,7 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
     getNavigationSnapshot() {
       const execution = executor.snapshot();
       const snapshot = { ...navigation.snapshot(), id, character: profile.id, state: reaction.getSnapshot().state,
+        patrolDestination: this.getPatrolDestination(),
         recoveryState: failureRemaining > 0 && !executor.committed ? (goal?.name === 'recover' ? 'moving' : 'waiting') : navigation.snapshot().recoveryState,
         goal: goal?.name ?? 'idle', plan: execution.plan.length ? execution.plan : [...lastPlan],
         action: actor.isDefending ? 'defense' : execution.phase ?? (scheduler ? 'waiting' : 'idle'),

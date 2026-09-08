@@ -53,13 +53,23 @@ function click(target, eventTarget = target) {
   target.dispatchEvent(event);
 }
 
+function elementByClass(root, className) {
+  const pending = [root];
+  while (pending.length) {
+    const element = pending.shift();
+    if ((element.className ?? "").split(/\s+/).includes(className)) return element;
+    pending.push(...element.children);
+  }
+  assert.fail(`Missing .${className}`);
+}
+
 test("Developer lists five independent visualizations and clears all their settings", () => {
   const store = createSettingsStore(null);
   const ui = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
     pauseController: { pause() {}, resume() {} } });
   ui.open();
-  click(ui.activeWindow.panel.children[2].children[0].children[3]);
-  const content = ui.developerWindow.panel.children[2].children[0];
+  click(elementByClass(ui.activeWindow.panel, "developer-settings-button"));
+  const content = elementByClass(ui.developerWindow.panel, "developer-settings-controls");
   assert.equal(content.children[0].textContent, "Debug Draw");
   const rows = content.children.slice(1, 6);
   assert.deepEqual(rows.map(row => row.children[0].textContent), [
@@ -242,7 +252,7 @@ test("developer settings opens above the main settings window and closes back to
   });
 
   settingsUi.open();
-  const developerButton = settingsUi.activeWindow.panel.children[2].children[0].children[3];
+  const developerButton = elementByClass(settingsUi.activeWindow.panel, "developer-settings-button");
   assert.equal(developerButton.textContent, "Developer");
   click(developerButton);
   assert.equal(settingsUi.developerWindow.panel.children[0].textContent, "Developer");
@@ -269,8 +279,8 @@ test("developer settings opens the related GitHub project above Reset", () => {
   });
 
   settingsUi.open();
-  click(settingsUi.activeWindow.panel.children[2].children[0].children[3]);
-  const developerContent = settingsUi.developerWindow.panel.children[2].children[0];
+  click(elementByClass(settingsUi.activeWindow.panel, "developer-settings-button"));
+  const developerContent = elementByClass(settingsUi.developerWindow.panel, "developer-settings-controls");
   const githubButton = developerContent.children.at(-2);
   const resetButton = developerContent.children.at(-1);
 
@@ -319,7 +329,7 @@ test("Account is styled and placed immediately before Developer", () => {
   const settings = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(),
     store: {get: () => 100}, pauseController: {pause() {}, resume() {}}, openAccount() {} });
   settings.open();
-  const content = settings.activeWindow.panel.children[2].children[0];
+  const content = elementByClass(settings.activeWindow.panel, "settings-controls");
   assert.equal(content.children[3].textContent, '⚡ Account');
   assert.equal(content.children[4].textContent, 'Developer');
   assert.ok(content.children[3].className.split(' ').includes('settings-account-button'));
@@ -334,8 +344,8 @@ test("Enemy Tasks control writes independently and Clear All Settings clears the
   const store = { get: key => values.get(key) ?? false, set: (key,value) => values.set(key,value), reset: () => values.clear() };
   const ui = createSettingsUi({ host: new FakeElement(), documentRef, store, pauseController: { pause() {}, resume() {} } });
   ui.open();
-  click(ui.activeWindow.panel.children[2].children[0].children[3]);
-  const content = ui.developerWindow.panel.children[2].children[0];
+  click(elementByClass(ui.activeWindow.panel, "developer-settings-button"));
+  const content = elementByClass(ui.developerWindow.panel, "developer-settings-controls");
   const row = content.children.find(child => child.children[0]?.textContent === 'Enemy Tasks');
   const checkbox = row.children[1];
   assert.equal(checkbox.checked, false);

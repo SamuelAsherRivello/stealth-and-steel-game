@@ -47,15 +47,19 @@ export function createMenu({ titleText, bodyText, content = null, closeButton = 
   title.className = "menu-title-text tiny-swords-title-text";
   title.textContent = titleText;
   title.id = titleId;
-  addRibbonArt(title, documentRef);
+  const header = closeButton ? documentRef.createElement("div") : title;
+  if (closeButton) {
+    header.className = "game-window-header";
+    header.append(title, closeButton);
+  }
+  addRibbonArt(header, documentRef);
   const body = documentRef.createElement(content ? "div" : "p");
   body.className = content ? "game-window-body" : "menu-subtitle-text tiny-swords-body-text";
   if (content) body.append(content);
   else body.textContent = bodyText;
   body.id = `${titleId}-body`;
   const actionButtons = buttons.map(options => createMenuButton({ ...options, documentRef }));
-  panel.append(title);
-  if (closeButton) panel.append(closeButton);
+  panel.append(header);
   panel.append(body, ...actionButtons, createPanelArt(documentRef));
 
   let logoElement = null;
