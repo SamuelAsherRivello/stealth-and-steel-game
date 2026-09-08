@@ -83,13 +83,13 @@ test("perception diagnostics skip enemies with invalid visual geometry", () => {
   ], detections: [] }, 64), []);
 });
 
-test("terrain colliders use the same green style as movement colliders", () => {
+test("terrain colliders use the same blue style as movement colliders", () => {
   assert.equal(TERRAIN_COLLIDER_STYLE.fillStyle, MOVEMENT_COLLIDER_STYLE.fillStyle);
   assert.equal(TERRAIN_COLLIDER_STYLE.strokeStyle, MOVEMENT_COLLIDER_STYLE.strokeStyle);
   assert.equal(TERRAIN_COLLIDER_STYLE.lineWidth, 1);
 });
 
-test("diagnostics draw every red combat collider before green movement colliders", () => {
+test("diagnostics draw every red combat collider before blue movement colliders", () => {
   const characters = [
     { combatCollider: { id: "player-combat" }, movementCollider: { id: "player-movement" } },
     { combatCollider: { id: "sheep-combat" }, movementCollider: { id: "sheep-movement" } },
@@ -102,7 +102,8 @@ test("diagnostics draw every red combat collider before green movement colliders
   assert.ok(commands.slice(0, 2).every(({ style }) => style === COMBAT_COLLIDER_STYLE));
   assert.ok(commands.slice(2).every(({ style }) => style === MOVEMENT_COLLIDER_STYLE));
   assert.match(COMBAT_COLLIDER_STYLE.strokeStyle, /ff|red/i);
-  assert.match(MOVEMENT_COLLIDER_STYLE.strokeStyle, /green|40d|2ecc|22c/i);
+  assert.equal(MOVEMENT_COLLIDER_STYLE.strokeStyle, "#4090ff");
+  assert.equal(MOVEMENT_COLLIDER_STYLE.fillStyle, "rgb(64 144 255 / 22%)");
 });
 
 test("diagnostics place center markers at movement collider centers", () => {

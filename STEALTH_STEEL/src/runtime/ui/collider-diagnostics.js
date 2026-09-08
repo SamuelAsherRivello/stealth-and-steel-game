@@ -4,8 +4,8 @@ export const COMBAT_COLLIDER_STYLE = Object.freeze({
 });
 
 export const MOVEMENT_COLLIDER_STYLE = Object.freeze({
-  fillStyle: "rgb(64 208 112 / 22%)",
-  strokeStyle: "#40d070",
+  fillStyle: "rgb(64 144 255 / 22%)",
+  strokeStyle: "#4090ff",
 });
 
 export const TERRAIN_COLLIDER_STYLE = Object.freeze({
