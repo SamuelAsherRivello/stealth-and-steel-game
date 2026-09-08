@@ -7,7 +7,7 @@ import { resolveProjectileHit } from '../../runtime/systems/objects/projectile-c
 // Execute the runtime's collision pass with overlapping targets and fake effects.
 const source = await readFile(new URL('../../runtime/main.js', import.meta.url), 'utf8');
 const start = source.indexOf('      const projectilesToRemove = [];');
-const end = source.indexOf('\n      if (playerRecord?.combat.isAlive', start);
+const end = source.indexOf('\n      for (const enemyTarget of enemyCombatColliders)', start);
 assert.ok(start >= 0 && end > start);
 const route = new Function('projectiles', 'sheepCombatColliders', 'enemyCombatColliders',
   'goldStoneObjects', 'collidersOverlap', 'resolveProjectileHit', source.slice(start, end));

@@ -15,6 +15,11 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
   const overlayParent = () => documentRef.fullscreenElement ?? documentRef.body ?? host;
   overlayParent().append(overlay);
   let disposed = false, active = false, visit = 0, restarting = false, session, initialization;
+  const continuations = new Set();
+  function passive() {
+    overlay.className = 'game-account-host game-account-passive';
+    overlay.hidden = false; status.hidden = true; mount.hidden = false;
+  }
   const restarts = new Set(); const inertBefore = new Map();
   const focusables = () => [...overlay.querySelectorAll('button:not(:disabled), input:not(:disabled), [tabindex="0"]')].filter(el => !el.closest('[hidden]') && el.getClientRects().length);
   const focusInside = () => (focusables()[0] ?? overlay).focus();
@@ -52,7 +57,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
   documentRef.addEventListener('fullscreenchange', moveOverlay);
   function close() {
     if (!active || restarting) return;
-    active = false; visit++; overlay.hidden = true;
+    active = false; visit++; passive();
     documentRef.removeEventListener('focusin', keepFocus, true);
     restoreInteraction();
     onClose();
@@ -64,7 +69,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     if (initialization) return initialization;
     initialization = (async () => {
       const api = await load(); if (disposed) return;
-      const current = {context: api.createBisContext()}; session = current;
+      const current = {context: api.createBisContext(), api}; session = current;
       current.unsubscribeEvents = current.context.onEvent(event => {
         if (disposed || event.type !== 'restartRequested' || restarts.has(event.logoutId)) return;
         restarts.add(event.logoutId); restarting = true;
@@ -81,6 +86,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
       });
       await current.context.ready(); if (disposed) return;
       current.ui = api.createBisUi(current.context); current.ui.mount(mount);
+      if (!active) passive();
       return current;
     })().catch(error => { cleanup(session); session = undefined; initialization = undefined; throw error; });
     return initialization;
@@ -88,6 +94,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
   async function open() {
     if (disposed || active || restarting) return;
     active = true; const currentVisit = ++visit;
+    overlay.className = 'game-account-host';
     pauseController.pause('bis-account');
     blockInteraction();
     overlay.hidden = false; status.hidden = true; mount.hidden = true; message.textContent = '';
@@ -101,8 +108,24 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     } catch { if (!disposed && active && visit === currentVisit) { status.hidden = false; message.textContent = 'Account is unavailable. Return to Settings and try again.'; back.focus(); } }
     finally { clearTimeout(timer); }
   }
-  return {open, get isOpen() { return active; }, dispose() {
+  return {open, ready: () => initialize(), async createAssetCollection(options) {
+    let timer;
+    try {
+      const current = await Promise.race([initialize(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Trophies unavailable')),timeoutMs);})]);
+      if(disposed || !current)throw Error('Game session ended.');
+      const controller=current.api.createBisAssetCollection(current.context,options);
+      continuations.add(controller);
+      return {...controller,dispose(){continuations.delete(controller);controller.dispose();}};
+    } finally {clearTimeout(timer);}
+  }, async createContinue(options) {
+    const current = await initialize();
+    if (disposed || !current) throw Error('Game session ended.');
+    const controller = current.api.createBisContinue(current.context, options);
+    continuations.add(controller);
+    return {...controller, dispose() { continuations.delete(controller); controller.dispose(); }};
+  }, get isOpen() { return active; }, dispose() {
     if (disposed) return; disposed = true; restarting = false; close();
+    for (const controller of continuations) controller.dispose(); continuations.clear();
     documentRef.removeEventListener('fullscreenchange', moveOverlay);
     cleanup(session); overlay.remove();
   }};

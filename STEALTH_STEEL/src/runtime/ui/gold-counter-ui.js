@@ -20,5 +20,6 @@ export function createGoldCounterUi({ host, total = 0, documentRef = globalThis.
       render();
     },
     get collected() { return collected; },
+    get total() { return total; },
   };
 }

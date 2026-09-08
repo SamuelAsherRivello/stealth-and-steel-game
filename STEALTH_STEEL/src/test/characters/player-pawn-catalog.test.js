@@ -21,7 +21,7 @@ test("Pawn catalog exposes the expected loadout categories and frame sizes", () 
 
 test("Pawn weapon damage values are approved and bounded", () => {
   assert.deepEqual(PLAYER_WEAPON_DAMAGE, {
-    knife: 10,
+    knife: 25,
     pickaxe: 20,
     axe: 30,
     hammer: 40,

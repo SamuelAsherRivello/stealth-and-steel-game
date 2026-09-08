@@ -14,6 +14,7 @@ test("debug canvas switches coordinates, perceptions, colliders, tiles and tasks
     const ctx = new Proxy({}, { get: (_, key) => key === "measureText" ? () => ({width: 10}) : () => {} });
     const draw = runInNewContext(`${source}\ndrawDiagnostics`, {
       debugContext: ctx, SCREEN_WIDTH: 576, SCREEN_HEIGHT: 1024, TILE_SIZE: 64, performance: { now: () => 0 },
+      drawCharacterOverheads: record("overheads"), statusBadgeArt: null,
       drawEnemyAiLabels: (_, labels) => { if (labels.length) calls.add("tasks"); },
       drawGridLines: record("tiles"), formatLevelCellLabel: () => "00,00",
       drawTerrainCollider: record("colliders"), drawCharacterCollider: record("colliders"),
@@ -27,5 +28,6 @@ test("debug canvas switches coordinates, perceptions, colliders, tiles and tasks
     ["coordinates", "perceptions", "colliders", "tiles", "tasks"].forEach((name, bit) => {
       assert.equal(calls.has(name), Boolean(mask & (1 << bit)), `${name} at mask ${mask}`);
     });
+    assert.ok(calls.has("overheads"), `overheads remain visible at debug mask ${mask}`);
   }
 });

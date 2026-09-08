@@ -1,3 +1,4 @@
+import { resolvePlayerKnifeImpact } from "./gameplay/player-melee.js";
 import { enemyAiLabel, drawEnemyAiLabels } from "./ai/enemy-ai-labels.js";
 import { createEnemyBrain } from "./ai/enemy-brain.js";
 import { createPlanningScheduler } from "./ai/planning-scheduler.js";
@@ -44,6 +45,7 @@ import { getCharacterGridCell, getCharacterLayerOrder } from "./characters/chara
 import { getYSortedLayerOrder } from "./systems/environment/render-depth.js";
 import { createLevelTerrainTiles } from "../../plugins/tiled-babylon-lite/index.js";
 import { getColumnAnimationOffset } from "../../plugins/tiled-babylon-lite/terrain-runtime.js";
+import { createTerrainRendering } from "./systems/environment/terrain-renderer.js";
 import {
   PLAYER_FRAME,
   PLAYER_MOVEMENT_COLLIDER,
@@ -100,12 +102,18 @@ import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
-import { drawStatusBadge, loadStatusBadgeArt } from "./ui/status-badge.js";
+import { loadStatusBadgeArt } from "./ui/status-badge.js";
+import { createCharacterOverhead, drawCharacterOverheads } from "./ui/character-overhead.js";
 import { createBisAccount } from "./integration/bis-account.js";
+import { createPayToContinue } from "./integration/pay-to-continue.js";
+import { createLevelReward } from "./integration/level-reward.js";
+import { createLevelProgress } from "./gameplay/level-progress.js";
+import { revivePaidPlayer } from "./gameplay/paid-revival.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
-import { createLevelCompleteUi } from "./ui/level-complete-ui.js";
+import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui.js";
 import { createGoal } from "./systems/goals/goal.js";
+import { createGoalExit } from "./systems/goals/goal-exit.js";
 import { createViewportSafeArea } from "./ui/viewport-safe-area.js";
 import {
   RUNTIME_DEBUG_SETTING_KEYS,
@@ -156,8 +164,6 @@ const ENEMY_EXPRESSION_FADE_SECONDS = 0.25;
 const ENEMY_EXPRESSION_INSTANCE_FADE_SECONDS = ENEMY_EXPRESSION_FADE_SECONDS / 2;
 const EMOTIONAL_JUMP_DURATION_SECONDS = 0.096;
 const EMOTIONAL_JUMP_HEIGHT_PIXELS = 8;
-const ENEMY_EXPRESSION_ICON_OFFSET = Object.freeze({ x: 0, y: -64 });
-const ENEMY_EXPRESSION_MIN_SCALE = 0.3;
 const ENEMY_EXPRESSION_GRID_OFFSET = TILE_SIZE;
 const EMPTY_TERRAIN_FRAMES = new Set([
   4, 13, 22, 31, 37, 38, 40, 46, 47, 49,
@@ -224,6 +230,7 @@ function makeDirection(from, to) {
 }
 
 export async function start({ showStartPrompt = true } = {}) {
+  const progress = createLevelProgress(__GAME_LEVELS__, {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)}, () => window.location.reload());
   if (!navigator.gpu) {
     throw new Error("This Babylon Lite demo requires a browser with WebGPU enabled.");
   }
@@ -241,7 +248,7 @@ export async function start({ showStartPrompt = true } = {}) {
   engine._h = GAME_VIEWPORT.referenceResolution.height;
   refreshGameViewportDiagnostics();
   const animationManager = createSpriteAnimationManager();
-  const level = await loadTiledMap(`${import.meta.env.BASE_URL}assets/levels/tiled/maps/Level01.tmj`);
+  const level = await loadTiledMap(`${import.meta.env.BASE_URL}assets/levels/tiled/maps/${progress.file}`);
   const world = getLevelWorld(level);
   const worldBounds = world.bounds;
   const worldGrid = world.grid;
@@ -372,15 +379,7 @@ export async function start({ showStartPrompt = true } = {}) {
     })
   ));
 
-  const terrainLayerByImage = new Map([...terrainAtlasByImage].map(([image, atlas]) => [
-    image,
-    createSprite2DLayer(atlas, {
-      capacity: terrainTiles.filter((tile) => tile.image === image).length,
-      order: TILE_MAP_SUB_Z.ground,
-      pivot: [0, 0],
-    }),
-  ]));
-  const terrainLayers = [...terrainLayerByImage.values()];
+  const { terrainLayers, animatedTerrain } = createTerrainRendering(terrainTiles, terrainAtlasByImage);
   const visionShadowLayer = createSprite2DLayer(visionShadowAtlas, {
     capacity: 64,
     order: TILE_MAP_SUB_Z.ground + 1,
@@ -409,20 +408,6 @@ export async function start({ showStartPrompt = true } = {}) {
       frame: command.frame,
       color: command.color,
     }));
-  }
-
-  const animatedTerrain = [];
-  for (const tile of terrainTiles) {
-    if (!tile.valid) {
-      continue;
-    }
-
-    const sprite = addSprite2D(terrainLayerByImage.get(tile.image), {
-      positionPx: [tile.spritePosition.x, tile.spritePosition.y],
-      sizePx: tile.frameSize,
-      frame: tile.frame,
-    });
-    if (tile.animation.length) animatedTerrain.push({ sprite, frames: tile.animation, elapsed: 0, tile });
   }
 
   // Once terrain sprites exist, phase water playback by the logical world column.
@@ -464,6 +449,7 @@ export async function start({ showStartPrompt = true } = {}) {
   const enemyProfiles = { goblin: goblinProfile, warrior: warriorProfile, lancer: lancerProfile, archer: archerProfile, monk: monkProfile };
 
   function attachActor(record) {
+    record.overhead = createCharacterOverhead(record.combat);
     if (renderer) {
       for (const layer of record.actor.layers) {
         addSpriteRendererLayer(renderer, camera.attachLayer(layer));
@@ -533,6 +519,7 @@ export async function start({ showStartPrompt = true } = {}) {
   }
 
   function disposeActorRecord(record) {
+    record.overhead.dispose();
     record.awareness?.dispose();
     characterPerception.unregister(record.combat.label);
     if (renderer) {
@@ -543,13 +530,20 @@ export async function start({ showStartPrompt = true } = {}) {
     record.actor.dispose();
   }
 
-  function createPlayerRecord(position) {
+  function spawnPlayer(row, column, {
+    position = { x: (column + 0.5) * TILE_SIZE, y: (row + 0.5) * TILE_SIZE },
+    loadout,
+  } = {}) {
     const actor = createPlayer({
       atlases: archerAtlas,
       bounds: worldBounds,
       obstacles: obstacleColliders,
       initialPosition: position,
-      onShoot: (spawnPosition, direction) => projectiles.shoot(spawnPosition, direction),
+      initialLoadout: loadout,
+      onAttackImpact: () => resolvePlayerKnifeImpact(
+        getRecordsByType(SpawnerType.PLAYER).find(record => record.actor === actor),
+        getRecordsByType(SpawnerType.ENEMY),
+      ),
       onDropItem: (item, startPosition, movement) => {
         if (item !== "gold") return;
         const direction = movement.x !== 0 || movement.y !== 0
@@ -582,7 +576,7 @@ export async function start({ showStartPrompt = true } = {}) {
       onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }),
       onKnockback: (direction, options) => actor.applyKnockback(direction, options),
       onDeathStart: () => { actor.setInputEnabled(false); gameStateMachine.playerDefeated(); playSfx("lose"); },
-      onDeathComplete: () => { gameStateMachine.deathCompleted(); pauseController.pause(); levelLostUi.show(); },
+      onDeathComplete: () => { gameStateMachine.deathCompleted(); pauseController.pause('player-loss'); void paidContinue.show(); },
     });
     return attachActor({ type: SpawnerType.PLAYER, actor, combat });
   }
@@ -656,7 +650,7 @@ export async function start({ showStartPrompt = true } = {}) {
       const length = Math.hypot(dx, dy) || 1;
       return projectiles.shoot(spawnPosition, options.initialVelocityDirection ?? { x: dx / length, y: dy / length }, ownerId, { target, speedMultiplier: 0.5, collisionEnabled: true, rotationEnabled: true, ...options });
     } });
-    const combat = createCombatActorState({ label: ownerId, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, ARCHER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [ARCHER_FRAME.width * value, ARCHER_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: () => {} });
+    const combat = createCombatActorState({ label: ownerId, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, ARCHER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [ARCHER_FRAME.width * value, ARCHER_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
     return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.ARCHER, actor, combat, controller: null });
   }
 
@@ -737,7 +731,7 @@ export async function start({ showStartPrompt = true } = {}) {
 
   function createMonkRecord(position) {
     const actor = createMonk({ onHeal: () => playSfx("monk"), atlases: monkAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders });
-    const combat = createCombatActorState({ label: `monk-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, MONK_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [MONK_FRAME.width * value, MONK_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: () => {} });
+    const combat = createCombatActorState({ label: `monk-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, MONK_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [MONK_FRAME.width * value, MONK_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
     return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.MONK, actor, combat, controller: null });
   }
 
@@ -769,7 +763,9 @@ export async function start({ showStartPrompt = true } = {}) {
     [SpawnerCharacter.MONK]: { atlas: monkAtlases.idle, frameSize: MONK_FRAME },
   };
   const actorFactories = {
-    [SpawnerCharacter.PLAYER]: createPlayerRecord,
+    [SpawnerCharacter.PLAYER]: (position) => spawnPlayer(
+      Math.floor(position.y / TILE_SIZE), Math.floor(position.x / TILE_SIZE), { position },
+    ),
     [SpawnerCharacter.SHEEP]: createSheepRecord,
     [SpawnerCharacter.GOBLIN]: createGoblinRecord,
     [SpawnerCharacter.WARRIOR]: createWarriorRecord,
@@ -937,22 +933,35 @@ export async function start({ showStartPrompt = true } = {}) {
   );
   const pauseController = createPauseController({
     onPause: () => {
-      spawnerByType.get(SpawnerType.PLAYER).actors[0]?.actor.setInputEnabled(false);
+      spawnerByType.get(SpawnerType.PLAYER).actors[0]?.actor.setInputEnabled(false, { preserveAttack: true });
     },
     onResume: () => {
-      spawnerByType.get(SpawnerType.PLAYER).actors[0]?.actor.setInputEnabled(true);
+      const player = spawnerByType.get(SpawnerType.PLAYER).actors[0];
+      player?.actor.setInputEnabled(player.combat.isAlive && gameStateMachine.state === GameState.LEVEL_PLAYING);
       previousTime = performance.now();
     },
   });
   const accountHost = createBisAccount({
     host: domScreen, pauseController,
-    restartGame: () => window.location.reload(),
+    restartGame: () => progress.restart(),
     onClose: () => settingsUi.returnFromAccount(),
   });
   const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: () => accountHost.open() });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
-  const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, artworkUrl: "./assets/images/goals/StepsDown.png", position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
+  const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
+  const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown.png`, {
+    gridSize: [64, 64], sampling: "nearest",
+  });
+  void accountHost.ready().catch(() => {}); // Wallet availability never blocks ordinary game startup.
+  const goalLayer = createSprite2DLayer(goalAtlas, {
+    capacity: 1, order: TILE_MAP_SUB_Z.groundDecorations, pivot: [0.5, 0.5],
+  });
+  addSprite2D(goalLayer, {
+    positionPx: [goal.position.x, SCREEN_HEIGHT - goal.position.y],
+    sizePx: [64, 64], frame: 0,
+  });
+  addSpriteRendererLayer(renderer, camera.attachLayer(goalLayer));
   goal.updateView(camera);
   if (import.meta.env.DEV) globalThis.levelCameraDebug = Object.freeze({
     snapshot: () => ({ mode: world.mode, bounds: { ...worldBounds }, grid: { ...worldGrid },
@@ -969,9 +978,13 @@ export async function start({ showStartPrompt = true } = {}) {
       state: gameStateMachine.state,
     }),
   });
-  const levelCompleteUi = createLevelCompleteUi({ host: domBody, onContinue: () => window.location.reload() });
+  const levelCompleteUi = createLevelCompleteUi({host:domBody,onContinue:()=>levelReward.next(),onRestart:()=>levelReward.restart(),onCollect:()=>levelReward.collect(),onCheck:()=>levelReward.check(),onAcknowledge:()=>levelReward.acknowledge()});
+  const levelReward = createLevelReward({accountHost,ui:levelCompleteUi,progress,gold:goldCounter});
   const gameStateMachine = createGameStateMachine();
-  const levelLostUi = createLevelCompleteUi({ host: domBody, outcome: "loss", onContinue: () => window.location.reload() });
+  const levelLostUi = createLevelLostUi({host:domBody,onPay:()=>paidContinue.pay(),onRestart:()=>paidContinue.restart()});
+  const paidContinue = createPayToContinue({accountHost,ui:levelLostUi,restart:()=>progress.restart(),
+    revive:()=>revivePaidPlayer({machine:gameStateMachine,player:getRecordsByType(SpawnerType.PLAYER)[0],spawners,
+      enemyType:SpawnerType.ENEMY,tileSize:TILE_SIZE,spawnPlayer,resume:()=>pauseController.resume('player-loss')})});
   const startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
     ? createStartGamePrompt({
       host: domBody,
@@ -985,10 +998,12 @@ export async function start({ showStartPrompt = true } = {}) {
     pauseController.pause();
   }
   const characterLockupWatchdog = createCharacterLockupWatchdog();
+  let goalExit = null;
 
   function update(currentTime) {
     const deltaSeconds = Math.min((currentTime - previousTime) / 1000, 0.05);
     previousTime = currentTime;
+    goalExit?.update(deltaSeconds);
     let activeDelta = [GameState.LEVEL_LOST, GameState.LEVEL_COMPLETE].includes(gameStateMachine.state) ? 0 : pauseController.getDelta(deltaSeconds);
     if (gameStateMachine.state === GameState.LEVEL_START) {
       gameStateMachine.assetsLoaded();
@@ -1009,13 +1024,15 @@ export async function start({ showStartPrompt = true } = {}) {
       for (const spawner of spawners) {
         for (const record of spawner.actors) {
           record.combat.updateSpawn(activeDelta);
-          if (record.type === SpawnerType.PLAYER && record.combat.isDying) {
-            record.actor.update(activeDelta, [...getRecordsByType(SpawnerType.ENEMY), ...getRecordsByType(SpawnerType.SHEEP)]
-              .filter(other => other.combat.isAlive).map(other => ({ collider: other.actor.getMovementCollider() })));
+          if (record.combat.isDying && (record.type === SpawnerType.PLAYER
+            || (record.type === SpawnerType.ENEMY && record.actor.isKnockedBack))) {
+            record.actor.update(activeDelta, [...getRecordsByType(SpawnerType.PLAYER), ...getRecordsByType(SpawnerType.ENEMY), ...getRecordsByType(SpawnerType.SHEEP)]
+              .filter(other => other !== record && other.combat.isAlive).map(other => ({ collider: other.actor.getMovementCollider() })));
           }
           record.combat.updateDeath(activeDelta);
+          record.overhead.update(activeDelta);
           if (gameStateMachine.state === GameState.LEVEL_LOST) activeDelta = 0;
-          if (record.combat.isDead) {
+          if (record.combat.isDead && record.type !== SpawnerType.PLAYER) {
             spawner.remove(record);
           }
         }
@@ -1056,7 +1073,6 @@ export async function start({ showStartPrompt = true } = {}) {
         collider: record.combat.getCombatCollider(),
       }));
 
-      let playerMovement = { x: 0, y: 0 };
       const playerPositionBeforeUpdate = playerRecord?.actor.getPosition();
       if (playerRecord?.combat.isAlive) {
         const dynamicColliders = [
@@ -1065,7 +1081,7 @@ export async function start({ showStartPrompt = true } = {}) {
           ...(TEMPORARILY_DISABLE_GREEN_GREEN_COLLISIONS ? [] : enemyMovementColliders.filter(({ collider }) => collider))
             .map(({ collider }) => ({ type: CharacterType.ENEMY, collider })),
         ];
-        playerMovement = playerRecord.actor.update(activeDelta, dynamicColliders).movement;
+        playerRecord.actor.update(activeDelta, dynamicColliders);
         playerMovementCollider = playerRecord.actor.getMovementCollider();
         playerCombatCollider = playerRecord.combat.getCombatCollider();
         playerRecord.actor.observeHidingBushes(reactiveDecorations.filter(bush =>
@@ -1274,10 +1290,10 @@ export async function start({ showStartPrompt = true } = {}) {
             record.actor.setArtYOffset?.(jumpOffset);
             record.expressionJumpOffset = jumpOffset;
           }
-          record.actor.setVisualTransform({ color: record.expressionFlashColor });
+          if (!record.combat.isDamageFlashing) record.actor.setVisualTransform({ color: record.expressionFlashColor });
           record.expressionFlashRemaining = Math.max(0, record.expressionFlashRemaining - activeDelta);
           if (record.expressionFlashRemaining === 0) {
-            record.actor.setVisualTransform({ color: [1, 1, 1, 1] });
+            if (!record.combat.isDamageFlashing) record.actor.setVisualTransform({ color: [1, 1, 1, 1] });
             record.actor.setArtYOffset?.(0);
             record.expressionJumpOffset = 0;
           }
@@ -1346,25 +1362,6 @@ export async function start({ showStartPrompt = true } = {}) {
         projectiles.removeProjectiles(projectilesToRemove);
       }
 
-      if (playerRecord?.combat.isAlive && playerCombatCollider) {
-        for (const { record, collider } of enemyCombatColliders) {
-          if (!record.combat.isAlive || !collider) {
-            continue;
-          }
-          const touching = collidersOverlap(playerCombatCollider, collider);
-          if (touching && (playerMovement.x !== 0 || playerMovement.y !== 0)) {
-            const pair = makeTouchKey(playerRecord.combat.label, record.combat.label);
-            nextTouchPairs.add(pair);
-            if (!activeTouchPairs.has(pair)) {
-              record.combat.applyDamage(
-                25,
-                makeDirection(playerRecord.actor.getPosition(), record.actor.getPosition()),
-              );
-            }
-          }
-        }
-      }
-
       for (const enemyTarget of enemyCombatColliders) {
         if (!enemyTarget.record.combat.isAlive || !enemyTarget.collider) {
           continue;
@@ -1398,12 +1395,12 @@ export async function start({ showStartPrompt = true } = {}) {
       if (playerSnapshot) {
         coordinatesUi.update(playerSnapshot.position, playerSnapshot.cell);
         if (gameStateMachine.state === GameState.LEVEL_PLAYING && playerRecord.combat.isAlive
-          && playerCombatCollider && collidersOverlap(playerCombatCollider, goal.combatCollider)) {
+          && goal.isReachedBy(playerRecord.actor)) {
+          playerRecord.actor.setInputEnabled(false);
           gameStateMachine.goalReached();
           playSfx("win");
-          playerRecord.actor.setInputEnabled(false);
           pauseController.pause();
-          levelCompleteUi.show();
+          goalExit = createGoalExit(playerRecord.actor, goal.position, () => levelReward.show());
         }
       }
     }
@@ -1476,11 +1473,11 @@ export async function start({ showStartPrompt = true } = {}) {
       movementCollider: null,
       combatCollider: collider,
     })));
-    if (goal?.combatCollider) {
+    if (goal?.movementCollider) {
       diagnosticCharacters.push({
-        gridSpot: goal.getGridSpot?.() ?? new GridSpot(getColliderCenter(goal.combatCollider), { width: TILE_SIZE, height: TILE_SIZE }),
-        combatCollider: goal.combatCollider,
-        movementCollider: null,
+        gridSpot: goal.getGridSpot?.() ?? new GridSpot(getColliderCenter(goal.movementCollider), { width: TILE_SIZE, height: TILE_SIZE }),
+        combatCollider: null,
+        movementCollider: goal.movementCollider,
       });
     }
     drawDiagnostics(
@@ -1497,6 +1494,7 @@ export async function start({ showStartPrompt = true } = {}) {
             position: record.actor.getPosition(), snapshot: record.brain.getNavigationSnapshot(), jumpOffset: record.expressionJumpOffset,
           }, SCREEN_HEIGHT)) : [],
       {
+        overheadCharacters: spawners.flatMap(spawner => spawner.actors),
         coordinates: runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showCoordinates),
         perceptions: runtimeSettingsStore.get(RUNTIME_DEBUG_SETTING_KEYS.showEnemyPerceptions),
         visionOptions: getVisionOptions(characterPerception.getSnapshot()),
@@ -1517,6 +1515,8 @@ export async function start({ showStartPrompt = true } = {}) {
 
   requestAnimationFrame(update);
   window.addEventListener("pagehide", () => {
+    levelReward.dispose();
+    paidContinue.dispose();
     grassDecorations.dispose();
     accountHost.dispose();
     canvas.removeEventListener("pointerup", handleGridSelection);
@@ -1534,6 +1534,7 @@ export async function start({ showStartPrompt = true } = {}) {
     }
     for (const object of goldStoneObjects) object.dispose();
     goal.dispose();
+    removeSpriteRendererLayer(renderer, goalLayer);
     levelCompleteUi.dispose();
     levelLostUi.dispose();
     startGamePrompt?.close();
@@ -1657,54 +1658,13 @@ function drawDiagnostics(
   selectedGridSpot = null,
   camera = null,
   enemyAiLabels = [],
-  { coordinates = false, perceptions = false, tileMapInfo = false, visionOptions = {} } = {},
+  { coordinates = false, perceptions = false, tileMapInfo = false, visionOptions = {}, overheadCharacters = [] } = {},
 ) {
   debugContext.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   const offset = camera?.getOffset() ?? { x: 0, y: 0 };
   debugContext.save();
   debugContext.translate(-offset.x, offset.y);
-  for (const character of diagnosticCharacters) {
-    if (!character.movementCollider || !Array.isArray(character.expressionInstances)) continue;
-    const collider = character.movementCollider;
-    const centerX = collider.type === "circle"
-      ? collider.x
-      : (collider.x ?? 0) + (collider.width ?? 0) / 2;
-    const centerY = collider.type === "circle"
-      ? collider.y
-      : (collider.y ?? 0) + (collider.height ?? 0) / 2;
-    const iconX = centerX + ENEMY_EXPRESSION_ICON_OFFSET.x;
-    const iconY = SCREEN_HEIGHT - centerY + ENEMY_EXPRESSION_ICON_OFFSET.y
-      + (character.expressionJumpOffset ?? 0);
-    debugContext.font = "700 28px system-ui, sans-serif";
-    debugContext.textAlign = "center";
-    debugContext.textBaseline = "middle";
-    for (const instance of character.expressionInstances) {
-      if (!instance.icon) {
-        continue;
-      }
-      const iconOpacity = Math.max(0, Math.min(1, instance.opacity ?? 0));
-      if (iconOpacity <= 0) {
-        continue;
-      }
-      debugContext.globalAlpha = iconOpacity;
-      const iconScale = ENEMY_EXPRESSION_MIN_SCALE + (1 - ENEMY_EXPRESSION_MIN_SCALE) * iconOpacity;
-      debugContext.save();
-      debugContext.translate(iconX, iconY);
-      debugContext.scale(iconScale, iconScale);
-      debugContext.translate(-iconX, -iconY);
-      debugContext.shadowColor = "rgb(0 0 0 / 70%)";
-      debugContext.shadowBlur = 4;
-      debugContext.shadowOffsetY = 2;
-      drawStatusBadge(debugContext, statusBadgeArt, {
-        x: iconX, y: iconY, icon: instance.icon, flash: instance.flash,
-      });
-      debugContext.shadowColor = "transparent";
-      debugContext.shadowBlur = 0;
-      debugContext.shadowOffsetY = 0;
-      debugContext.restore();
-      debugContext.globalAlpha = 1;
-    }
-  }
+  drawCharacterOverheads(debugContext, statusBadgeArt, overheadCharacters, SCREEN_HEIGHT);
   drawEnemyAiLabels(debugContext, enemyAiLabels, { x: offset.x, y: -offset.y, width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
   if (tileMapInfo) drawGridLines(offset);
   if (tileMapInfo && selectedGridSpot) {

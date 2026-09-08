@@ -50,7 +50,8 @@ test("an upper-body projectile can overlap combat geometry without the movement 
   assert.equal(collidersOverlap(projectileCollider, movementCollider), false);
 });
 
-test("player damage uses committed impact events while player contact still requires movement", () => {
+test("player and enemy damage use committed impacts, with no player walking damage", () => {
   assert.match(mainSource, /resolveMeleeImpacts\(enemyRecords, playerRecord\)/);
-  assert.match(mainSource, /touching && \(playerMovement\.x !== 0 \|\| playerMovement\.y !== 0\)[\s\S]*record\.combat\.applyDamage/);
+  assert.match(mainSource, /onAttackImpact: \(\) => resolvePlayerKnifeImpact\(/);
+  assert.doesNotMatch(mainSource, /touching && \(playerMovement\.x !== 0/);
 });

@@ -2,6 +2,7 @@ import { loadSpriteAtlas } from "@babylonjs/lite";
 import { createSharedCharacterActor } from "../../shared-character-actor.js";
 import { createCharacterDefinition } from "../../character-contract.js";
 import { MONK_ANIMATION_CATALOG, MONK_ANIMATION_NAMES } from "./monk-animation-catalog.js";
+import { createEnemyKnockback } from '../../../gameplay/enemy-knockback.js';
 
 export const MONK_FRAME = Object.freeze({ width: 192, height: 192 });
 export const MONK_PIVOT = Object.freeze({ x: 0.5, y: 0.84 });
@@ -30,15 +31,26 @@ export function createMonk({ atlases, initialPosition, bounds, obstacles = [], r
     definition: MONK_DEFINITION, atlases, initialPosition, bounds,
     tileSize: 64, obstacles, api: runtimeApi,
   });
+  const knockback = createEnemyKnockback({
+    character: { frame: MONK_FRAME, pivot: { x: .5, y: 1 - 32 / MONK_FRAME.height },
+      collider: { type: 'circle', x: 96, y: 160, radius: MONK_MOVEMENT_COLLIDER.radius } },
+    bounds, obstacles,
+  });
   return {
     ...actor,
+    get isKnockedBack() { return knockback.active; },
     get state() { return "idle"; },
     get isAttacking() { return false; },
     getHeading() { return actor.getHeading(); },
-    update(deltaSeconds, dynamicColliders) { return actor.update(deltaSeconds, dynamicColliders); },
+    isMovementLocked() { return knockback.active; },
+    update(deltaSeconds, dynamicColliders) {
+      const position = knockback.move(actor.getPosition(), deltaSeconds, dynamicColliders);
+      if (position) { actor.setPosition(position); return { position, state: 'idle' }; }
+      return actor.update(deltaSeconds, dynamicColliders);
+    },
     playAnimation(manager) { actor.setAnimationManager(manager); actor.playAnimation("idle"); },
     playHeal() { actor.playAnimation("heal"); onHeal(); },
     playHealEffect() { actor.playAnimation("heal-effect"); },
-    applyKnockback() {},
+    applyKnockback(direction, options) { knockback.start(direction, options); },
   };
 }

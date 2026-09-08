@@ -63,15 +63,13 @@ test("player module owns pawn input and animation", async () => {
   assert.match(playerSource, /createVirtualController/);
   assert.match(playerSource, /playSprite2DAnimation/);
   assert.match(playerSource, /window\.addEventListener\("keydown"/);
-  assert.match(playerSource, /KeyC/);
+  assert.doesNotMatch(playerSource, /KeyC/);
   assert.match(playerSource, /KeyV/);
-  assert.match(playerSource, /onShoot/);
+  assert.match(playerSource, /onAttackImpact/);
   assert.match(playerSource, /ARROW_SPAWN_OFFSETS/);
   assert.match(playerSource, /Pawn_Idle\.png/);
   assert.match(playerSource, /Pawn_Run\.png/);
   assert.match(playerSource, /Pawn_Interact Knife\.png/);
-  assert.match(playerSource, /visibleName\.startsWith\("idle"\)\s*\? 7\s*:\s*visibleName\.startsWith\("run"\) \? 5 : 3/);
-  assert.match(playerSource, /visibleName !== "shoot"/);
   assert.match(playerSource, /createPlayerStateMachine/);
   assert.match(playerSource, /createGridAlignedMovementController/);
   assert.match(playerSource, /const ENABLE_QUANTIZE_MOVEMENT = false;/);
@@ -80,8 +78,8 @@ test("player module owns pawn input and animation", async () => {
   assert.match(playerSource, /gridAlignedMovement\.reset\(\)/);
   assert.match(playerSource, /gridAlignedMovement\.move\(/);
   assert.match(playerSource, /getPosition\(\)/);
-  assert.match(playerSource, /PlayerState\.SHOOTING/);
-  assert.match(playerSource, /stateMachine\.releaseShot\(activeAnimation\.current\)/);
+  assert.match(playerSource, /PlayerState\.ATTACKING/);
+  assert.match(playerSource, /knifeSwing\.advance/);
   assert.match(mainSource, /spawner\.actors\.flatMap\(\(record\) => record\.actor\.layers\)/);
   assert.doesNotMatch(mainSource, /createVirtualController/);
   assert.doesNotMatch(mainSource, /playSprite2DAnimation\(animationManager, archer/);

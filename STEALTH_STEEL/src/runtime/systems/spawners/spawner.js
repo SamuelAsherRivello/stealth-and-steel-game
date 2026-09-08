@@ -231,6 +231,16 @@ export function createSpawner({
       }
       return created;
     },
+    replace(actor, createReplacement) {
+      const index = actors.indexOf(actor);
+      if (disposed || index === -1) return null;
+      // Dispose input/renderer registrations before installing the replacement.
+      disposeActor(actor);
+      const replacement = createReplacement();
+      if (!replacement) throw new Error(`Spawner '${type}' replacement returned no actor`);
+      actors[index] = replacement;
+      return replacement;
+    },
     remove(actor) {
       const index = actors.indexOf(actor);
       if (index === -1) {

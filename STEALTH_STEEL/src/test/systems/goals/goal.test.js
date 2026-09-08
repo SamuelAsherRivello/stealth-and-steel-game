@@ -17,15 +17,15 @@ test("goal completion requires overlap with the centered 10x10 pixel collider", 
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const outerContact = { x: position.x + dx * 7 - 1,
       y: position.y + dy * 7 - 1, width: 2, height: 2 };
-    assert.equal(collidersOverlap(outerContact, goal.combatCollider), false,
+    assert.equal(collidersOverlap(outerContact, goal.movementCollider), false,
       `outer cell contact (${dx}, ${dy}) must not complete the level`);
   }
-  assert.deepEqual(goal.combatCollider, {
+  assert.deepEqual(goal.movementCollider, {
     x: position.x - 5, y: position.y - 5,
     width: 10, height: 10,
   });
   assert.equal(collidersOverlap({ x: position.x - 1, y: position.y - 1,
-    width: 2, height: 2 }, goal.combatCollider), true);
+    width: 2, height: 2 }, goal.movementCollider), true);
 });
 
 test("goal view projects its DOM marker without moving world collision geometry", () => {
@@ -34,15 +34,18 @@ test("goal view projects its DOM marker without moving world collision geometry"
   const position = { x: 800, y: 1440 };
   const goal = createGoal({ host: { append(element) { marker = element; } }, position,
     screenWidth: GRID.widthPx, screenHeight: GRID.heightPx, documentRef });
+  assert.equal(goal.combatCollider, undefined);
+  assert.equal(goal.isReachedBy({ getMovementCollider: () => ({ x: 799, y: 1439, width: 2, height: 2 }) }), true);
+  assert.equal(goal.isReachedBy({ getMovementCollider: () => ({ x: 820, y: 1460, width: 2, height: 2 }), getCombatCollider: () => goal.movementCollider }), false);
   const camera = createLevelCamera(getLevelWorld({ width: 32, height: 42, origin: { x: 1, y: 1 }, cameraMode: "follow-player" }));
   camera.initialize({ x: 672, y: 1312 });
-  const collider = { ...goal.combatCollider };
+  const collider = { ...goal.movementCollider };
   goal.updateView(camera);
   assert.equal(marker.style.top, "37.5%");
   assert.equal(marker.hidden, false);
-  assert.deepEqual(goal.combatCollider, collider);
+  assert.deepEqual(goal.movementCollider, collider);
   camera.initialize({ x: 1800, y: 2400 });
   goal.updateView(camera);
   assert.equal(marker.hidden, true);
-  assert.deepEqual(goal.combatCollider, collider);
+  assert.deepEqual(goal.movementCollider, collider);
 });

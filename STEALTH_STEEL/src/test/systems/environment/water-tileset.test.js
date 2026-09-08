@@ -14,16 +14,31 @@ test('Water has two distinct static editor icons and runtime-only animation acro
  assert.notEqual(water.tiles[0].image,water.tiles[1].image);
  assert.ok(water.tiles.every(t=>!t.animation));
  const tiles=collectTiledLayerTiles(normalizeTiledMap(map,sets)).filter(t=>t.source==='../tilesets/Water.tsj');
- assert.equal(tiles.length,51);
+ const waterRef = map.tilesets.find(t => t.source === '../tilesets/Water.tsj');
+ const authored = map.layers.filter(l => l.type === 'tilelayer').flatMap(l => l.data);
+ assert.equal(tiles.length, authored.filter(gid => gid === waterRef.firstgid || gid === waterRef.firstgid + 1).length);
  assert.ok(tiles.every(t=>t.layerName==='Underground'));
  const staticTiles=tiles.filter(t=>t.gid===160),animatedTiles=tiles.filter(t=>t.gid===161);
- assert.equal(staticTiles.length,38);assert.equal(animatedTiles.length,13);
+ assert.equal(staticTiles.length, authored.filter(gid => gid === waterRef.firstgid).length);
+ assert.equal(animatedTiles.length, authored.filter(gid => gid === waterRef.firstgid + 1).length);
  const samples=[staticTiles[0],animatedTiles[0]];
  assert.equal(samples[0].animation.length,0);assert.equal(samples[1].animation.length,16);
  assert.deepEqual(samples[1].frameSize,[192,192]);assert.equal(samples[1].frame,0);
  const png=readFileSync(new URL(samples[1].image,new URL('../tilesets/Water.tsj',url)));
  assert.equal(png.readUInt32BE(16),192*16);assert.equal(png.readUInt32BE(20),192);
  assert.ok(createLevelTerrainTiles(tiles,64,1024,new Set()).every(t=>t.valid && t.blocked === (t.animation.length === 0)));
+});
+
+test('animated water displays ten percent smaller without changing atlas sampling or its cell center', () => {
+ const url = new URL('maps/Level01.tmj', base), map = json(url);
+ const sets = new Map(map.tilesets.map(r => [r.source, json(new URL(r.source, url))]));
+ const placement = collectTiledLayerTiles(normalizeTiledMap(map, sets))
+   .find(t => t.source.endsWith('/Water.tsj') && t.animation.length);
+ const [tile] = createLevelTerrainTiles([placement], 64, 1024, new Set());
+ assert.deepEqual(tile.frameSize, [192, 192]);
+ assert.deepEqual(tile.displaySize, [172.8, 172.8]);
+ assert.equal(tile.spritePosition.x + tile.displaySize[0] / 2, tile.screenPosition.x + 32);
+ assert.equal(tile.spritePosition.y + tile.displaySize[1] / 2, tile.screenPosition.y + 32);
 });
 
 

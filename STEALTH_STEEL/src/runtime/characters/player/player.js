@@ -1,3 +1,4 @@
+import { createKnifeSwing } from "../../gameplay/player-melee.js";
 import { createDistanceImpulse } from "../../gameplay/player-damage.js";
 import { createBushGravity } from "./bush-gravity.js";
 import {
@@ -102,7 +103,7 @@ export async function loadPlayerAtlases(engine) {
     gridSize: [PLAYER_FRAME.width, PLAYER_FRAME.height],
     sampling: "nearest",
   };
-  const [idle, run, shoot, ...loadoutAtlases] = await Promise.all([
+  const [idle, run, attack, ...loadoutAtlases] = await Promise.all([
     loadSpriteAtlas(engine, "./assets/images/player/pawn/Pawn_Idle.png", options),
     loadSpriteAtlas(engine, "./assets/images/player/pawn/Pawn_Run.png", options),
     loadSpriteAtlas(engine, "./assets/images/player/pawn/Pawn_Interact Knife.png", options),
@@ -111,7 +112,7 @@ export async function loadPlayerAtlases(engine) {
       loadSpriteAtlas(engine, `./assets/images/player/pawn/Pawn_Run ${name}.png`, options),
     ]),
   ]);
-  const atlases = { idle, run, shoot };
+  const atlases = { idle, run, attack };
   for (const [index, name] of ["axe", "gold", "hammer", "knife", "meat", "pickaxe", "wood"].entries()) {
     atlases[`idle-${name}`] = loadoutAtlases[index * 2];
     atlases[`run-${name}`] = loadoutAtlases[index * 2 + 1];
@@ -124,7 +125,8 @@ export function createPlayer({
   bounds,
   obstacles,
   initialPosition,
-  onShoot = () => {},
+  initialLoadout = {},
+  onAttackImpact = () => {},
   onDropItem = () => {},
 }) {
   let position = { ...initialPosition };
@@ -139,6 +141,7 @@ export function createPlayer({
   );
   const layers = {};
   const sprites = {};
+  let visualPivot = PLAYER_PIVOT;
   for (const animation of Object.keys(atlases)) {
     const layer = createSprite2DLayer(atlases[animation], {
       capacity: 1,
@@ -159,8 +162,9 @@ export function createPlayer({
   const bushGravity = createBushGravity();
   const knockbackImpulse = createDistanceImpulse();
   const stateMachine = createPlayerStateMachine();
-  let weaponSlot = null;
-  let itemSlot = null;
+  const knifeSwing = createKnifeSwing();
+  let weaponSlot = initialLoadout.weapon ?? null;
+  let itemSlot = initialLoadout.item ?? null;
   let presentationOverride = null;
   let presentationOverrideTimer = 0;
   let animationManager = null;
@@ -196,29 +200,13 @@ export function createPlayer({
     for (const [layerName, layer] of Object.entries(layers)) {
       layer.visible = layerName === visibleName;
     }
-    const lastFrame = visibleName.startsWith("idle")
-      ? 7
-      : visibleName.startsWith("run") ? 5 : 3;
-    activeAnimation = playSprite2DAnimation(
-      animationManager,
-      sprites[visibleName],
-      0,
-      lastFrame,
-      visibleName !== "shoot",
-      100,
-      visibleName === "shoot"
-        ? {
-            onEnd: () => {
-              const transition = stateMachine.completeShooting(
-                getSelectedMovement(),
-              );
-              if (transition.changed) {
-                playStateAnimation(getAnimationName(transition.state));
-              }
-            },
-          }
-        : undefined,
-    );
+    if (visibleName === "attack") {
+      activeAnimation = null;
+      updateSprite2D(sprites.attack, { frame: knifeSwing.frame });
+      return;
+    }
+    const lastFrame = visibleName.startsWith("idle") ? 7 : 5;
+    activeAnimation = playSprite2DAnimation(animationManager, sprites[visibleName], 0, lastFrame, true, 100);
   }
 
   function getLocomotionAnimationName(name) {
@@ -232,22 +220,22 @@ export function createPlayer({
     if (state === PlayerState.RUNNING) {
       return "run";
     }
-    if (state === PlayerState.SHOOTING) {
-      return "shoot";
+    if (state === PlayerState.ATTACKING) {
+      return "attack";
     }
     return "idle";
   }
 
-  function shoot() {
-    if (!inputEnabled || !weaponSlot) {
-      return;
-    }
-    const transition = stateMachine.startShooting(
-      shotDirectionMemory.resolve(getSelectedMovement()),
-    );
-    if (transition.changed) {
-      playStateAnimation(getAnimationName(transition.state));
-    }
+  function attack() {
+    if (!inputEnabled || !knifeSwing.start()) return;
+    const transition = stateMachine.startAttack("knife");
+    if (transition.changed) playStateAnimation("attack");
+  }
+
+  function cancelAttack() {
+    knifeSwing.cancel();
+    const transition = stateMachine.completeAttack(getSelectedMovement());
+    if (transition.changed) playStateAnimation(getAnimationName(transition.state));
   }
 
   function setVisualTransform({
@@ -255,10 +243,16 @@ export function createPlayer({
     scaleY,
     alpha,
     rotation,
+    pivot,
     color,
     sizePx,
   }) {
     const patch = {};
+    if (pivot !== undefined) {
+      visualPivot = { x: pivot[0], y: pivot[1] };
+      for (const layer of Object.values(layers)) layer.pivot = [...pivot];
+      updateSprites();
+    }
     if (scaleX !== undefined) {
       patch.scaleX = scaleX;
     }
@@ -298,7 +292,10 @@ export function createPlayer({
     for (const layer of Object.values(layers)) layer.order = order;
     for (const sprite of Object.values(sprites)) {
       updateSprite2D(sprite, {
-        positionPx: [screenPosition.x, screenPosition.y],
+        positionPx: [
+          screenPosition.x + (visualPivot.x - PLAYER_PIVOT.x) * PLAYER_FRAME.width,
+          screenPosition.y + (visualPivot.y - PLAYER_PIVOT.y) * PLAYER_FRAME.height,
+        ],
       });
     }
   }
@@ -315,10 +312,8 @@ export function createPlayer({
   const virtualController = createVirtualController({
     joystick: document.querySelector("#movement-joystick"),
     puck: document.querySelector("#movement-puck"),
-    itemButton: document.querySelector("#item-action"),
     attackButton: document.querySelector("#attack-action"),
-    onItem: useItem,
-    onAttack: shoot,
+    onAttack: attack,
     onMovementChange: (movement) => {
       shotDirectionMemory.rememberMovement(movement);
     },
@@ -370,15 +365,9 @@ export function createPlayer({
       }
       return;
     }
-    if (event.code === "KeyC" || event.code === "KeyV") {
+    if (event.code === "KeyV") {
       event.preventDefault();
-      if (!event.repeat && inputEnabled) {
-        if (event.code === "KeyC") {
-          useItem();
-        } else {
-          shoot();
-        }
-      }
+      if (!event.repeat) attack();
       return;
     }
     setKey(event, true);
@@ -412,6 +401,8 @@ export function createPlayer({
 
   return {
     layers: Object.values(layers),
+    get state() { return stateMachine.state; },
+    cancelAttack,
     observeHidingBushes(bushes) {
       const wasActive = bushGravity.active;
       bushGravity.observe(bushes, position, inputEnabled && !knockbackImpulse.active);
@@ -419,6 +410,8 @@ export function createPlayer({
     },
     isGravityMoving() { return bushGravity.active; },
     dispose() {
+      inputEnabled = false;
+      cancelAttack();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleBlur);
@@ -459,11 +452,12 @@ export function createPlayer({
       return stateMachine.heading;
     },
     resetInput,
-    setInputEnabled(enabled) {
+    setInputEnabled(enabled, { preserveAttack = false } = {}) {
       inputEnabled = Boolean(enabled);
       if (!inputEnabled) {
         bushGravity.cancel();
         resetInput();
+        if (!preserveAttack) cancelAttack();
       }
     },
     playAnimation(manager) {
@@ -483,7 +477,7 @@ export function createPlayer({
         );
         if (presentationOverrideTimer === 0) {
           presentationOverride = null;
-          playStateAnimation(
+          if (!knifeSwing.active) playStateAnimation(
             stateMachine.state === PlayerState.RUNNING ? "run" : "idle",
           );
         }
@@ -493,18 +487,6 @@ export function createPlayer({
       const transition = stateMachine.updateLocomotion(selectedMovement);
       if (transition.changed) {
         playStateAnimation(getAnimationName(transition.state));
-      }
-
-      if (
-        inputEnabled
-        && stateMachine.state === PlayerState.SHOOTING
-        && activeAnimation
-        && stateMachine.releaseShot(activeAnimation.current)
-      ) {
-        onShoot(
-          getArrowSpawnPosition(position, stateMachine.shotDirection),
-          stateMachine.shotDirection,
-        );
       }
 
       const movement = knockbackMovement || (stateMachine.movementLocked
@@ -569,6 +551,16 @@ export function createPlayer({
       }
 
       gridSpot.update(position);
+
+      if (inputEnabled && knifeSwing.active) {
+        const { impact, completed } = knifeSwing.advance(deltaSeconds);
+        updateSprite2D(sprites.attack, { frame: knifeSwing.frame });
+        if (impact) onAttackImpact();
+        if (completed) {
+          const result = stateMachine.completeAttack(getSelectedMovement());
+          if (result.changed) playStateAnimation(getAnimationName(result.state));
+        }
+      }
 
       const screenPosition = getArtScreenPosition(position);
       const order = renderOrderOverride ?? getCharacterLayerOrder(this.getMovementCollider(), bounds);

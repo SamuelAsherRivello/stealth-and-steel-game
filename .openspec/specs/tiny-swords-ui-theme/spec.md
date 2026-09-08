@@ -8,7 +8,7 @@ Provide a complete Tiny Swords visual treatment for the game's existing interfac
 
 ### Requirement: Approved compact HUD presentation
 
-The HUD SHALL show version metadata at the upper-left inset using 9.6px text and left-aligned Gold directly beneath it, without a gold ribbon or coin. Settings artwork SHALL retain the approved half-size presentation and raised inner icon. Move and action controls SHALL use unchanged artwork geometry with tint for pressed states, while retaining joystick translation. Item SHALL show a flat white square at 25% of the action artwork dimensions; the Attack sword SHALL occupy 45.5%. The three controller labels SHALL share a baseline lowered 20px from the previously reviewed raised position.
+The HUD SHALL show version metadata at the upper-left inset using 9.6px text and left-aligned Gold directly beneath it, without a gold ribbon or coin. Settings artwork SHALL retain the approved half-size presentation and raised inner icon. Move and action controls SHALL use unchanged artwork geometry with tint for pressed states, while retaining joystick translation. Item and its label SHALL be temporarily absent; the Attack sword SHALL occupy 45.5%. The Move and Attack labels SHALL share a baseline lowered 20px from the previously reviewed raised position.
 
 #### Scenario: Approved HUD appears in gameplay
 - **WHEN** the player enters gameplay
@@ -55,7 +55,7 @@ C061 SHALL present the implemented HUD for explicit user approval before main-me
 
 ### Requirement: Existing actions remain recognizable and functional
 
-The themed UI SHALL retain existing instructions, outcome messages, action labels, keyboard bindings, settings values, and gameplay effects. The approved Start Menu SHALL show the Stealth & Steel logo above its blue Start Menu ribbon. Other menus SHALL NOT show the logo. Prompt bodies SHALL contain no decorative icons. Item and Attack SHALL retain that left-to-right order. Decorative artwork SHALL NOT intercept gameplay or control input outside intended interactive regions. Main menu SHALL refer to the existing Stealth Grid start screen. Status badges SHALL retain the meanings of suspicious, investigating, alert, and hidden indicators and their existing timing.
+The themed UI SHALL retain existing outcome messages, available action labels, settings values, and gameplay effects. Instructions and keyboard hints SHALL describe Attack/V and movement, omitting Item/C activation while temporarily disabled. Attack SHALL use the fixed knife melee action. Other keyboard bindings SHALL remain available. The approved Start Menu SHALL show the Stealth & Steel logo above its blue Start Menu ribbon. Other menus SHALL NOT show the logo. Prompt bodies SHALL contain no decorative icons. Attack SHALL be the sole visible action button while Item is temporarily unavailable. Decorative artwork SHALL NOT intercept gameplay or control input outside intended interactive regions. Main menu SHALL refer to the existing Stealth Grid start screen. Status badges SHALL retain the meanings of suspicious, investigating, alert, and hidden indicators and their existing timing.
 
 #### Scenario: Simultaneous movement and attack
 - **WHEN** one pointer moves the joystick and another activates Attack
@@ -63,8 +63,18 @@ The themed UI SHALL retain existing instructions, outcome messages, action label
 - **AND** the themed pressed state corresponds to the control being used
 
 #### Scenario: Settings and outcome actions
-- **WHEN** the user adjusts Music or SFX, changes fullscreen, opens or closes settings, resets settings, or selects Continue after a level outcome
+- **WHEN** the user adjusts Music or SFX, changes fullscreen, opens or closes settings, or resets settings
 - **THEN** each action retains its existing state and gameplay effect while using the themed presentation
+
+#### Scenario: Completion reward and progression (BIS C6)
+- **WHEN** the player reaches the level exit
+- **THEN** the themed prompt shows Level Completed with HUD gold counts and Collect Level N Trophy, Continue To Next Level and Restart Game
+- **AND** the final packaged level shows Game Completed with completed/total levels and omits Continue
+- **AND** collection uses the public BIS asset-collection controller, retains the menu and disables its actions during the bounded attempt
+- **AND** confirmed collection shows the awarded image toast and disables collection; uncertainty preserves the request for Check Trophy Status
+- **AND** guests, owned trophies and missing configuration cannot collect but can navigate
+- **AND** Continue loads the next packaged level, while Restart Game returns to Level 1 without clearing wallet state
+- **AND** the death menu uses Restart Game while retaining its paid revival action
 
 #### Scenario: Hidden or alert state changes
 - **WHEN** the game changes a character's hidden or perception state

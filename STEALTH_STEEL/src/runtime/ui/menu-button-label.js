@@ -6,7 +6,9 @@ if (globalThis.customElements && !customElements.get("menu-button-label")) {
         if (!this.isConnected || !this.parentElement) return;
         const button = this.parentElement;
         const style = getComputedStyle(button);
-        const available = button.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const icon = button.querySelector('.menu-button-icon');
+        const iconWidth = icon ? icon.getBoundingClientRect().width + (parseFloat(style.columnGap) || 0) : 0;
+        const available = button.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - iconWidth;
         if (available <= 0) return;
         const baseSize = parseFloat(style.fontSize);
         this.style.fontSize = `${baseSize}px`;

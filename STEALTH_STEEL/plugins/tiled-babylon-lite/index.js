@@ -89,6 +89,7 @@ export function normalizeTiledMap(map, externalTilesets) {
           frame: source.tileset.image ? frame : 0, gid, source: source.source, image,
           blocksVision: tileProperties.blocksVision === true,
           frameSize: [tileProperties.frameWidth ?? source.tileset.tilewidth, tileProperties.frameHeight ?? source.tileset.tileheight],
+          displayScale: tileProperties.displayScale ?? 1,
           animation: tileProperties.frameCount
             ? Array.from({ length: tileProperties.frameCount }, (_, tileid) => ({ tileid, duration: tileProperties.frameDurationMs }))
             : tileDefinition?.animation ?? [],

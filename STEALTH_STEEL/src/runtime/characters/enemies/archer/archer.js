@@ -4,6 +4,7 @@ import { getYSortedLayerOrder } from "../../../systems/environment/render-depth.
 import { ARCHER_RECOVERY_SECONDS } from "./archer-ai.js";
 import { getQuantizedGridCell } from "../../../systems/environment/grid-spot.js";
 import { updatePlayerAttackPreparation, cancelPlayerAttackPreparation } from '../player-attack-preparation.js';
+import { createEnemyKnockback } from '../../../gameplay/enemy-knockback.js';
 
 export const ARCHER_FRAME = Object.freeze({ width: 192, height: 192 });
 export const ARCHER_PIVOT = Object.freeze({ x: 0.5, y: 0.84 });
@@ -24,6 +25,7 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
   let facing = 1; let target = null; let recovery = 0; let released = false; let shootElapsed = 0;
   let movementIntent = { x: 0, y: 0 };
   const gridMovement = createGridAlignedMovementController({ frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }, 64);
+  const knockback = createEnemyKnockback({ character: { frame: ARCHER_FRAME, pivot: ARCHER_PIVOT, collider: ARCHER_MOVEMENT_COLLIDER }, bounds, obstacles });
   const layers = {}; const sprites = {};
   const getArtScreenPosition = (worldPosition) => worldToScreen({ x: worldPosition.x + ARCHER_ART_OFFSET.x, y: worldPosition.y + ARCHER_ART_OFFSET.y }, 1, (bounds.renderHeight ?? bounds.height));
   const updateSprites = (transform = {}) => {
@@ -53,7 +55,8 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
   }
   return {
     layers: Object.values(layers),
-    isMovementLocked() { return disposed || state === "shooting" || recovery > 0; },
+    get isKnockedBack() { return knockback.active; },
+    isMovementLocked() { return disposed || knockback.active || state === "shooting" || recovery > 0; },
     get state() {
       return state;
     },
@@ -90,6 +93,14 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       if (disposed) return;
       const delta = Math.max(0, deltaSeconds);
       if (delta <= 0) return;
+      const knockedPosition = knockback.move(position, delta, dynamicColliders);
+      if (knockedPosition) {
+        cancelPlayerAttackPreparation(this);
+        gridMovement.reset();
+        position = knockedPosition;
+        updateSprites();
+        return;
+      }
       if (recovery > 0) {
         recovery = Math.max(0, recovery - delta);
         if (recovery === 0) play("idle");
@@ -151,7 +162,7 @@ export function createArcher({ atlases, initialPosition, bounds, obstacles = [],
       artYOffset = Number.isFinite(value) ? value : 0;
       updateSprites();
     },
-    applyKnockback() {},
+    applyKnockback(direction, options) { knockback.start(direction, options); },
     dispose() {
       if (disposed) return;
       cancelPlayerAttackPreparation(this);

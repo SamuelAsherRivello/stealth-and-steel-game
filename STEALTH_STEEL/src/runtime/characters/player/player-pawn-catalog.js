@@ -16,7 +16,7 @@ export const PLAYER_WEAPONS = Object.freeze([
 export const PLAYER_ITEMS = Object.freeze(["gold", "meat", "wood"]);
 
 export const PLAYER_WEAPON_DAMAGE = Object.freeze({
-  knife: 10,
+  knife: 25,
   pickaxe: 20,
   axe: 30,
   hammer: 40,

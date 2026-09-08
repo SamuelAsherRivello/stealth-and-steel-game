@@ -38,7 +38,7 @@ Closing the Settings Menu SHALL resume only if no other pause owner remains, fro
 - **THEN** closing settings does not restore that input as active
 
 ### Requirement: Independent Account pause ownership
-Settings and BIS Account SHALL acquire/release separate pause reasons while preserving existing start/loss pauses. Account SHALL keep the scene rendered, isolate keyboard/pointer input and preserve the final-resume time reset. Coordination: BIS `.openspec/changes/smoke-test-bis-to-game/`; no payment, revival or death requirements change.
+Settings and BIS Account SHALL acquire/release separate pause reasons while preserving existing start/loss pauses. Account SHALL keep the scene rendered, isolate keyboard/pointer input and preserve the final-resume time reset. Paid revival SHALL release only the player-loss reason after enemy cleanup and full-health restoration. The passive BIS toast host SHALL not acquire a gameplay pause or intercept input. Coordination: BIS `.openspec/changes/smoke-test-bis-to-game/` and `.openspec/changes/archive/2026-09-07-add-b2-game-pay-to-continue/`.
 
 #### Scenario: Account returns while another pause remains
 - **WHEN** Account returns to Settings, or Settings closes while a start/loss pause remains

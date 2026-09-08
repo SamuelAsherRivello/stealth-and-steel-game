@@ -17,8 +17,16 @@ export function createCombatActorState({
   onSpawnProgress,
   onHitFlashStart,
   onKnockback,
+  onHealthChange,
 }) {
   let health = MAX_HEALTH;
+  const healthListeners = new Set();
+  function notifyHealthChanged(previous) {
+    if (previous === health) return;
+    const change = Object.freeze({ previous, current: health, maximum: MAX_HEALTH });
+    onHealthChange?.(change);
+    for (const listener of healthListeners) listener(change);
+  }
   let isDying = false;
   let isDead = false;
   // A sprite must have a valid visible transform before its first renderer
@@ -61,6 +69,13 @@ export function createCombatActorState({
     get health() {
       return health;
     },
+    get maxHealth() {
+      return MAX_HEALTH;
+    },
+    subscribeHealthChanges(listener) {
+      healthListeners.add(listener);
+      return () => healthListeners.delete(listener);
+    },
     get isAlive() {
       return !isDying && !isDead;
     },
@@ -70,8 +85,22 @@ export function createCombatActorState({
     get isDead() {
       return isDead;
     },
+    get isDamageFlashing() {
+      return hitFlashRemainingSeconds > 0 && !isDying && !isDead;
+    },
     getCombatCollider: getActiveCombatCollider,
     setVisualTransform,
+    revive() {
+      if (!isDead) return false;
+      const previousHealth = health;
+      health = MAX_HEALTH; isDead = false; isDying = false;
+      deathElapsedSeconds = 0; hitFlashRemainingSeconds = 0;
+      spawnElapsedSeconds = SPAWN_ANIMATION_DURATION_SECONDS;
+      onDeathProgress?.(1);
+      setVisualTransform({scaleX:1,scaleY:1,alpha:1,rotation:0,color:[1,1,1,1]});
+      notifyHealthChanged(previousHealth);
+      return true;
+    },
     beginSpawn() {
       spawnElapsedSeconds = 0;
       if (onSpawnProgress) {
@@ -93,11 +122,13 @@ export function createCombatActorState({
       }
     },
     applyDamage(amount, hitDirection = { x: 1, y: 0 }, knockbackOptions = {}) {
-      if (!this.isAlive || amount <= 0) {
+      if (!this.isAlive || !Number.isFinite(amount) || amount <= 0) {
         return;
       }
 
+      const previousHealth = health;
       health -= amount;
+      notifyHealthChanged(previousHealth);
       if (onKnockback && hitDirection) {
         onKnockback(hitDirection, {
           duration: KNOCKBACK_DURATION_SECONDS,

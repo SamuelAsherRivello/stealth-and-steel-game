@@ -83,7 +83,7 @@ export function createSharedCharacterActor({
   return {
     layers: Object.values(layers),
     getPosition: () => ({ ...position }),
-    setPosition(next) { position = { ...next }; gridSpot.update(position); updateSprites(); },
+    setPosition(next) { position = { ...next }; gridMovement.reset(); gridSpot.update(position); updateSprites(); },
     getMovementCollider: () => getCharacterMovementCollider(position, definition),
     getCombatCollider: () => getCharacterCombatCollider(position, tileSize),
     faceDirection(direction) {

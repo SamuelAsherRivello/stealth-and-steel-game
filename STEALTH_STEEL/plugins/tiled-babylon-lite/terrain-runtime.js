@@ -18,6 +18,8 @@ export function createLevelTerrainTiles(
       y: screenHeight - (gameCell.y + 1) * tileSize,
     };
     const valid = !emptyFrames.has(frame);
+    const displaySize = (placement.frameSize ?? [tileSize, tileSize])
+      .map(size => size * (placement.displayScale ?? 1));
     const colliders = valid
       ? collisionShapes
         .map((shape) => collisionShapeToWorld(
@@ -35,9 +37,10 @@ export function createLevelTerrainTiles(
       collisionShapes,
       colliders,
       screenPosition,
+      displaySize,
       spritePosition: {
-        x: screenPosition.x + (tileSize - (placement.frameSize?.[0] ?? tileSize)) / 2,
-        y: screenPosition.y + (tileSize - (placement.frameSize?.[1] ?? tileSize)) / 2,
+        x: screenPosition.x + (tileSize - displaySize[0]) / 2,
+        y: screenPosition.y + (tileSize - displaySize[1]) / 2,
       },
       valid,
       blocked: colliders.length > 0,

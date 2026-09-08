@@ -102,5 +102,8 @@ export function createPlayerStateMachine({ releaseFrame = 5 } = {}) {
           : PlayerState.IDLE,
       );
     },
+    completeAttack(movement) {
+      return this.completeShooting(movement);
+    },
   };
 }

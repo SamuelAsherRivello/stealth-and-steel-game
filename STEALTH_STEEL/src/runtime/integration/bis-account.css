@@ -1,6 +1,7 @@
 /* Host geometry only; the packaged BIS stylesheet owns Account components. */
 .game-account-host { position: fixed; inset: 0; z-index: 10000; pointer-events: auto; isolation: isolate; background: rgb(0 0 0 / 55%); }
 .game-account-host[hidden], .game-account-host [hidden] { display: none; }
+.game-account-host.game-account-passive { background: transparent; pointer-events: none; }
 /* BIS owns its native dimensions; the host mounts it at 100%. */
 .game-account-mount { position: absolute; inset: 0; }
 .game-account-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; background: transparent; color: white; font: 16px/1.5 system-ui, sans-serif; text-align: center; }

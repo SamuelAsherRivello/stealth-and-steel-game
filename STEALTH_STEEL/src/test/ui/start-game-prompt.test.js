@@ -36,7 +36,7 @@ test("skipIntro is enabled only for the exact development query flag", () => {
   assert.equal(shouldSkipIntro({ isDevelopment: false, search: "?skipIntro=true" }), false);
 });
 
-test("start prompt closes only when the backdrop itself is clicked", () => {
+test("start prompt requires its Start button and ignores background clicks", () => {
   const host = new FakeElement();
   let starts = 0;
   const prompt = createStartGamePrompt({ host, onStart: () => { starts += 1; }, documentRef });
@@ -57,5 +57,25 @@ test("start prompt closes only when the backdrop itself is clicked", () => {
   click(secondPrompt.backdrop, secondPrompt.panel);
   assert.equal(host.children.length, 1);
   click(secondPrompt.backdrop);
+  assert.equal(host.children.length, 1);
+  secondPrompt.close();
+});
+
+test("start prompt blocks keyboard button activation", () => {
+  const host = new FakeElement();
+  let starts = 0;
+  const prompt = createStartGamePrompt({ host, onStart: () => starts++, documentRef });
+  for (const type of ["keydown", "keyup"]) {
+    for (const key of ["Enter", " "]) {
+      const event = new Event(type, { cancelable: true, bubbles: true });
+      Object.defineProperty(event, "key", { value: key });
+      prompt.backdrop.dispatchEvent(event);
+      assert.equal(event.defaultPrevented, true, `${type} ${key} must not activate Start`);
+    }
+  }
+  assert.equal(starts, 0);
+  assert.equal(host.children.length, 1);
+  click(prompt.startButton);
+  assert.equal(starts, 1);
   assert.equal(host.children.length, 0);
 });

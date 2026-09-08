@@ -35,14 +35,14 @@ The player SHALL initially use a 64 px wide by 128 px high combat rectangle cent
 - **THEN** each rectangle follows its own configured dimensions rather than a universal rectangle
 
 ### Requirement: Combat overlap preserves existing damage rules
-Projectile targeting and contact-damage overlap checks SHALL use combat colliders. Damage amounts, enemy attack-state gates, moving-player contact behavior, enemy-to-sheep contact behavior, and contact-pair reset behavior SHALL remain unchanged.
+Projectile targeting and contact-damage overlap checks SHALL use combat colliders. Player-to-enemy walking/contact damage SHALL be disabled. Explicit knife impacts SHALL use direct damage-collider overlap at the swing midpoint and deal 25 damage per living enemy once per swing. Existing enemy attack-state gates, enemy-to-sheep contact behavior, projectile rules, and contact-pair reset behavior SHALL remain unchanged.
 
 #### Scenario: Combat colliders overlap without an active damage trigger
 - **WHEN** two combat colliders overlap but the existing actor-state and movement rules do not permit damage
 - **THEN** neither actor receives damage solely because of the overlap
 
 #### Scenario: Existing contact trigger is satisfied
-- **WHEN** two combat colliders overlap and the existing actor-state or movement rule permits contact damage
+- **WHEN** an enemy and sheep overlap and their existing contact rule permits damage
 - **THEN** damage is applied with the existing amount and contact-pair behavior
 
 ### Requirement: Collider diagnostics distinguish both roles

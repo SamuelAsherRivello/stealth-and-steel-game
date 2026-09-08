@@ -45,10 +45,7 @@ export function createVirtualController({
   onMovementChange = () => {},
 }) {
   const removers = [];
-  const actionPointers = new Map([
-    [itemButton, new Set()],
-    [attackButton, new Set()],
-  ]);
+  const actionPointers = new Map();
   let activeMovementPointer;
   let movement = { x: 0, y: 0 };
 
@@ -125,7 +122,9 @@ export function createVirtualController({
   listen(joystick, "lostpointercapture", handleMovementEnd);
 
   function registerAction(button, callback) {
-    const pressedPointers = actionPointers.get(button);
+    if (!button) return;
+    const pressedPointers = new Set();
+    actionPointers.set(button, pressedPointers);
 
     function resetPointer(event) {
       pressedPointers.delete(getPointerId(event));
@@ -149,6 +148,11 @@ export function createVirtualController({
     listen(button, "pointerup", resetPointer);
     listen(button, "pointercancel", resetPointer);
     listen(button, "lostpointercapture", resetPointer);
+    listen(button, "keydown", (event) => {
+      if (event.repeat && (event.code === "Enter" || event.code === "Space")) {
+        event.preventDefault();
+      }
+    });
     listen(button, "click", (event) => {
       if (event.detail === 0) {
         callback();

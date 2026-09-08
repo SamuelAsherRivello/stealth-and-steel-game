@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { createCombatActorState } from "../../runtime/gameplay/combat-actor.js";
+import { createCharacterOverhead } from "../../runtime/ui/character-overhead.js";
 
 test("characters use a quarter-second scale and opacity spawn animation", async () => {
   const source = await readFile(new URL("../../runtime/main.js", import.meta.url), "utf8") + await readFile(new URL("../../runtime/gameplay/combat-actor.js", import.meta.url), "utf8");
@@ -23,11 +25,13 @@ test("spawn animation begins even when actors attach before renderer creation", 
 
   assert.ok(attachActor);
   let spawnCount = 0;
-  const attach = new Function("renderer", "SpawnerType", "getEnemyExpression",
-    `return (${attachActor});`)(null, { ENEMY: "enemy" }, () => ({}));
-  const record = { type: "player", actor: {}, combat: { beginSpawn() { spawnCount += 1; } } };
+  const attach = new Function("renderer", "SpawnerType", "getEnemyExpression", "createCharacterOverhead",
+    `return (${attachActor});`)(null, { ENEMY: "enemy" }, () => ({}), createCharacterOverhead);
+  const combat = createCombatActorState({ onSpawnProgress: progress => { if (progress === 0) spawnCount++; } });
+  const record = { type: "player", actor: {}, combat };
   assert.equal(attach(record), record);
   assert.equal(spawnCount, 1);
+  assert.equal(record.overhead.snapshot.opacity, 0);
 });
 
 test("all character renderers keep spawn scaling centered on the sprite", async () => {

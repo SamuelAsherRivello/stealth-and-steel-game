@@ -215,6 +215,8 @@ human edits content only on the existing layers.
 See [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md) for the open, edit, save,
 close, and play workflow.
 
+Level completion offers an optional player-funded trophy through BIS and then **Continue To Next Level** or **Restart Game**. The final level shows **Game Completed**. Levels are catalogued from exact `LevelNN.tmj` filenames; backups are excluded. Run progress is stored per tab, and restarting returns to Level 1 without clearing the wallet. Level 2 is a minimal playable map using existing terrain, three gold pickups and an exit. Game-controlled trophy issuance (X1) is deferred.
+
 ### Troubleshooting
 
 #### WebGPU not working?

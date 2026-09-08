@@ -4,21 +4,36 @@ import "./menu-button-label.js";
 let nextMenuId = 0;
 
 /** A native menu action; callers own its event handlers and lifecycle. */
-export function createMenuButton({ displayText, className = "", documentRef = globalThis.document }) {
+export function createMenuButton({ displayText, icon = null, className = "", documentRef = globalThis.document }) {
   const button = documentRef.createElement("button");
   button.type = "button";
   button.className = `menu-button-text tiny-swords-button ${className}`.trim();
   const label = documentRef.createElement("menu-button-label");
   label.textContent = displayText;
+  button.menuLabel = label;
+  if (icon) {
+    const symbol = documentRef.createElement('span');
+    symbol.className = 'menu-button-icon'; symbol.textContent = icon; symbol.setAttribute('aria-hidden','true');
+    button.className += ' has-menu-icon'; button.append(symbol);
+  }
   button.append(label, createPanelArt(documentRef, "tiny-swords-button-art"));
   return button;
 }
 
 /** Reusable presentation; callers own mounting, visibility, focus and actions. */
-export function createMenu({ titleText, bodyText, content = null, closeButton = null, buttons = [], logo = null,
+export function createMenu({ titleText, bodyText, content = null, closeButton = null, buttons = [], logo = null, buttonClicksOnly = false,
   titleId = `menu-title-${++nextMenuId}`, documentRef = globalThis.document }) {
   const backdrop = documentRef.createElement("div");
   backdrop.className = `menu-backdrop tiny-swords-menu-backdrop${logo ? " has-logo" : ""}`;
+  if (buttonClicksOnly) {
+    // Focused native buttons otherwise activate on Enter or Space.
+    const containKeyboard = event => {
+      event.stopPropagation();
+      if (event.key === "Enter" || event.key === " " || event.code === "Space") event.preventDefault();
+    };
+    backdrop.addEventListener("keydown", containKeyboard);
+    backdrop.addEventListener("keyup", containKeyboard);
+  }
   const composition = documentRef.createElement("div");
   composition.className = "tiny-swords-menu-composition";
   const panel = documentRef.createElement("section");

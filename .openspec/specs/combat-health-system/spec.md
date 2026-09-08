@@ -16,7 +16,7 @@ Each player, sheep, and goblin entity SHALL start with exactly 100 health points
 
 ### Requirement: Damage is applied only by defined sources and amounts
 The system SHALL apply damage only through the defined interaction matrix and
-SHALL ignore all other contact sources for damage. An arrow approaching from
+SHALL ignore all other contact sources for damage. A successful player knife swing SHALL deal exactly 25 damage once to each eligible living Goblin, Warrior, Lancer, Archer, or Monk through direct damage-collider overlap at the swing midpoint. Knife hits SHALL retain existing hit feedback, supported knockback, and death handling; projectile-only defense SHALL not reject knife hits. An arrow approaching from
 the direction the Warrior is already facing SHALL always trigger defense and
 deal no damage. An arrow approaching from behind SHALL never trigger defense
 and SHALL reduce Warrior health by 50. An upward-moving arrow SHALL be defended
@@ -53,7 +53,7 @@ be defended and SHALL reduce Warrior health by 50.
 
 #### Scenario: Hero walks into goblin
 - **WHEN** the hero collider overlaps the goblin collider while the hero is moving
-- **THEN** goblin health is reduced by 25
+- **THEN** goblin health is unchanged unless a knife swing reaches its midpoint with overlapping damage colliders
 
 #### Scenario: Goblin damages hero only during attack swing
 - **WHEN** the goblin is in an active swing damage phase and its damage window overlaps the hero
@@ -63,6 +63,15 @@ be defended and SHALL reduce Warrior health by 50.
 - **WHEN** the goblin overlaps the hero while not in an attack damage phase
 - **THEN** the hero health does not change
 
+#### Scenario: Knife hits each enemy type
+- **WHEN** a successful knife swing hits a living Goblin, Warrior, Lancer, Archer, or Monk
+- **THEN** its health decreases by exactly 25 once and existing hit or lethal feedback runs
+
+#### Scenario: Four isolated knife hits defeat an enemy
+- **WHEN** an enemy starting at its existing 100 health receives four successful knife hits with no other damage
+- **THEN** its health progresses through 75, 50, 25, and 0
+- **AND** at zero health its existing death lifecycle begins and it stops accepting damage
+
 ### Requirement: Death animation triggers at zero health
 When an entity health reaches 0 or below, the entity SHALL stop moving and SHALL run a 250ms in-place death animation.
 
@@ -70,12 +79,44 @@ When an entity health reaches 0 or below, the entity SHALL stop moving and SHALL
 - **WHEN** hero arrow damage causes a target health to reach 0 or below
 - **THEN** the target stops moving immediately and plays a 250ms death animation that scales from current scale to 0, fades opacity from 1 to 0, and rotates randomly by -20° or +20°
 
-### Requirement: No health visibility
-The health system SHALL NOT render any health bars or numeric health UI during gameplay.
+### Requirement: Shared character health visibility on change
+Every player, enemy character type, and sheep SHALL use the same compact green health fill, dark background, and thin border without numeric text. A meter SHALL start hidden and appear only when its character's current health changes. Actual health SHALL change immediately; presentation SHALL animate independently using gameplay time and pause with gameplay.
 
-#### Scenario: Health never shown
-- **WHEN** gameplay is running and any entity takes damage
-- **THEN** no health bar or health value appears in the game UI for that entity
+#### Scenario: A character takes damage while its meter is hidden
+- **WHEN** current health changes from a previous value to a new value
+- **THEN** the meter fades in for 0.1 seconds while showing the previous value, then animates its fill to the new value over 0.1 seconds
+- **AND** after 1 second measured from the latest health change it fades out over 0.1 seconds
+
+#### Scenario: Another change arrives during a fill transition
+- **WHEN** health changes while the fill is animating or holding
+- **THEN** the fill animates from its currently displayed value to the latest health over a fresh 0.1 seconds without snapping
+- **AND** the hide timer restarts at that health change
+
+#### Scenario: Another change arrives during a fade
+- **WHEN** health changes during fade-in
+- **THEN** the existing fade-in finishes while retaining the displayed health, then the fill animates to the latest health over 0.1 seconds
+- **WHEN** health changes during fade-out
+- **THEN** the meter fades back in from its current opacity over 0.1 seconds, then animates to the latest health over 0.1 seconds
+- **AND** either change restarts the hide timer
+
+#### Scenario: Health does not change
+- **WHEN** a character spawns, a hit is blocked, or an update leaves current health unchanged
+- **THEN** its meter is not revealed and its hide timer is not extended
+
+#### Scenario: A character dies or revives
+- **WHEN** lethal damage reduces character health to zero or below
+- **THEN** the displayed fill animates to zero and the meter remains eligible to render during the existing 0.25-second death animation
+- **AND** the meter disappears when the character becomes dead, even if its normal timeout has not elapsed
+- **WHEN** an existing dead character revives with restored health
+- **THEN** the meter starts a fresh reveal and fill transition for the restored health
+
+### Requirement: Shared overhead placement
+Perception icons and health meters SHALL be anchored to each character's logical center plus a centrally configured character-type-specific overhead offset, separate from artwork offsets. The perception icon SHALL occupy a fixed slot above the health bar, which SHALL clear the character's head. Both elements SHALL follow the same movement, visual jump displacement, and camera translation independently of debug visibility settings.
+
+#### Scenario: Perception and damage occur together
+- **WHEN** a perception icon and health bar are visible for the same character
+- **THEN** both remain readable with a gap accommodating the icon at its full animation size
+- **AND** neither element changes position when the other appears or disappears
 
 ### Requirement: Bushes participate in shared health without visible UI
 Each bush SHALL start with exactly 100 health, accept damage only while living, and expose no health bar or numeric health value during gameplay.

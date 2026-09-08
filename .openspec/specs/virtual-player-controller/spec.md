@@ -7,16 +7,14 @@ Provide responsive pointer and touch controls for X/Y player movement, item use,
 
 ### Requirement: Virtual controller remains visible and usable
 
-The game SHALL display one movement joystick in the lower-left and two action buttons labeled `Item` and `Attack` in that left-to-right order in the lower-right. The complete controller SHALL remain inside the visible game frame on desktop and mobile after viewport or orientation changes.
+The game SHALL display one movement joystick in the lower-left and one action button labeled `Attack` in the lower-right. Item SHALL be temporarily absent from visible layout, hit testing, and keyboard focus. The complete controller SHALL remain inside the visible game frame on desktop and mobile after viewport or orientation changes, without reserving an empty Item slot.
 
 #### Scenario: Controller appears at startup
-
 - **WHEN** gameplay starts in a supported browser
-- **THEN** the movement joystick, Item button, and Attack button are visible
-- **AND** they do not overlap one another or extend outside the game frame
+- **THEN** the movement joystick and Attack button are visible and Item is absent
+- **AND** controls do not overlap one another or extend outside the game frame
 
 #### Scenario: Viewport changes
-
 - **WHEN** the viewport size or orientation changes
 - **THEN** the controller remains fully visible inside the game frame
 - **AND** existing coordinate and control guidance remains legible without overlapping the controller
@@ -82,61 +80,57 @@ The player controller SHALL NOT expose, bind, or execute jump behavior. No input
 
 ### Requirement: Item activation uses the held item
 
-Activating Item by pointer press or keyboard key `C` SHALL attempt to use the currently held item exactly once per activation. With no held item, activation SHALL cause no runtime error, movement, state change, or animation. With a held item, the item slot SHALL be cleared. Gold SHALL spawn a pickup from the player's center toward the player's movement direction; wood and meat SHALL be consumed without spawning a map pickup until their pickup implementations exist.
+Player-triggered Item activation SHALL be temporarily disabled. C SHALL not be accepted as a gameplay action and SHALL cause no item consumption, drop, animation, movement, or attack. Item inventory and pickup data SHALL remain available for future restoration; other loadout keys SHALL retain their existing behavior.
 
 #### Scenario: Item activation with a held item
-
-- **WHEN** the player presses Item or `C` while holding an item
-- **THEN** the held item is used once and the item slot becomes empty
-- **AND** gold spawns as a pickup from the player's center toward movement
+- **WHEN** the player presses, holds, or releases C while holding an item
+- **THEN** the item remains held and no gameplay action or animation is triggered by C
 
 #### Scenario: Item activation without a held item
+- **WHEN** the player presses C with an empty item slot
+- **THEN** no gameplay action, animation, or error occurs
 
-- **WHEN** the player presses Item or `C` without holding an item
-- **THEN** no gameplay action or animation occurs
+#### Scenario: Item control is omitted
+- **WHEN** the controller starts, resets, handles blur, or is disposed without an Item element
+- **THEN** no error occurs and available controls retain their normal lifecycle
 
 ### Requirement: Action buttons support simultaneous pointers
 
-Item and Attack SHALL activate independently on pointer press and SHALL remain usable while another pointer controls movement. Releasing, cancelling, or moving one action pointer SHALL NOT reset the joystick or the other action.
+Attack SHALL activate once on pointer press and SHALL remain usable while another pointer controls movement. Releasing, cancelling, or moving an action pointer SHALL NOT reset the joystick. Pressed appearance SHALL follow the Attack pointer and clear on release, cancellation, lost capture, or blur.
+
+#### Scenario: Attack while moving
+- **WHEN** one pointer controls the joystick and a second pointer presses Attack
+- **THEN** one knife attack begins without interrupting movement
+
+#### Scenario: Attack pointer is cancelled
+- **WHEN** the Attack pointer is cancelled while the joystick remains held
+- **THEN** Attack's pressed appearance clears and joystick movement continues
 
 #### Scenario: Former jump action is pressed while moving
-
-- **WHEN** one pointer controls the joystick and a second pointer presses Item
-- **THEN** the held item's use action begins without interrupting movement
+- **WHEN** one pointer controls the joystick and another pointer presses the former Item/Jump button location outside Attack's hit area
+- **THEN** no item or jump action occurs and movement remains uninterrupted
 
 #### Scenario: Separate action pointers are used
-
-- **WHEN** different pointers press Jump and Shoot
-- **THEN** each action receives its own activation
-- **AND** each button's pressed appearance follows only its own active pointer state
-
-### Requirement: Shoot integrates without owning projectile behavior
-
-Activating Shoot SHALL request the game-owned shoot action exactly once per pointer press when that action is available. If the arrow-shooting implementation is not available, Shoot SHALL cause no runtime error or unrelated state change.
-
-#### Scenario: Arrow shooting is available
-
-- **WHEN** the player presses Shoot and the game has registered its shooting action
-- **THEN** that action is invoked exactly once for the press
-
-#### Scenario: Arrow shooting is unavailable
-
-- **WHEN** the player presses Shoot before the shooting action has been integrated
-- **THEN** gameplay continues without an error
-- **AND** movement and jump state are unchanged
+- **WHEN** one pointer presses Attack and another presses the inactive former Item/Jump location
+- **THEN** only Attack requests an action
+- **AND** Attack's pressed appearance follows only its own active pointer state
 
 ### Requirement: Attack integrates without owning weapon behavior
 
-Activating Attack SHALL request the game-owned weapon attack exactly once per
-pointer press when available. Without an equipped weapon, Attack SHALL cause
-no runtime error or unrelated state change.
+Attack SHALL request the game-owned fixed knife attack once per deliberate pointer press, accessible button activation, or non-repeated V keydown during active gameplay. The attack SHALL be available without an equipped weapon and SHALL ignore the selected weapon type. Held V SHALL not auto-repeat attacks. Active swings and disabled gameplay input SHALL reject additional attack requests without queueing them.
 
 #### Scenario: Weapon attack is available
-
-- **WHEN** the player presses Attack with a weapon equipped
-- **THEN** the game-owned weapon attack is invoked once
+- **WHEN** the player presses Attack or V during active gameplay while no swing is active
+- **THEN** the game-owned knife attack begins once regardless of weapon selection
 
 #### Scenario: Weapon attack is unavailable
+- **WHEN** Attack or V is activated while input is disabled or another swing is active
+- **THEN** no new attack begins or is queued and gameplay continues without an error
 
-- **WHEN** the player presses Attack without an equipped weapon
-- **THEN** gameplay continues without an error
+#### Scenario: Accessible button activation
+- **WHEN** the focused Attack button is activated with Enter or Space during active gameplay
+- **THEN** one knife attack is requested
+
+#### Scenario: Holding V
+- **WHEN** V remains held through repeated keydown events and swing completion
+- **THEN** repeats start no additional attack until a new deliberate press

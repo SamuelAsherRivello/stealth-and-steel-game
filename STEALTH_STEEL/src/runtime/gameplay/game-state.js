@@ -7,6 +7,7 @@ export function createGameStateMachine() {
     goalReached() { if (state === GameState.LEVEL_PLAYING) state = GameState.LEVEL_COMPLETE; return state; },
     playerDefeated() { if (state === GameState.LEVEL_PLAYING) state = GameState.LEVEL_DYING; return state; },
     deathCompleted() { if (state === GameState.LEVEL_DYING) state = GameState.LEVEL_LOST; return state; },
+    continueAfterPayment() { if (state === GameState.LEVEL_LOST) state = GameState.LEVEL_PLAYING; return state; },
     shouldShowLevelCompletePrompt() { return state === GameState.LEVEL_COMPLETE; },
   };
 }

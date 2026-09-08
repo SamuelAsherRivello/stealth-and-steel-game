@@ -122,6 +122,7 @@
         {
          "draworder":"topdown",
          "id":20,
+         "locked":true,
          "name":"Level Markers",
          "objects":[
                 {
@@ -146,6 +147,7 @@
         {
          "draworder":"topdown",
          "id":5,
+         "locked":true,
          "name":"Spawners",
          "objects":[
                 {
@@ -331,8 +333,8 @@
                  "type":"GoldPickupSpawner",
                  "visible":true,
                  "width":35,
-                 "x":591.5,
-                 "y":143
+                 "x":718.5,
+                 "y":267
                 },
             
                 {
@@ -407,6 +409,42 @@
                  "width":34.5,
                  "x":480.25,
                  "y":241
+                }, 
+                {
+                 "height":34,
+                 "id":35,
+                 "name":"Gold Pickup Spawner 1",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"GoldPickupSpawner",
+                 "visible":true,
+                 "width":35,
+                 "x":399.5,
+                 "y":264
+                }, 
+                {
+                 "height":34,
+                 "id":36,
+                 "name":"Gold Pickup Spawner 1",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"GoldPickupSpawner",
+                 "visible":true,
+                 "width":35,
+                 "x":455.5,
+                 "y":270
+                }, 
+                {
+                 "height":34,
+                 "id":37,
+                 "name":"Gold Pickup Spawner 1",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"GoldPickupSpawner",
+                 "visible":true,
+                 "width":35,
+                 "x":659.5,
+                 "y":78
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -417,6 +455,7 @@
         {
          "draworder":"topdown",
          "id":6,
+         "locked":true,
          "name":"Y-Sorted Props",
          "objects":[
                 {
@@ -504,7 +543,7 @@
          "y":0
         }],
  "nextlayerid":23,
- "nextobjectid":34,
+ "nextobjectid":42,
  "orientation":"orthogonal",
  "properties":[
         {

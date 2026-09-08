@@ -1,3 +1,4 @@
+import { createEnemyKnockback } from '../../../gameplay/enemy-knockback.js';
 import { createAttackImpactQueue } from "../../../gameplay/attack-impact.js";
 import { updatePlayerAttackPreparation, cancelPlayerAttackPreparation } from '../player-attack-preparation.js';
 import {
@@ -13,7 +14,6 @@ import {
 import {
   getCharacterCollider,
   createGridAlignedMovementController,
-  moveWithCollisions,
   worldToScreen,
 } from "../../../gameplay/game-logic.js";
 import { getCharacterGridCell, getCharacterLayerOrder } from "../../character-spatial.js";
@@ -56,8 +56,6 @@ const DEFAULT_API = Object.freeze({
   stopSpriteAnimation,
   updateSprite2D,
 });
-const DEFAULT_KNOCKBACK_DURATION_SECONDS = 0.15;
-const DEFAULT_KNOCKBACK_SPEED = 260;
 
 export async function loadWarriorAtlases(engine, api = DEFAULT_API) {
   const entries = await Promise.all(
@@ -108,10 +106,8 @@ export function createWarrior({
   let animationManager = null;
   let activeAnimation = null;
   let disposed = false;
-  let knockback = { x: 0, y: 0 };
+  const knockback = createEnemyKnockback({ character, bounds, obstacles });
   const attackImpacts = createAttackImpactQueue();
-  let knockbackTimer = 0;
-  let knockbackDuration = 0;
   let defenseRemainingSeconds = 0;
 
   const layers = {};
@@ -217,30 +213,15 @@ export function createWarrior({
     }
   }
 
-  function applyKnockback(direction, {
-    duration = DEFAULT_KNOCKBACK_DURATION_SECONDS,
-    speed = DEFAULT_KNOCKBACK_SPEED,
-  } = {}) {
-    const normalizer = Math.hypot(direction.x, direction.y) || 1;
-    knockback = {
-      x: direction.x / normalizer * speed,
-      y: direction.y / normalizer * speed,
-    };
-    knockbackTimer = duration;
-    knockbackDuration = Math.max(0.0001, duration);
-  }
-
-  function getKnockbackMovement(deltaSeconds) {
-    if (knockbackTimer <= 0) return null;
-    const intensity = Math.max(0, knockbackTimer / knockbackDuration);
-    knockbackTimer = Math.max(0, knockbackTimer - Math.max(0, deltaSeconds));
-    return { x: knockback.x * intensity, y: knockback.y * intensity };
+  function applyKnockback(direction, options) {
+    knockback.start(direction, options);
   }
 
   return {
     layers: Object.values(layers),
+    get isKnockedBack() { return knockback.active; },
     drainAttackImpacts() { return attackImpacts.drain(); },
-    isMovementLocked() { return stateMachine.movementLocked || knockbackTimer > 0; },
+    isMovementLocked() { return stateMachine.movementLocked || knockback.active; },
     get state() {
       return stateMachine.state;
     },
@@ -337,6 +318,14 @@ export function createWarrior({
       if (disposed) {
         return { position: { ...position }, state: stateMachine.state };
       }
+      if (this.isMovementLocked()) cancelPlayerAttackPreparation(this);
+      const knockedPosition = knockback.move(position, deltaSeconds, dynamicColliders);
+      if (knockedPosition) {
+        gridMovement.reset();
+        position = knockedPosition;
+        updateSprites();
+        return { position: { ...position }, state: stateMachine.state };
+      }
       if (defenseRemainingSeconds <= 0) {
         const incoming = selectIncomingProjectile(
           projectiles,
@@ -364,21 +353,6 @@ export function createWarrior({
           const transition = stateMachine.completeDefense(movementIntent);
           if (transition.changed) playStateAnimation(transition.state);
         }
-        updateSprites();
-        return { position: { ...position }, state: stateMachine.state };
-      }
-      if (this.isMovementLocked()) cancelPlayerAttackPreparation(this);
-      const knockbackMovement = getKnockbackMovement(deltaSeconds);
-      if (knockbackMovement) {
-        gridMovement.reset();
-        position = moveWithCollisions(
-          position,
-          knockbackMovement,
-          Math.hypot(knockbackMovement.x, knockbackMovement.y) * deltaSeconds,
-          bounds,
-          character,
-          [...obstacles, ...dynamicColliders.map(({ collider }) => collider)],
-        );
         updateSprites();
         return { position: { ...position }, state: stateMachine.state };
       }

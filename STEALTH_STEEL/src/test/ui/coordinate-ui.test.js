@@ -45,15 +45,15 @@ test("Coordinates UI visibility follows the collider diagnostic setting", () => 
   assert.equal(gridOutput.value, "Grid: (10,4)");
 });
 
-test("virtual controller contains matching Move, Item (C), and Attack (V) labels", async () => {
+test("virtual controller contains Move and Attack (V) labels with Item temporarily absent", async () => {
   const html = await readFile(new URL("../../../index.html", import.meta.url), "utf8");
   const itemIndex = html.indexOf('id="item-action"');
   const attackIndex = html.indexOf('id="attack-action"');
 
   assert.match(html, /id="movement-joystick"/);
-  assert.ok(itemIndex >= 0);
+  assert.equal(itemIndex, -1);
   assert.ok(attackIndex > itemIndex);
-  assert.match(html, /<span class="control-label">Item \(C\)<\/span>/);
+  assert.doesNotMatch(html, /Item \(C\)/);
   assert.match(html, /<span class="control-label">Attack \(V\)<\/span>/);
   assert.doesNotMatch(html, /Jump|jump-action/);
   assert.match(html, /<div class="movement-control action-control-layout">/);

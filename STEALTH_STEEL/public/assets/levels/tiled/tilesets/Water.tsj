@@ -56,6 +56,11 @@
           "name": "frameDurationMs",
           "type": "int",
           "value": 100
+        },
+        {
+          "name": "displayScale",
+          "type": "float",
+          "value": 0.9
         }
       ]
     }

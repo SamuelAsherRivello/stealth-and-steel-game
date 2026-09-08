@@ -1,5 +1,6 @@
 import { GridSpot } from "../environment/grid-spot.js";
 import { GRID } from "../environment/grid-contract.js";
+import { collidersOverlap } from "../../gameplay/game-logic.js";
 
 export function createGoal({ host, position, screenWidth, screenHeight, artworkUrl = "", documentRef = globalThis.document }) {
   const marker = documentRef.createElement("div");
@@ -18,7 +19,11 @@ export function createGoal({ host, position, screenWidth, screenHeight, artworkU
   const colliderSize = 10;
   return {
     position,
-    combatCollider: { x: position.x - colliderSize / 2, y: position.y - colliderSize / 2, width: colliderSize, height: colliderSize },
+    movementCollider: { x: position.x - colliderSize / 2, y: position.y - colliderSize / 2, width: colliderSize, height: colliderSize },
+    isReachedBy(actor) {
+      const collider = actor?.getMovementCollider();
+      return Boolean(collider && collidersOverlap(collider, this.movementCollider));
+    },
     getGridSpot() { return gridSpot; },
     updateView(camera) {
       const point = camera.worldToScreen(position);
