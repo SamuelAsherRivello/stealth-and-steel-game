@@ -58,6 +58,16 @@ branches revealed by the code or answers.
 
 ### Question Budget
 
+- Keep each unanswered question visible until the user answers. When ending a
+  turn with a pending question, include its full text and all answer choices in
+  the final response; never replace it with a summary or "choose above."
+  An asynchronous question card alone is insufficient because it may disappear
+  when the turn ends. If higher-priority rules require a question tool, use it
+  and preserve the same question in the final response where permitted.
+- Repeated skill invocations or unrelated steering do not answer a pending
+  question. Keep its number and wording stable until answered or explicitly
+  withdrawn by the user; do not advance the interview or submit duplicate cards.
+
 - If the invocation argument consists of a single positive integer, interpret
   that integer as the maximum number of substantive grilling questions. For
   example, `$openspec-grill-me 3` means "grill me with 3 questions." Do not
