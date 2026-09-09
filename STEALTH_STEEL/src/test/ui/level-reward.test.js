@@ -9,6 +9,20 @@ class Element extends EventTarget {
   setAttribute(){}focus(){}remove(){this.parentNode?.children.splice(this.parentNode.children.indexOf(this),1);}
 }
 const documentRef={createElement:()=>new Element()};
+test('reordered completion counts maps played and retains trophy identity', () => {
+  let snapshot, asset;
+  const flow = createLevelReward({
+    ui: {setCompletion: value => snapshot = value, show() {}, setState() {}},
+    progress: {current: 3, completed: 0, total: 3, hasNext: true},
+    gold: {collected: 0, total: 10},
+    accountHost: {createAssetCollection: value => { asset = value.asset; return Promise.reject(new Error('guest')); }},
+  });
+  flow.show();
+  assert.equal(snapshot.levelsCompleted, 1);
+  assert.equal(snapshot.levelNumber, 3);
+  assert.equal(asset.ticker, 'LVL3');
+  flow.dispose();
+});
 test('completion snapshot renders exact level/final bodies and action gating',()=>{
   const host=new Element();let collects=0,next=0,restarts=0;
   const ui=createLevelCompleteUi({host,documentRef,onCollect:()=>collects++,onContinue:()=>next++,onRestart:()=>restarts++});

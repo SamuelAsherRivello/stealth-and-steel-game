@@ -25,6 +25,36 @@ test('Underground water draws static fill, then foam, then ground regardless of 
   assert.deepEqual(animatedTerrain[0].sprite.sizePx, [172.8, 172.8], 'Apply display scale independently from atlas sampling');
 });
 
+test('Background covers Underground regardless of water animation or texture', () => {
+  const { terrainLayers } = render([
+    { image: 'foam', source: '../tilesets/Water.tsj', layerName: 'Underground', layerIndex: 0, animation: [{tileid: 0, duration: 100}] },
+    { image: 'water', source: '../tilesets/Water.tsj', layerName: 'Background', layerIndex: 1 },
+    { image: 'ground', layerName: 'Background', layerIndex: 1 },
+  ]);
+  const order = image => terrainLayers.find(layer => layer.atlas === image).order;
+  assert.ok(order('foam') < order('water'));
+  assert.ok(order('foam') < order('ground'));
+});
+
+test('authored layer order wins over Underground naming', () => {
+  const { terrainLayers } = render([
+    { image: 'ground', layerName: 'Background', layerIndex: 0 },
+    { image: 'water', source: '../tilesets/Water.tsj', layerName: 'Underground', layerIndex: 1 },
+  ]);
+  assert.ok(terrainLayers[0].order < terrainLayers[1].order);
+});
+
+test('each authored layer reserves 1000 depths including gaps for empty layers', () => {
+  const { terrainLayers } = render([
+    { image: 'bottom', layerName: 'Custom bottom', layerIndex: 0 },
+    { image: 'middle', layerName: 'Custom middle', layerIndex: 2 },
+    { image: 'top', layerName: 'Custom top', layerIndex: 3 },
+  ]);
+  assert.equal(terrainLayers[1].order - terrainLayers[0].order, 2000);
+  assert.equal(terrainLayers[2].order - terrainLayers[1].order, 1000);
+  assert.ok(terrainLayers[2].order + 999 < 0, 'all reserved terrain depths remain behind gameplay');
+});
+
 test('a shared atlas does not merge different Tiled layers or reorder their artwork', () => {
   const { terrainLayers } = render([
     { image: 'shared', layerName: 'Underground', layerIndex: 0 },

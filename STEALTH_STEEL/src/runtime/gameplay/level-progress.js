@@ -7,19 +7,27 @@ export function catalogFromFiles(files) {
   return levels;
 }
 
-export function createLevelProgress(catalog, storage, reload) {
-  let current = 1, completed = 0;
+export function normalizeMapOrder(catalog, preference) {
+  const numbers = catalog.map(level => level.number).sort((a, b) => a - b);
+  return [...new Set([...(Array.isArray(preference) ? preference : []).filter(number => numbers.includes(number)), ...numbers])];
+}
+
+export function createLevelProgress(catalog, storage, reload, getPreferredOrder = () => []) {
+  let order = normalizeMapOrder(catalog, getPreferredOrder()), completed = 0;
   try {
     const saved = JSON.parse(storage.getItem(RUN_STORAGE_KEY) ?? 'null');
-    if (saved?.pendingTransition === true && Number.isInteger(saved.current) && catalog.some(level => level.number === saved.current) && saved.completed === saved.current-1) {
+    if (saved?.pendingTransition === true && Array.isArray(saved.order) && saved.order.length === catalog.length
+      && JSON.stringify(normalizeMapOrder(catalog, saved.order)) === JSON.stringify(saved.order)
+      && Number.isInteger(saved.completed) && saved.completed >= 0 && saved.completed < saved.order.length) {
       // Continue reloads the page; consume its destination once so manual refresh starts over.
       storage.setItem(RUN_STORAGE_KEY, 'null');
       if (storage.getItem(RUN_STORAGE_KEY) !== 'null') throw Error('Level transition could not be consumed.');
-      current = saved.current; completed = saved.completed;
+      order = saved.order; completed = saved.completed;
     }
   } catch { /* Unreadable game progress starts a guest run, never touches wallet data. */ }
-  const save = (next, count) => {
-    const value = JSON.stringify({current: next, completed: count, pendingTransition: true});
+  const current = order[completed];
+  const save = (nextOrder, count) => {
+    const value = JSON.stringify({order: nextOrder, completed: count, pendingTransition: true});
     storage.setItem(RUN_STORAGE_KEY, value);
     if (storage.getItem(RUN_STORAGE_KEY) !== value) throw Error('Game progress could not be saved. Enable browser storage and try again.');
     reload();
@@ -27,8 +35,8 @@ export function createLevelProgress(catalog, storage, reload) {
   return {
     current, completed, total: catalog.length,
     file: catalog.find(level => level.number === current).file,
-    get hasNext() { return catalog.some(level => level.number === current+1); },
-    advance() { if (this.hasNext) save(current+1, current); },
-    restart() { save(1,0); },
+    get hasNext() { return completed + 1 < order.length; },
+    advance() { if (this.hasNext) save(order, completed + 1); },
+    restart() { save(normalizeMapOrder(catalog, getPreferredOrder()), 0); },
   };
 }

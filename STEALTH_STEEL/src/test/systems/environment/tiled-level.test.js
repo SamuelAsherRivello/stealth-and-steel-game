@@ -54,15 +54,23 @@ async function readLevelWithTilesets() {
   };
 }
 
-test("camera mode defaults to fixed and validates opt-in scrolling dimensions", async () => {
+test("camera mode defaults to fixed and accepts scrolling regardless of map size", async () => {
   const { map, externalTilesets } = await readLevelWithTilesets();
   assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "follow-player");
   map.properties = (map.properties ?? []).filter(({ name }) => name !== "cameraMode");
   assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "fixed");
   map.properties = [{ name: "cameraMode", type: "string", value: "follow-player" }];
   assert.equal(normalizeTiledMap(map, externalTilesets).cameraMode, "follow-player");
-  map.width = 10;
-  assert.ok(validateTiledMap(map).some(message => /Invalid level.*11.*18/i.test(message)));
+  for (const [width, height] of [[32, 16], [9, 32], [5, 8]]) {
+    map.width = width;
+    map.height = height;
+    for (const layer of map.layers.filter(layer => layer.type === 'tilelayer')) {
+      layer.width = width;
+      layer.height = height;
+      layer.data = Array(width * height).fill(0);
+    }
+    assert.deepEqual(validateTiledMap(map), []);
+  }
   map.properties[0].value = "typo";
   assert.ok(validateTiledMap(map).some(message => /cameraMode/.test(message)));
 });

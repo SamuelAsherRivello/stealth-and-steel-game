@@ -69,11 +69,11 @@ The themed UI SHALL retain existing outcome messages, available action labels, s
 #### Scenario: Completion reward and progression (BIS C6)
 - **WHEN** the player reaches the level exit
 - **THEN** the themed prompt shows Level Completed with HUD gold counts and Collect Level N Trophy, Continue To Next Level and Restart Game
-- **AND** the final packaged level shows Game Completed with completed/total levels and omits Continue
+- **AND** the final level in the active run order shows Game Completed with completed/total levels and omits Continue
 - **AND** collection uses the public BIS asset-collection controller, retains the menu and disables its actions during the bounded attempt
 - **AND** confirmed collection shows the awarded image toast and disables collection; uncertainty preserves the request for Check Trophy Status
 - **AND** guests, owned trophies and missing configuration cannot collect but can navigate
-- **AND** Continue loads the next packaged level, while Restart Game returns to Level 1 without clearing wallet state
+- **AND** Continue loads the next map in the active run order, while Restart Game starts the first map in the saved Map Order preference (Level1 by default) without clearing wallet state
 - **AND** the death menu uses Restart Game while retaining its paid revival action
 
 #### Scenario: Hidden or alert state changes

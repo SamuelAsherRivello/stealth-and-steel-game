@@ -57,3 +57,15 @@ test('the standalone account passes the project game wallet recipient to BIS', a
    assert.equal(options.continueRecipient, gameWallet.continueRecipient);
  } finally { f.adapter.dispose(); gameWallet.continueRecipient = previous; }
 });
+
+test('game signer and LTO reuse one BIS session while the toast mount remains passive',async()=>{
+ const f=fixture(),disposed=[],wallet={getState:()=>({profileId:'saved-game'}),dispose:()=>disposed.push('wallet')};
+ let creates=0,ltoOptions,walletOptions;
+ f.api.createBisGameWallet=options=>{walletOptions=options;creates++;return wallet;};
+ f.api.createBisLto=options=>{ltoOptions=options;return {dispose:options=>disposed.push(options)};};
+ const first=await f.adapter.ready(),second=await f.adapter.ready();
+ assert.equal(first,second);assert.equal(creates,1);assert.equal(walletOptions.serviceUrl,'/__bis/wallet');assert.equal(ltoOptions.context,first.context);assert.equal(ltoOptions.gameWallet,wallet);
+ assert.equal(f.overlay.hidden,false);assert.match(f.overlay.className,/game-account-passive/);assert.equal(f.counts().mounts,1);
+ await f.adapter.open();f.back.dispatchEvent(new Event('click'));assert.match(f.overlay.className,/game-account-passive/);assert.equal(f.counts().mounts,1);
+ f.adapter.dispose({preserveContracts:true});assert.deepEqual(disposed,[{endSessions:false},'wallet']);assert.equal(f.counts().mounts,0);
+});

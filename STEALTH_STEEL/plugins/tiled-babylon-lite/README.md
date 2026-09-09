@@ -17,16 +17,31 @@ The current ecosystem review found no maintained package that directly connects 
   `PLAYER` is required per level.
 - `loadTiledMap(url, fetchImpl)` loads a TMJ and its referenced TSJ files in a browser.
 
+## Tiled layer drawing order
+
+Each level controls its own tile-layer stack. Layers higher in Tiled's Layers panel
+cover lower layers; names and tileset types never override that order. Tiled stores
+this stack bottom-to-top in the map file, which is also the drawing order.
+
+Each tile layer reserves 1,000 integer render depths, including empty layers.
+Bands end below gameplay depth zero: for four layers, their base depths are
+-4000, -3000, -2000, and -1000. Static tiles use the band's base and animated tiles
+use base + 1, leaving base + 2 through base + 999 available within each layer.
+Animation remains behind every tile on a higher layer. Reordering layers in Tiled
+reassigns the bands automatically on load; no code or fixed layer names are required.
+
 ## Level camera
 
 In Tiled's Map Properties, add the string property `cameraMode` with value
 `follow-player` to enable scrolling. Omit it or use `fixed` to retain the existing
 fixed view. Level 1 uses `follow-player` and is the scrolling example.
 
-Scrolling maps must be at least **11 columns by 18 rows** with the project's
-64-pixel tiles. The runtime excludes exactly one outer tile on each side and
-shows a 9-by-16-cell window into the remaining interior. Smaller scrolling maps
-are invalid and do not load. World coordinates use an automatic lower-left interior origin; no World Origin
+Scrolling accepts any positive map dimensions with the project's 64-pixel tiles.
+The camera shows a 9-by-16-cell window and scrolls each axis independently;
+axes that fit inside the viewport stay locked. A one-tile border is excluded
+on an axis only when that axis can fit the viewport plus both border tiles
+(11 columns or 18 rows). A 32-by-16 map scrolls horizontally with a fixed vertical view.
+World coordinates use an automatic lower-left interior origin; no World Origin
 object or layer is required. Legacy origin markers remain supported for older maps.
 
 Add a point object named `Camera Focus` (class `CameraFocus`) to `Level Markers`.
@@ -40,5 +55,5 @@ or ended. These camera dimensions and damping are hardcoded for the first versio
 With the local Vite server running, open `/` to play the authored Level 1. Its
 13-by-18 map has an 11-by-16 playable interior, allowing two columns of horizontal
 scrolling while the vertical axis stays locked. There is no demo-map override.
-Minimum dimensions, invalid maps, and fixed-mode compatibility are covered by
+Independent-axis scrolling, small maps, and fixed-mode compatibility are covered by
 automated camera and map-validation tests.

@@ -8,13 +8,13 @@ export function getLevelWorld(level) {
   const mode = level.cameraMode ?? "fixed";
   if (!["fixed", "follow-player"].includes(mode)) throw new Error(`Invalid level cameraMode: ${mode}`);
   const follow = mode === "follow-player";
-  if (follow && (level.width < GRID.columns + 2 || level.height < GRID.rows + 2)) {
-    throw new Error("Invalid level: scrolling maps require at least 11 columns and 18 rows, including the one-tile border.");
-  }
-  const minColumn = follow ? 1 - level.origin.x : 0;
-  const minRow = follow ? 1 - level.origin.y : 0;
-  const columns = follow ? level.width - 2 : GRID.columns;
-  const rows = follow ? level.height - 2 : GRID.rows;
+  // Keep the authored border only where there is room for a full viewport inside it.
+  const borderX = level.width >= GRID.columns + 2 ? 1 : 0;
+  const borderY = level.height >= GRID.rows + 2 ? 1 : 0;
+  const minColumn = follow ? borderX - level.origin.x : 0;
+  const minRow = follow ? borderY - level.origin.y : 0;
+  const columns = follow ? level.width - 2 * borderX : GRID.columns;
+  const rows = follow ? level.height - 2 * borderY : GRID.rows;
   const grid = { ...GRID, minColumn, minRow, columns, rows, widthPx: columns * GRID.tileSizePx, heightPx: rows * GRID.tileSizePx };
   const bounds = { x: minColumn * GRID.tileSizePx, y: minRow * GRID.tileSizePx,
     width: grid.widthPx, height: grid.heightPx, renderHeight: GRID.heightPx, enforce: follow };
@@ -27,7 +27,7 @@ export function createLevelCamera(world) {
   const width = GRID.widthPx, height = GRID.heightPx;
   const halfZone = { x: CAMERA_FOLLOW.columns * GRID.tileSizePx / 2, y: CAMERA_FOLLOW.rows * GRID.tileSizePx / 2 };
   const min = { x: bounds.x, y: bounds.y };
-  const max = { x: bounds.x + bounds.width - width, y: bounds.y + bounds.height - height };
+  const max = { x: bounds.x + Math.max(0, bounds.width - width), y: bounds.y + Math.max(0, bounds.height - height) };
   const offset = mode === "fixed" ? { x: 0, y: 0 } : { ...min };
   const view = { positionPx: [0, 0], zoom: 1, rotation: 0 };
   function sync() { view.positionPx[0] = offset.x; view.positionPx[1] = -offset.y; }

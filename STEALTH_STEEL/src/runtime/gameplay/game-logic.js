@@ -496,6 +496,30 @@ export function moveWithCollisions(
       }
     }
 
+    // Rounded actors can follow an exposed rectangular corner just as they
+    // follow a diagonal polygon. Keep flat faces and occupied cells blocking.
+    for (const obstacle of validObstacles) {
+      if (obstacle.type === "enemy-grid-occupancy" || obstacle.type === "circle"
+        || obstacle.type === "polygon") continue;
+      const collider = getCharacterCollider(resolvedCandidate, character.frame, character.pivot, character.collider);
+      if (collider.type !== "circle") continue;
+      const closestX = Math.max(obstacle.x, Math.min(collider.x, obstacle.x + obstacle.width));
+      const closestY = Math.max(obstacle.y, Math.min(collider.y, obstacle.y + obstacle.height));
+      const dx = collider.x - closestX;
+      const dy = collider.y - closestY;
+      const separation = Math.hypot(dx, dy);
+      const previous = getCharacterCollider(nextPosition, character.frame, character.pivot, character.collider);
+      const wasAtCorner = (previous.x < obstacle.x || previous.x > obstacle.x + obstacle.width)
+        && (previous.y < obstacle.y || previous.y > obstacle.y + obstacle.height);
+      if ((dx !== 0 && dy !== 0 || wasAtCorner) && separation > 0 && separation < collider.radius) {
+        const correction = (collider.radius - separation + 1e-7) / separation;
+        resolvedCandidate = {
+          x: resolvedCandidate.x + dx * correction,
+          y: resolvedCandidate.y + dy * correction,
+        };
+      }
+    }
+
     const resolvedCollider = getCharacterCollider(
       resolvedCandidate,
       character.frame,

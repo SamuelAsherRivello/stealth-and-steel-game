@@ -445,6 +445,19 @@
                  "width":35,
                  "x":659.5,
                  "y":78
+                }, 
+                {
+                 "gid":163,
+                 "height":64,
+                 "id":42,
+                 "name":"Treasure Chest Spawner",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"TreasureChestSpawner",
+                 "visible":true,
+                 "width":64,
+                 "x":256,
+                 "y":768
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -543,7 +556,7 @@
          "y":0
         }],
  "nextlayerid":23,
- "nextobjectid":42,
+ "nextobjectid":43,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -586,6 +599,10 @@
         {
          "firstgid":160,
          "source":"..\/tilesets\/Water.tsj"
+        }, 
+        {
+         "firstgid":163,
+         "source":"..\/tilesets\/TreasureChestSpawner.tsj"
         }],
  "tilewidth":64,
  "type":"map",

@@ -23,7 +23,7 @@ export function createLevelReward({accountHost,ui,progress,gold}) {
     finally{initializing=false;}
   }
   return {
-    show(){if(visible||disposed)return;visible=true;ui.setCompletion({levelNumber:progress.current,levelsCompleted:progress.current,totalLevels:progress.total,hasNext:progress.hasNext,collected:gold.collected,total:gold.total});ui.show();void initialize();},
+    show(){if(visible||disposed)return;visible=true;ui.setCompletion({levelNumber:progress.current,levelsCompleted:progress.completed+1,totalLevels:progress.total,hasNext:progress.hasNext,collected:gold.collected,total:gold.total});ui.show();void initialize();},
     collect:()=>controller?.collect(),
     check:()=>controller?controller.check():initialize(),
     acknowledge(){if(controller)return controller.acknowledge();ui.setState({needsAcknowledgment:false,message:''});},

@@ -1,5 +1,6 @@
 export const RUNTIME_SETTINGS_STORAGE_KEY = "babylon-lite-stealth-grid.settings";
 export const RUNTIME_SETTINGS_VERSION = 1;
+export const MAP_ORDER_SETTING_KEY = "developer.mapOrder";
 
 export const RUNTIME_AUDIO_SETTING_KEYS = Object.freeze({
   music: "audio.musicVolume",
@@ -17,12 +18,14 @@ export const RUNTIME_DEBUG_SETTING_KEYS = Object.freeze({
 const DEBUG_BOOLEAN_KEYS = Object.freeze(Object.values(RUNTIME_DEBUG_SETTING_KEYS));
 
 const KNOWN_KEYS = Object.freeze([
+  MAP_ORDER_SETTING_KEY,
   RUNTIME_AUDIO_SETTING_KEYS.music,
   RUNTIME_AUDIO_SETTING_KEYS.sfx,
   ...DEBUG_BOOLEAN_KEYS,
 ]);
 
 function defaultFor(key) {
+  if (key === MAP_ORDER_SETTING_KEY) return [];
   if (DEBUG_BOOLEAN_KEYS.includes(key)) {
     return false;
   }
@@ -33,6 +36,7 @@ function defaultFor(key) {
 }
 
 function isValid(key, value) {
+  if (key === MAP_ORDER_SETTING_KEY) return Array.isArray(value) && value.every(number => Number.isInteger(number) && number > 0);
   if (DEBUG_BOOLEAN_KEYS.includes(key)) {
     return typeof value === "boolean";
   }

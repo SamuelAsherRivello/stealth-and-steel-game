@@ -65,12 +65,14 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     pauseController.resume('bis-account');
   }
   back.addEventListener('click', close);
-  const cleanup = current => { current?.unsubscribe?.(); current?.unsubscribeEvents?.(); current?.ui?.unmount(); current?.context?.dispose(); };
+  const cleanup = (current, preserveContracts = false) => { current?.lto?.dispose({endSessions:!preserveContracts}); current?.gameWallet?.dispose(); current?.unsubscribe?.(); current?.unsubscribeEvents?.(); current?.ui?.unmount(); current?.context?.dispose(); };
   function initialize() {
     if (initialization) return initialization;
     initialization = (async () => {
       const api = await load(); if (disposed) return;
-      const current = {context: api.createBisContext({continueRecipient: gameWallet.continueRecipient || import.meta.env?.VITE_BIS_GAME_WALLET_ADDRESS}), api}; session = current;
+      const current = {api};
+      current.context = api.createBisContext({get continueRecipient(){return current.gameWallet?.getState().addresses?.arkadeAddress ?? (!api.createBisGameWallet ? gameWallet.continueRecipient || import.meta.env?.VITE_BIS_GAME_WALLET_ADDRESS : undefined);}});
+      session = current;
       current.unsubscribeEvents = current.context.onEvent(event => {
         if (disposed || event.type !== 'restartRequested' || restarts.has(event.logoutId)) return;
         restarts.add(event.logoutId); restarting = true;
@@ -85,6 +87,8 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
         // restartRequested follows the state publication in the same turn.
         queueMicrotask(() => { if (active && !restarting && current.context.getState().view === 'empty') close(); });
       });
+      current.gameWallet = api.createBisGameWallet?.({playerProfileId:()=>current.context.getState().profileId,serviceUrl:import.meta.env?.VITE_BIS_WALLET_SERVICE_URL || (import.meta.env?.DEV?'http://127.0.0.1:8787':'/__bis/wallet')});
+      if(current.gameWallet && api.createBisLto)current.lto=api.createBisLto({context:current.context,gameWallet:current.gameWallet});
       await current.context.ready(); if (disposed) return;
       current.ui = api.createBisUi(current.context); current.ui.mount(mount);
       if (!active) passive();
@@ -109,7 +113,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     } catch { if (!disposed && active && visit === currentVisit) { status.hidden = false; message.textContent = 'Account is unavailable. Return to Settings and try again.'; back.focus(); } }
     finally { clearTimeout(timer); }
   }
-  return {open, ready: () => initialize(), async createAssetCollection(options) {
+  return {open, getSession:()=>session, ready: () => initialize(), async createAssetCollection(options) {
     let timer;
     try {
       const current = await Promise.race([initialize(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Trophies unavailable')),timeoutMs);})]);
@@ -124,11 +128,11 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     const controller = current.api.createBisContinue(current.context, options);
     continuations.add(controller);
     return {...controller, dispose() { continuations.delete(controller); controller.dispose(); }};
-  }, get isOpen() { return active; }, dispose() {
+  }, get isOpen() { return active; }, dispose({preserveContracts=false}={}) {
     if (disposed) return; disposed = true; restarting = false; close();
     for (const controller of continuations) controller.dispose(); continuations.clear();
     documentRef.removeEventListener('fullscreenchange', moveOverlay);
-    cleanup(session); overlay.remove();
+    cleanup(session,preserveContracts); overlay.remove();
   }};
 }
 

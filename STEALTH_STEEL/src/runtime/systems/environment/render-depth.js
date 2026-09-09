@@ -1,3 +1,5 @@
+export const TILED_LAYER_DEPTH_STEP = 1000;
+
 export const TILE_MAP_SUB_Z = Object.freeze({
   backgroundWater: 0, ground: 20,
   elevationShadows: 30, elevatedTerrain: 40, groundDecorations: 50,

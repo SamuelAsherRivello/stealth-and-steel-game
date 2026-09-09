@@ -1,3 +1,11 @@
+# Current BIS development package (2026-09-09)
+
+Current artifact: bis-integration-0.14.1-g1-g2-3215920c76b0.tgz. SHA-256: 3215920c76b078cbc7bfb41dbd6e7080d2fb0a84ee4575441dd6fbc380bcb814. The 102-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This unreleased snapshot supersedes every historical package below.
+
+Includes the shared hosted game wallet, player-local claim signing, generic Contracts UI and LTO flow. Admin imports once; the game uses the configured service and has no game-wallet import dialog. The service public wallet supplies the current Continue recipient. Configure VITE_BIS_WALLET_SERVICE_URL for hosted builds. See [play and setup instructions](../documentation/treasure-lto.md). Local runtime is verified; no deployed signer endpoint is claimed.
+
+## Historical package records
+
 # BIS release package
 
 - Package: `@bis/integration` 0.14.0.
@@ -20,3 +28,17 @@ F1 local development snapshot: bis-integration-0.14.1-f1-c70c2adcabe1.tgz. SHA-2
 F1 host configuration: set public VITE_BIS_GAME_WALLET_ADDRESS before building. BIS disables new Continue payments when it is absent or invalid. The value is the game's Arkade receiving address, not a signing credential. Admin can be closed during receipt. No actual recipient has been selected in this checkout by this change.
 
 Final F1 snapshot: bis-integration-0.14.1-f1-c70c2adcabe1.tgz. SHA-256: c70c2adcabe1fdceadaf34a8a6a15478e70db9051b6c14d12795503b085e5e1a. Supersedes the earlier local F1 snapshot above.
+
+## G1/G2 local development snapshot (2026-09-09)
+
+Current artifact: bis-integration-0.14.1-g1-g2-1b31a54a68a9.tgz. SHA-256: 1b31a54a68a9fe777de6db6e4b84ea8058a179e5563053a53a3a17ca2642f505. Supersedes earlier F1 snapshots for this checkout. All 93 installed files verified against the current inventory. React and React DOM remain deduplicated at 19.2.8.
+
+Includes generic contracts, encrypted recovery, Item List/Item List Detail, and the client LTO controller. New creation is gated pending live race/preservation evidence; query/refund/recovery remain available. See [treasure integration setup and acceptance](../documentation/treasure-lto.md). This is an unreleased local package, not a published release.
+
+Autonomous verification update: bis-integration-0.14.1-g1-g2-3fb9421ed7bb.tgz; SHA-256 3fb9421ed7bb6c11230e219943fbc14d76948ce9e73779b6c7528d3d7b6b0e56. All 93 files verified. Includes game-role refund toasts and scoped disposal recovery. BIS 52 focused tests and isolated browser acceptance pass; live creation gate remains unchanged.
+
+Final acceptance snapshot: bis-integration-0.14.1-g1-g2-8b79d547b577.tgz; SHA-256 8b79d547b5774c826b509b1301dce746b1bea8f09cc607ca15ef9034b7c32bb0. Supersedes the prior G1/G2 snapshots above. All 93 installed files verified. Adds an origin-exclusive Admin Reset guard for unresolved player/game contracts. Game build and actual loaded BIS version check pass. Live creation remains gated.
+
+Default-enabled LTO snapshot: bis-integration-0.14.1-g1-g2-3b1f7f91ca8c.tgz; SHA-256 3b1f7f91ca8cc79981227d54a8449dc7419c740b5c346deca0633077beec61ca. Supersedes all earlier G1/G2 snapshots above. All 93 installed files verify and the game build passes. Creation uses runtime readiness by default; explicit creationEnabled:false retains recovery. This is an unreleased local snapshot.
+
+Asset-carrier funding fix: bis-integration-0.14.1-g1-g2-d191d1bc8688.tgz; SHA-256 d191d1bc8688c22c77fccf8bf23e5156b6adf17275b16014013d90f30459a47c. Supersedes earlier G1/G2 snapshots. The 93-file inventory verifies. Preserves every asset in game change and provides sanitized preparation failure reasons.

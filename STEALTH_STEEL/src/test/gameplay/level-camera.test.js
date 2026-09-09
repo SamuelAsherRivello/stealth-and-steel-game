@@ -16,14 +16,33 @@ test("fixed defaults preserve the 576x1024 view regardless of player", () => {
   assert.equal(world.grid.rows, 16);
 });
 
-test("interior bounds honor shifted origins and reject undersized scrolling maps", () => {
+test("interior bounds honor shifted origins", () => {
   const world = getLevelWorld(level({ origin: { x: 4, y: 5 } }));
   assert.equal(world.bounds.x, -192);
   assert.equal(world.bounds.y, -256);
   assert.equal(world.bounds.width, 1920);
   assert.equal(world.grid.minColumn, -3);
   assert.equal(world.grid.minRow, -4);
-  for (const size of [{ width: 10 }, { height: 17 }]) assert.throws(() => make(size), /Invalid level.*11.*18/i);
+});
+
+test("short wide maps scroll horizontally and lock the vertical camera", () => {
+  const world = getLevelWorld(level({width: 32, height: 16, origin: {x: 0, y: 0}}));
+  const camera = createLevelCamera(world);
+  camera.initialize({x: 256, y: 256});
+  const start = camera.getOffset();
+  camera.update({x: 1800, y: 900}, 1);
+  assert.ok(camera.getOffset().x > start.x);
+  assert.equal(camera.getOffset().y, 0);
+  assert.equal(world.bounds.height, 1024);
+});
+
+test("small maps never produce reversed camera limits", () => {
+  const camera = make({width: 5, height: 8, origin: {x: 0, y: 0}});
+  for (const point of [{x: -999, y: -999}, {x: 9999, y: 9999}]) {
+    camera.initialize(point);
+    camera.update(point, 1);
+    assert.deepEqual(camera.getOffset(), {x: 0, y: 0});
+  }
 });
 
 test("initial camera centers immediately and clamps at all corners", () => {

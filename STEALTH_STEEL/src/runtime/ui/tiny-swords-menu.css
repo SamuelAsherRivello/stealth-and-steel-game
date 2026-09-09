@@ -148,6 +148,9 @@
 }
 .tiny-swords-button-art i { background-image: url('/ui/tiny-swords/BigBlueButton_Regular.png'); }
 .developer-settings-button .tiny-swords-button-art i { filter: hue-rotate(175deg) saturate(2) brightness(.8); }
+.map-order-buttons { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; justify-content: flex-start; padding: 4px 0; box-sizing: border-box; }
+.ui-layer .game-window .map-order-button { flex: 0 1 68px; min-width: 0; width: 68px; height: 34px; min-height: 34px; padding: 0 4px 3px; font-size: 13px; line-height: 1; }
+.ui-layer .map-order-button .tiny-swords-button-art { grid-template-columns: 10px 1fr 10px; grid-template-rows: 10px 1fr 10px; }
 menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: nowrap; }
 .ui-layer .tiny-swords-button.has-menu-icon { display: flex; justify-content: center; align-items: center; gap: 6px; }
 .menu-button-icon { flex: 0 0 auto; font-size: 18px; line-height: 1; }
@@ -215,7 +218,12 @@ menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: 
   text-align: left;
   color: #513d2a;
 }
+.ui-layer .map-order-heading { margin: 12px 0 8px; font: bold clamp(18px, 4cqw, 23px)/1.3 Georgia, serif; text-align: left; color: #513d2a; }
 
 .level-complete-panel .menu-button-text:disabled { filter:grayscale(1); opacity:.5; cursor:default; }
 .level-complete-panel [hidden] { display:none !important; }
 .level-complete-panel .level-complete-check { font-size:12px; }
+
+.treasure-content { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.treasure-content > p { text-align: center; margin: 8px 0; }
+.treasure-content > [hidden] { display: none; }

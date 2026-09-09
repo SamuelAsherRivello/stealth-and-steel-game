@@ -23,9 +23,6 @@ export function validateTiledMap(map, externalTilesets = null) {
   if (!Number.isInteger(map?.tileheight) || map.tileheight <= 0) errors.push("Tile height must be positive.");
   const cameraMode = propertiesToObject(map?.properties).cameraMode ?? "fixed";
   if (!["fixed", "follow-player"].includes(cameraMode)) errors.push(`Invalid level cameraMode: ${cameraMode}. Expected fixed or follow-player.`);
-  if (cameraMode === "follow-player" && (map.width < 11 || map.height < 18)) {
-    errors.push("Invalid level: scrolling maps require at least 11 columns and 18 rows, including the one-tile border.");
-  }
   for (const layer of map?.layers ?? []) {
     if (layer.type === "tilelayer" && layer.data?.length !== map.width * map.height) {
       errors.push(`Layer "${layer.name}" must contain ${map.width * map.height} cells.`);
@@ -200,6 +197,15 @@ export function normalizeTiledMap(map, externalTilesets) {
       const row = Math.floor(object.y / map.tileheight) - (object.gid ? 1 : 0);
       return [{ id: object.id, name: object.name ?? "", tiledCell: { x: column, y: row }, gameCell: { x: column - originColumn, y: originRow - row } }];
     }));
+  const treasureSpawners = map.layers.filter(({type})=>type==='objectgroup').flatMap(layer=>(layer.objects??[]).flatMap(object=>{
+    const gid=object.gid?object.gid & ~FLIP_FLAGS:0, source=gid?resolveTileset(tilesets,gid):null;
+    const tile=source?.tileset?.tiles?.find(({id})=>id===gid-source.firstgid);
+    if((object.class||object.type||tile?.class||tile?.type||'').toLowerCase()!=='treasurechestspawner')return [];
+    const column=Math.floor(object.x/map.tilewidth),row=object.gid?Math.ceil(object.y/map.tileheight)-1:Math.floor(object.y/map.tileheight);
+    const sensor=tile?.objectgroup?.objects?.find(shape=>(shape.class||shape.type)==='Sensor');
+    if(!sensor||![sensor.x,sensor.y,sensor.width,sensor.height].every(Number.isFinite)||sensor.width<=0||sensor.height<=0)throw Error('Treasure chest requires a rectangular sensor.');
+    return [{id:object.id,name:object.name??'',tiledCell:{x:column,y:row},gameCell:{x:column-originColumn,y:originRow-row},sensor:{x:sensor.x-32,y:32-sensor.y-sensor.height,width:sensor.width,height:sensor.height}}];
+  }));
   const goals = map.layers.filter(({ type }) => type === "objectgroup")
     .flatMap((layer) => (layer.objects ?? []).flatMap((object) => {
       const gid = object.gid ? object.gid & ~FLIP_FLAGS : 0;
@@ -217,7 +223,7 @@ export function normalizeTiledMap(map, externalTilesets) {
     cameraMode: propertiesToObject(map.properties).cameraMode ?? "fixed",
     tileWidth: map.tilewidth, tileHeight: map.tileheight,
     origin: { x: originColumn, y: map.height - originRow - 1 },
-    cameraFocus, layers, objects, spawners, goldPickupSpawners, goals,
+    cameraFocus, layers, objects, spawners, goldPickupSpawners, treasureSpawners, goals,
     decorationOccupiedCells: collectDecorationOccupiedCells(map, originColumn, originRow),
     reactiveDecorations: objects.filter(({ decoration }) => decoration?.frameCount > 1 && decoration.triggerMode),
     goldStones: objects.filter(({ class: className }) => className === "GoldObject"),

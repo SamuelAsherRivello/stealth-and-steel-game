@@ -113,12 +113,17 @@ import { revivePaidPlayer } from "./gameplay/paid-revival.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
 import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui.js";
+import {createTreasureRuntime} from './integration/treasure-runtime.js';
+import {createTreasureUi} from './ui/treasure-ui.js';
+import {createTreasureChest} from './systems/objects/treasure-chest.js';
+import {createObjectSpawner} from './systems/objects/object-spawner.js';
 import { createGoal } from "./systems/goals/goal.js";
 import { createGoalExit } from "./systems/goals/goal-exit.js";
 import { createViewportSafeArea } from "./ui/viewport-safe-area.js";
 import {
   RUNTIME_DEBUG_SETTING_KEYS,
   runtimeSettingsStore,
+  MAP_ORDER_SETTING_KEY,
 } from "./runtime-settings/runtime-settings-store.js";
 import {
   GAME_DEPTH,
@@ -231,7 +236,7 @@ function makeDirection(from, to) {
 }
 
 export async function start({ showStartPrompt = true } = {}) {
-  const progress = createLevelProgress(__GAME_LEVELS__, {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)}, () => window.location.reload());
+  const progress = createLevelProgress(__GAME_LEVELS__, {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)}, () => window.location.reload(), () => runtimeSettingsStore.get(MAP_ORDER_SETTING_KEY));
   if (!navigator.gpu) {
     throw new Error("This Babylon Lite demo requires a browser with WebGPU enabled.");
   }
@@ -250,6 +255,7 @@ export async function start({ showStartPrompt = true } = {}) {
   refreshGameViewportDiagnostics();
   const animationManager = createSpriteAnimationManager();
   const level = await loadTiledMap(`${import.meta.env.BASE_URL}assets/levels/tiled/maps/${progress.file}`);
+  canvas.dataset.levelFile = progress.file;
   const world = getLevelWorld(level);
   const worldBounds = world.bounds;
   const worldGrid = world.grid;
@@ -380,7 +386,7 @@ export async function start({ showStartPrompt = true } = {}) {
     })
   ));
 
-  const { terrainLayers, animatedTerrain } = createTerrainRendering(terrainTiles, terrainAtlasByImage);
+  const { terrainLayers, animatedTerrain } = createTerrainRendering(terrainTiles, terrainAtlasByImage, undefined, level.layers.length);
   const visionShadowLayer = createSprite2DLayer(visionShadowAtlas, {
     capacity: 64,
     order: TILE_MAP_SUB_Z.ground + 1,
@@ -869,7 +875,7 @@ export async function start({ showStartPrompt = true } = {}) {
     groundCells: collectDecorationGroundCells(terrainTiles),
     occupiedCells: [
       ...(level.decorationOccupiedCells ?? []),
-      ...[...level.spawners, ...level.goldPickupSpawners, ...level.goals].map(object => object.gameCell),
+      ...[...level.spawners, ...level.goldPickupSpawners, ...(level.treasureSpawners??[]), ...level.goals].map(object => object.gameCell),
       ...reactiveDecorations.map(object => object.getGridSpot().cell),
       ...spawners.flatMap(spawner => spawner.actors.map(record => getCharacterGridCell(record.actor.getMovementCollider(), TILE_SIZE))),
     ], isWalkable: grassWalkability });
@@ -948,7 +954,9 @@ export async function start({ showStartPrompt = true } = {}) {
     restartGame: () => progress.restart(),
     onClose: () => settingsUi.returnFromAccount(),
   });
-  const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: () => accountHost.open() });
+  const treasure = createTreasureRuntime({accountHost,resumeRun:progress.completed>0});
+  const treasureUi = createTreasureUi({host:domBody,screenLayer:domScreen,pauseController,session:treasure});
+  const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: () => accountHost.open() });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
   const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
@@ -956,6 +964,18 @@ export async function start({ showStartPrompt = true } = {}) {
     gridSize: [64, 64], sampling: "nearest",
   });
   void accountHost.ready().catch(() => {}); // Wallet availability never blocks ordinary game startup.
+  const treasureAtlas = await loadSpriteAtlas(engine,
+    `${import.meta.env.BASE_URL}assets/images/ui/spawners/treasure-chest.png`, {gridSize:[64,64],sampling:'nearest'});
+  const treasureLayers=[];
+  const treasureSpawners=(level.treasureSpawners??[]).map(authored=>{
+    const position=gridCellToWorldCenter(authored.gameCell,TILE_SIZE);
+    const spawner=createObjectSpawner({type:'treasure',position,createObject:position=>{
+      const layer=createSprite2DLayer(treasureAtlas,{capacity:1,order:getYSortedLayerOrder(position.y,worldBounds),pivot:[0.5,0.5]});
+      addSprite2D(layer,{positionPx:[position.x,SCREEN_HEIGHT-position.y],sizePx:[64,64],frame:0});
+      addSpriteRendererLayer(renderer,camera.attachLayer(layer));treasureLayers.push(layer);
+      return createTreasureChest({position,sensor:authored.sensor,onEnter:()=>treasureUi.open()});
+    }});spawner.initialize();return spawner;
+  });
   const goalLayer = createSprite2DLayer(goalAtlas, {
     capacity: 1, order: TILE_MAP_SUB_Z.groundDecorations, pivot: [0.5, 0.5],
   });
@@ -991,6 +1011,7 @@ export async function start({ showStartPrompt = true } = {}) {
     ? createStartGamePrompt({
       host: domBody,
       onStart: () => {
+        treasure.start();
         startGamePrompt.close();
         pauseController.resume();
       },
@@ -1399,6 +1420,7 @@ export async function start({ showStartPrompt = true } = {}) {
         if (gameStateMachine.state === GameState.LEVEL_PLAYING && playerRecord.combat.isAlive
           && goal.isReachedBy(playerRecord.actor)) {
           playerRecord.actor.setInputEnabled(false);
+          if(!progress.hasNext)treasure.end();
           gameStateMachine.goalReached();
           playSfx("win");
           pauseController.pause();
@@ -1407,6 +1429,7 @@ export async function start({ showStartPrompt = true } = {}) {
       }
     }
     const trackedPlayer = getRecordsByType(SpawnerType.PLAYER)[0];
+    if(!pauseController.isPaused)for(const spawner of treasureSpawners)for(const chest of spawner.objects)chest.update(trackedPlayer?.actor,gameStateMachine.state===GameState.LEVEL_PLAYING&&trackedPlayer?.combat.isAlive);
     const cameraDelta = gameStateMachine.state === GameState.LEVEL_PLAYING ? pauseController.getDelta(activeDelta) : 0;
     camera.update(trackedPlayer?.actor.getPosition(), cameraDelta);
     goal.updateView(camera);
@@ -1520,7 +1543,12 @@ export async function start({ showStartPrompt = true } = {}) {
     levelReward.dispose();
     paidContinue.dispose();
     grassDecorations.dispose();
-    accountHost.dispose();
+    let preserveContracts=false;
+    try{const next=JSON.parse(sessionStorage.getItem('stealth-steel-level-run-v1')??'null');preserveContracts=next?.pendingTransition===true&&next.completed>0;}catch{}
+    treasureUi.dispose();treasure.dispose({preserveSession:preserveContracts});
+    for(const spawner of treasureSpawners)spawner.dispose();
+    for(const layer of treasureLayers)removeSpriteRendererLayer(renderer,layer);
+    accountHost.dispose({preserveContracts});
     canvas.removeEventListener("pointerup", handleGridSelection);
     viewportSafeArea.dispose();
     viewportResizeObserver.disconnect();

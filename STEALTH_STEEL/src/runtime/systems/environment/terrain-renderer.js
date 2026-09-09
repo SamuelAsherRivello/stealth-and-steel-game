@@ -1,9 +1,7 @@
 import { addSprite2D, createSprite2DLayer } from '@babylonjs/lite';
-import { TILE_MAP_SUB_Z } from './render-depth.js';
+import { TILED_LAYER_DEPTH_STEP } from './render-depth.js';
 
-export function createTerrainRendering(tiles, atlases, api = { addSprite2D, createSprite2DLayer }) {
-  const groundIndices = [...new Set(tiles.filter(tile => tile.layerName !== 'Underground')
-    .map(tile => tile.layerIndex))].sort((a, b) => a - b);
+export function createTerrainRendering(tiles, atlases, api = { addSprite2D, createSprite2DLayer }, layerCount = Math.max(-1, ...tiles.map(tile => tile.layerIndex)) + 1) {
   const groups = new Map();
   for (const tile of tiles) {
     if (!tile.valid) continue;
@@ -16,13 +14,13 @@ export function createTerrainRendering(tiles, atlases, api = { addSprite2D, crea
   const animatedTerrain = [];
   for (const group of groups.values()) {
     const { tile: first } = group;
-    const rank = groundIndices.indexOf(first.layerIndex);
-    const baseOrder = first.layerName === 'Underground' ? TILE_MAP_SUB_Z.backgroundWater
-      : TILE_MAP_SUB_Z.ground + rank * (TILE_MAP_SUB_Z.foregroundArtwork - TILE_MAP_SUB_Z.ground) / Math.max(1, groundIndices.length);
+    // Tiled stores layers bottom-to-top. Reserve a full band even for empty layers.
+    // Negative terrain depths keep all bands behind gameplay, regardless of layer count.
+    const baseOrder = (first.layerIndex - layerCount) * TILED_LAYER_DEPTH_STEP;
     const layer = api.createSprite2DLayer(atlases.get(first.image), {
       capacity: group.tiles.length,
-      // Foam sits over static fill, while the whole Underground stays below ground.
-      order: baseOrder + (first.animation.length ? (first.layerName === 'Underground' ? 10 : 0.5) : 0),
+      // Animation may overlay fill within its own authored layer, never the next layer.
+      order: baseOrder + (first.animation.length ? 1 : 0),
       pivot: [0, 0],
     });
     terrainLayers.push(layer);

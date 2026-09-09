@@ -63,6 +63,24 @@ function elementByClass(root, className) {
   assert.fail(`Missing .${className}`);
 }
 
+test('Map Order promotes clicked maps and Clear All Settings restores order', () => {
+  const store = createSettingsStore(null);
+  const ui = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
+    catalog: [1, 2, 3].map(number => ({number, file: `Level0${number}.tmj`})),
+    pauseController: { pause() {}, resume() {} } });
+  ui.open();
+  click(elementByClass(ui.activeWindow.panel, 'developer-settings-button'));
+  assert.equal(elementByClass(ui.developerWindow.panel, 'map-order-heading').textContent, 'Map');
+  const row = elementByClass(ui.developerWindow.panel, 'map-order-buttons');
+  click(row.children[1]);
+  click(row.children[2]);
+  assert.deepEqual(row.children.map(button => button.textContent), ['Level3', 'Level2', 'Level1']);
+  click(row.children[0]);
+  assert.deepEqual(row.children.map(button => button.textContent), ['Level3', 'Level2', 'Level1']);
+  click(elementByClass(ui.developerWindow.panel, 'settings-reset'));
+  assert.deepEqual(row.children.map(button => button.textContent), ['Level1', 'Level2', 'Level3']);
+});
+
 test("Developer lists five independent visualizations and clears all their settings", () => {
   const store = createSettingsStore(null);
   const ui = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
@@ -219,7 +237,7 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /pauseController\.pause\('settings'\)/);
   assert.match(source, /pauseController\.resume\('settings'\)/);
   assert.doesNotMatch(source, /Skip Start Menu/);
-  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, openAccount: \(\) => accountHost.open\(\) \}\)/);
+  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: \(\) => accountHost.open\(\), openGameWallet:/);
   assert.match(main, /updateSpriteAnimationManager\(animationManager, activeDelta \* 1000\)/);
   assert.match(main, /playerRecord\.actor\.update\(activeDelta, dynamicColliders\)/);
   assert.match(main, /showColliders = runtimeSettingsStore\.get\(RUNTIME_DEBUG_SETTING_KEYS\.showColliders\)/);

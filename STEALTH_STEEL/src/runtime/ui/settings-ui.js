@@ -2,7 +2,9 @@ import {
   RUNTIME_AUDIO_SETTING_KEYS,
   RUNTIME_DEBUG_SETTING_KEYS,
   runtimeSettingsStore,
+  MAP_ORDER_SETTING_KEY,
 } from "../runtime-settings/runtime-settings-store.js";
+import { normalizeMapOrder } from "../gameplay/level-progress.js";
 import { applyFullscreenPreference } from "./fullscreen-settings.js";
 import { GameWindow } from "./game-window.js";
 import { createMenuButton } from "./menu.js";
@@ -54,6 +56,7 @@ export function createSettingsUi({
   screenLayer = modalHost,
   pauseController,
   openAccount,
+  catalog = [],
   store = runtimeSettingsStore,
   documentRef = globalThis.document,
   applyFullscreen = applyFullscreenPreference,
@@ -111,9 +114,34 @@ export function createSettingsUi({
       openExternal(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer");
     });
     const resetButton = createMenuButton({ displayText: "Clear All Settings", className: "settings-reset", documentRef });
-    developerContent.append(debugHeading, ...debugControls.map(control => control.row), githubButton, resetButton);
+    const mapHeading = documentRef.createElement("h3");
+    mapHeading.className = "map-order-heading menu-label-text";
+    mapHeading.textContent = "Map";
+    const mapButtons = documentRef.createElement("div");
+    mapButtons.className = "map-order-buttons";
+    mapButtons.setAttribute("role", "group");
+    mapButtons.setAttribute("aria-label", "Map Order");
+    const renderMapOrder = () => {
+      mapButtons.textContent = "";
+      for (const number of normalizeMapOrder(catalog, store.get(MAP_ORDER_SETTING_KEY))) {
+        const button = createMenuButton({ displayText: `Level${number}`, className: "map-order-button", documentRef });
+        button.setAttribute("data-map-number", String(number));
+        button.addEventListener("click", () => {
+          const order = normalizeMapOrder(catalog, store.get(MAP_ORDER_SETTING_KEY));
+          store.set(MAP_ORDER_SETTING_KEY, [number, ...order.filter(value => value !== number)]);
+          renderMapOrder();
+          mapButtons.querySelector?.(`[data-map-number="${number}"]`)?.focus();
+        });
+        mapButtons.append(button);
+      }
+    };
+    renderMapOrder();
+    developerContent.append(debugHeading, ...debugControls.map(control => control.row));
+    if (catalog.length) developerContent.append(mapHeading, mapButtons);
+    developerContent.append(githubButton, resetButton);
     resetButton.addEventListener("click", () => {
       store.reset();
+      renderMapOrder();
       musicSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.music));
       sfxSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.sfx));
       for (const control of debugControls) control.checkbox.checked = store.get(control.key);
