@@ -35,7 +35,7 @@ test('loss prompt has restart copy and cannot be dismissed by backdrop', () => {
   const ui = createLevelLostUi({host, onPay:()=>{}, onRestart:()=>{}, documentRef});
   ui.show();
   assert.equal(ui.panel.children[0].textContent, 'You Lost');
-  assert.equal(ui.panel.children[1].textContent, 'Try again!');
+  assert.equal(ui.panel.children[1].children[0].textContent, 'Try again!');
   assert.deepEqual(ui.actions.children, [ui.payButton, ui.restartButton]);
   ui.backdrop.dispatchEvent(new Event('click'));
   assert.equal(host.children.length, 1);

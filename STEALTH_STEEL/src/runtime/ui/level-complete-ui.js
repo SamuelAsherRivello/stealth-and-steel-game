@@ -54,7 +54,7 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
   function render() {
     const final=!completion.hasNext;
     const heading=final?'Game Completed':'Level Completed';
-    if(title.firstChild?.nodeType===3)title.firstChild.textContent=heading;else title.textContent=heading;
+    title.menuTitleLabel.textContent=heading;
     const gold=`${pad(completion.collected)}/${pad(completion.total)}`;
     body.textContent=final?`Great jobs. You completed ${completion.levelsCompleted}/${completion.totalLevels} levels. You collected ${gold} gold in the final level and reached the exit.`:`Great jobs. You collected ${gold} gold and reached the exit.`;
     const message=state.status==='owned'?'You already own this trophy.':state.status==='guest'?'Log in to collect this trophy.':state.message;

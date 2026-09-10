@@ -27,13 +27,13 @@ test('completion snapshot renders exact level/final bodies and action gating',()
   const host=new Element();let collects=0,next=0,restarts=0;
   const ui=createLevelCompleteUi({host,documentRef,onCollect:()=>collects++,onContinue:()=>next++,onRestart:()=>restarts++});
   ui.setCompletion({levelNumber:1,totalLevels:2,hasNext:true,collected:3,total:100});ui.show();
-  assert.equal(ui.panel.children[0].textContent,'Level Completed');assert.match(ui.panel.children[1].textContent,/03\/100 gold/);
+  assert.equal(ui.panel.children[0].textContent,'Level Completed');assert.match(ui.panel.children[1].children[0].textContent,/03\/100 gold/);
   ui.setState({canCollect:true,status:'available',message:''});ui.collectButton.dispatchEvent(new Event('click'));assert.equal(collects,1);
   ui.setState({busy:true});for(const b of [ui.collectButton,ui.continueButton,ui.restartButton]){assert.equal(b.disabled,true);b.dispatchEvent(new Event('click'));}assert.equal(collects,1);assert.equal(next+restarts,0);
   ui.setState({busy:false,status:'owned',canCollect:false});assert.equal(ui.backdrop.hidden,false);assert.equal(ui.continueButton.disabled,false);
-  assert.equal(ui.panel.children[1].textContent,'Great jobs. You collected 03/100 gold and reached the exit. You already own this trophy.');
+  assert.equal(ui.panel.children[1].children[0].textContent,'Great jobs. You collected 03/100 gold and reached the exit. You already own this trophy.');
   assert.ok(!ui.panel.children.some(child=>child.className==='level-complete-status'));
-  ui.setCompletion({levelNumber:2,levelsCompleted:2,totalLevels:2,hasNext:false});assert.equal(ui.panel.children[0].textContent,'Game Completed');assert.match(ui.panel.children[1].textContent,/2\/2 levels/);assert.equal(ui.continueButton.hidden,true);assert.equal(ui.restartButton.textContent,'Restart Game');ui.dispose();
+  ui.setCompletion({levelNumber:2,levelsCompleted:2,totalLevels:2,hasNext:false});assert.equal(ui.panel.children[0].textContent,'Game Completed');assert.match(ui.panel.children[1].children[0].textContent,/2\/2 levels/);assert.equal(ui.continueButton.hidden,true);assert.equal(ui.restartButton.textContent,'Restart Game');ui.dispose();
 });
 test('flow snapshots HUD and late initialization cannot attach to a disposed screen',async()=>{
   let resolve,disposed=0,snapshot,shows=0;

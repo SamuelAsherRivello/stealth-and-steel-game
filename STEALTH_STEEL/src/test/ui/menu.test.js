@@ -55,7 +55,7 @@ test("menus combine optional body text, custom content, and shared actions", () 
   assert.deepEqual(menu.bodyArea.children, [menu.body, content]);
   assert.deepEqual(menu.actions.children, menu.buttons);
   assert.ok(!menu.panel.children.includes(menu.buttons[0]));
-  assert.ok(menu.panel.children.includes(menu.actions));
+  assert.ok(menu.contentStack.children.includes(menu.actions));
 });
 
 test("menus can omit the visible header while retaining an accessible name", () => {
@@ -69,7 +69,7 @@ test("menus can omit the visible header while retaining an accessible name", () 
   assert.equal(menu.header, null);
   assert.equal(menu.title, null);
   assert.equal(menu.panel.attributes.get("aria-label"), "Hidden Title");
-  assert.equal(menu.panel.children[0], menu.bodyArea);
+  assert.equal(menu.panel.children[0], menu.contentStack);
 });
 
 test("a menu can explicitly opt into a logo without changing other instances", () => {

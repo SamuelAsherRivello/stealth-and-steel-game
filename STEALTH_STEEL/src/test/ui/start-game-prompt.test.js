@@ -41,9 +41,9 @@ test("start prompt requires its Start button and ignores background clicks", () 
   let starts = 0;
   const prompt = createStartGamePrompt({ host, onStart: () => { starts += 1; }, documentRef });
   assert.equal(prompt.panel.children[0].textContent, "Start Menu");
-  assert.equal(prompt.panel.children[1].textContent, START_PROMPT_BODY);
+  assert.equal(prompt.panel.children[1].children[0].textContent, START_PROMPT_BODY);
   assert.equal(prompt.startButton.textContent, "Start");
-  assert.equal(prompt.panel.children.length, 4);
+  assert.equal(prompt.panel.children.length, 3);
   assert.equal(prompt.backdrop.children[0].children[0].alt, "Stealth & Steel");
   assert.equal(prompt.startButton.focused, true);
   click(prompt.backdrop, prompt.panel);

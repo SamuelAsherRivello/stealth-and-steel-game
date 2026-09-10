@@ -7,4 +7,7 @@
 .game-account-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; background: transparent; color: white; font: 16px/1.5 system-ui, sans-serif; text-align: center; }
 .game-account-status button { padding: .75rem 1rem; cursor: pointer; }
 
+/* BIS supplies the semantic status icon; the bolt is not part of game toast messaging. */
+.game-account-host .bis-toast-lightning { display: none; }
+
 /* The game-owned Account menu action uses the shared menu button theme. */

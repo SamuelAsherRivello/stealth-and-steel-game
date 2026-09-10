@@ -1,5 +1,6 @@
 import { addRibbonArt, createPanelArt } from "./tiny-swords-panel.js";
 import "./menu-button-label.js";
+import "./menu-title-label.js";
 
 let nextMenuId = 0;
 const DEFAULT_LOGO_SRC = `${import.meta.env?.BASE_URL ?? "/"}ui/tiny-swords/`
@@ -90,7 +91,10 @@ export function createMenu({
   if (showHeader) {
     title = documentRef.createElement("h2");
     title.className = "menu-title-text tiny-swords-title-text";
-    title.textContent = titleText;
+    const label = documentRef.createElement("menu-title-label");
+    label.textContent = titleText;
+    title.menuTitleLabel = label;
+    title.append(label);
     title.id = titleId;
     header = closeButton ? documentRef.createElement("div") : title;
     if (closeButton) {
@@ -119,8 +123,11 @@ export function createMenu({
   const actions = documentRef.createElement("div");
   actions.className = "menu-actions";
   actions.append(...actionButtons);
+  const contentStack = documentRef.createElement("div");
+  contentStack.className = "menu-content-stack";
+  contentStack.append(bodyArea, actions);
   if (header) panel.append(header);
-  panel.append(bodyArea, actions, createPanelArt(documentRef));
+  panel.append(contentStack, createPanelArt(documentRef));
 
   let logoElement = null;
   if (showLogo) {
@@ -140,6 +147,7 @@ export function createMenu({
     title,
     body: body ?? bodyArea,
     bodyArea,
+    contentStack,
     actions,
     buttons: actionButtons,
     logo: logoElement,
