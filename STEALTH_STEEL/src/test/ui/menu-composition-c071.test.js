@@ -112,7 +112,7 @@ test("C071 removes every menu scrollbar at the shared layout boundary", async ()
   assert.match(styles, /\.ui-layer \.tiny-swords-menu-backdrop\.has-logo\s*\{[^}]*overflow:\s*clip;/s);
 });
 
-test("C071 keeps the 44px close target and a clean close mark", async () => {
+test("C071 keeps the 44px close target with its supplied PNG", async () => {
   const styles = await readFile(
     new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url),
     "utf8",
@@ -120,9 +120,8 @@ test("C071 keeps the 44px close target and a clean close mark", async () => {
 
   assert.match(styles, /grid-template-columns:\s*44px minmax\(0, 1fr\) 44px;/);
   assert.match(styles, /\.ui-layer \.game-window \.game-window-close\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s);
-  assert.doesNotMatch(styles, /Icon_09\.png/);
-  assert.match(styles, /\.game-window-close::before,\s*\.ui-layer \.game-window \.game-window-close::after\s*\{[^}]*width:\s*18px;[^}]*height:\s*3px;/s);
-  assert.match(styles, /justify-self:\s*end;/);
+  assert.match(styles, /background:\s*url\('\/ui\/tiny-swords\/Icon_09\.png'\) center \/ 19\.2px 19\.2px no-repeat;/);
+  assert.match(styles, /image-rendering:\s*pixelated;/);
 });
 
 test("C071 removes lightning only from BIS toast messaging", async () => {

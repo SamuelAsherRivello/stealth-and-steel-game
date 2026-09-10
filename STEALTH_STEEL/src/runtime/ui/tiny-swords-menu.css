@@ -108,19 +108,14 @@
   transform: translate(-50%, -65%) rotate(45deg);
 }
 .ui-layer .game-window .game-window-close {
-  position: relative; grid-column: 3; grid-row: 1;
+  position: static; grid-column: 3; grid-row: 1;
   width: 44px; height: 44px; padding: 0; transform: none;
-  justify-self: end;
   z-index: 2; border: 0; border-radius: 0; box-shadow: none;
-  background-color: transparent;
+  background: url('/ui/tiny-swords/Icon_09.png') center / 19.2px 19.2px no-repeat;
+  image-rendering: pixelated;
 }
 .ui-layer .game-window .game-window-close::before,
-.ui-layer .game-window .game-window-close::after {
-  display: block; position: absolute; top: 50%; left: 50%;
-  width: 18px; height: 3px; border-radius: 1px; background: #e55b62;
-}
-.ui-layer .game-window .game-window-close::before { transform: translate(-50%, -50%) rotate(45deg); }
-.ui-layer .game-window .game-window-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.ui-layer .game-window .game-window-close::after { display: none; }
 .ui-layer .game-window .game-window-close:hover { filter: brightness(1.12); outline: none; }
 .ui-layer .game-window .game-window-close:active { filter: brightness(.78) saturate(.75); }
 .ui-layer .game-window input:focus-visible,
