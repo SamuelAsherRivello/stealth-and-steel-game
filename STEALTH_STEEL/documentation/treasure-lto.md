@@ -1,6 +1,6 @@
 # G2. LTO Treasure Chest
 
-The game consumes the local BIS 0.14.1 G1/G2 development package recorded in `vendor/bis-package-inventory.json`. This is an unreleased snapshot, not a published release upgrade.
+The game consumes the published BIS 0.14.1 release package recorded in `vendor/bis-package-inventory.json`.
 
 ## Setup and current availability
 

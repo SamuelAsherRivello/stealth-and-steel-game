@@ -282,8 +282,8 @@
             "type": "",
             "visible": true,
             "width": 4,
-            "x": 0.5,
-            "y": 1
+            "x": 0,
+            "y": 0
           },
           {
             "height": 4,
@@ -294,8 +294,8 @@
             "type": "",
             "visible": true,
             "width": 64,
-            "x": 0.5,
-            "y": 1
+            "x": 0,
+            "y": 0
           },
           {
             "height": 64,
@@ -306,8 +306,8 @@
             "type": "",
             "visible": true,
             "width": 4,
-            "x": 60.5,
-            "y": 1
+            "x": 60,
+            "y": 0
           }
         ],
         "opacity": 1,
@@ -768,8 +768,8 @@
             "type": "",
             "visible": true,
             "width": 4,
-            "x": 0.5,
-            "y": 0.5
+            "x": 0,
+            "y": 0
           },
           {
             "height": 4,
@@ -780,8 +780,8 @@
             "type": "",
             "visible": true,
             "width": 64,
-            "x": 0.5,
-            "y": 60.5
+            "x": 0,
+            "y": 60
           },
           {
             "height": 64,
@@ -792,8 +792,8 @@
             "type": "",
             "visible": true,
             "width": 4,
-            "x": 60.5,
-            "y": 0.5
+            "x": 60,
+            "y": 0
           }
         ],
         "opacity": 1,
@@ -1134,7 +1134,7 @@
             "visible": true,
             "width": 64,
             "x": 0,
-            "y": 0.5
+            "y": 0
           },
           {
             "height": 64,
@@ -1146,7 +1146,7 @@
             "visible": true,
             "width": 4,
             "x": 60,
-            "y": 0.5
+            "y": 0
           },
           {
             "height": 4,
@@ -1158,7 +1158,7 @@
             "visible": true,
             "width": 64,
             "x": 0,
-            "y": 60.5
+            "y": 60
           },
           {
             "height": 64,
@@ -1170,7 +1170,7 @@
             "visible": true,
             "width": 4,
             "x": 0,
-            "y": 0.5
+            "y": 0
           }
         ],
         "opacity": 1,

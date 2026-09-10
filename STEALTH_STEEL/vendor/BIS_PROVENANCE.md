@@ -1,8 +1,10 @@
-# Current BIS development package (2026-09-09)
+# Current BIS release package (2026-09-10)
 
-Current artifact: bis-integration-0.14.1-g1-g2-3215920c76b0.tgz. SHA-256: 3215920c76b078cbc7bfb41dbd6e7080d2fb0a84ee4575441dd6fbc380bcb814. The 102-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This unreleased snapshot supersedes every historical package below.
+Current artifact: bis-integration-0.14.1-f6d89da842c7.tgz. SHA-256: f6d89da842c7ea5705dc8ba597f25985f9e9ed3131c09a27572adfad65f6acbe. The 105-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This published release supersedes every historical package below.
 
-Includes the shared hosted game wallet, player-local claim signing, generic Contracts UI and LTO flow. Admin imports once; the game uses the configured service and has no game-wallet import dialog. The service public wallet supplies the current Continue recipient. Configure VITE_BIS_WALLET_SERVICE_URL for hosted builds. See [play and setup instructions](../documentation/treasure-lto.md). Local runtime is verified; no deployed signer endpoint is claimed.
+Release: https://github.com/SamuelAsherRivello/blockchain-integration-service/releases/tag/v0.14.1
+
+Includes the shared hosted game wallet, player-local claim signing, generic Contracts UI and LTO flow, stable logout cleanup, durable continuation records, and the generic asset detail field. Admin imports once; the game uses the configured service and has no game-wallet import dialog. The service public wallet supplies the current Continue recipient. Configure VITE_BIS_WALLET_SERVICE_URL for hosted builds. See [play and setup instructions](../documentation/treasure-lto.md). Local runtime is verified; no deployed signer endpoint is claimed.
 
 ## Historical package records
 

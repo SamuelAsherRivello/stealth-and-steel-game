@@ -30,8 +30,8 @@ const MEAT_RESOURCE_TILESET_URL = new URL(
 );
 const COLOR_THREE_SOURCE = "../tilesets/Tilemap_color3.tsj";
 const COLOR_THREE_COLLIDABLE_IDS = [
-  0, 1, 2, 3, 5, 6, 7, 9, 11, 12, 14, 16, 18, 19, 20, 21, 23, 24, 25,
-  27, 28, 29, 30, 32, 33, 34, 36, 39, 41, 42, 43, 44, 45, 48, 50, 51, 52, 53,
+  0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 12, 14, 16, 17, 18, 19, 20, 21, 23, 24, 25,
+  26, 27, 28, 29, 30, 32, 33, 34, 35, 36, 39, 41, 42, 43, 44, 45, 48, 50, 51, 52, 53,
 ];
 const LEVEL01_AUTHORED_CONTENT_SHA256 =
   "6b4fd7d51d7ea9de2fd626fb92c864b78780a30f56e39f1b870f8093813a2108";

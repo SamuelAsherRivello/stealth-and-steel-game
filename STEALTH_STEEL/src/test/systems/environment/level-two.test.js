@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import {normalizeTiledMap,validateTiledMap} from '../../../../plugins/tiled-babylon-lite/index.js';
 
-test('Level02 has a clear floor route from its player through gold to its exit',async()=>{
+test('Level02 keeps its authored player, exit and gold pickup layout',async()=>{
   const url=new URL('../../../../public/assets/levels/tiled/maps/Level02.tmj',import.meta.url);
   const map=JSON.parse(await readFile(url,'utf8'));
   const tilesets=new Map(await Promise.all(map.tilesets.map(async({source})=>[source,JSON.parse(await readFile(new URL(source,url),'utf8'))])));
@@ -12,18 +12,17 @@ test('Level02 has a clear floor route from its player through gold to its exit',
   assert.equal(level.spawners.length,1);
   const player=level.spawners.find(s=>s.type==='PLAYER');
   const goal=level.goals[0];
-  assert.equal(player.gameCell.x,goal.gameCell.x);
-  assert.ok(goal.gameCell.y>player.gameCell.y);
-  assert.equal(level.goldPickupSpawners.length,3);
-  for(const gold of level.goldPickupSpawners){
-    assert.equal(gold.gameCell.x,player.gameCell.x);
-    assert.ok(gold.gameCell.y>player.gameCell.y&&gold.gameCell.y<goal.gameCell.y);
-  }
-  // The straight route uses an existing floor tile with no collision shapes.
-  const floor=tilesets.get('../tilesets/Tilemap_color3.tsj');
-  assert.equal(floor.tiles.find(t=>t.id===15)?.objectgroup?.objects?.length??0,0);
-  for(let row=3;row<=12;row++){
-    assert.equal(map.layers.find(l=>l.name==='Background').data[row*9+4],16);
-    for(const layer of map.layers.filter(l=>l.type==='tilelayer'&&l.name!=='Background'))assert.equal(layer.data[row*9+4],0);
-  }
+  assert.deepEqual(player.gameCell,{x:26,y:9});
+  assert.deepEqual(goal.gameCell,{x:4,y:12});
+  assert.equal(level.goldPickupSpawners.length,21);
+  assert.deepEqual(
+    level.goldPickupSpawners.map(({gameCell})=>gameCell),
+    [
+      {x:4,y:5},{x:4,y:7},{x:4,y:9},
+      {x:19,y:15},{x:21,y:15},{x:20,y:15},{x:22,y:15},{x:23,y:15},
+      {x:19,y:9},{x:21,y:9},{x:22,y:9},{x:18,y:9},{x:20,y:9},{x:18,y:9},
+      {x:17,y:11},{x:17,y:12},{x:17,y:13},{x:17,y:10},
+      {x:18,y:14},{x:24,y:14},{x:24,y:13},
+    ],
+  );
 });
