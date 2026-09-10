@@ -1,5 +1,4 @@
 // The game consumes only the public BIS package. Loading is independent of game startup.
-import gameWallet from './game-wallet-public.json' with {type:'json'};
 const loadPackage = () => Promise.all([import('@bis/integration'), import('@bis/integration/style.css')]).then(([api]) => api);
 
 export function createBisAccount({host, pauseController, restartGame, documentRef = globalThis.document,
@@ -71,7 +70,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     initialization = (async () => {
       const api = await load(); if (disposed) return;
       const current = {api};
-      current.context = api.createBisContext({get continueRecipient(){return current.gameWallet?.getState().addresses?.arkadeAddress ?? (!api.createBisGameWallet ? gameWallet.continueRecipient || import.meta.env?.VITE_BIS_GAME_WALLET_ADDRESS : undefined);}});
+      current.context = api.createBisContext({get continueRecipient(){return current.gameWallet?.getState().addresses?.arkadeAddress;}});
       session = current;
       current.unsubscribeEvents = current.context.onEvent(event => {
         if (disposed || event.type !== 'restartRequested' || restarts.has(event.logoutId)) return;
@@ -87,10 +86,10 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
         // restartRequested follows the state publication in the same turn.
         queueMicrotask(() => { if (active && !restarting && current.context.getState().view === 'empty') close(); });
       });
-      current.gameWallet = api.createBisGameWallet?.({playerProfileId:()=>current.context.getState().profileId,serviceUrl:import.meta.env?.VITE_BIS_WALLET_SERVICE_URL || (import.meta.env?.DEV?'http://127.0.0.1:8787':'/__bis/wallet')});
+      current.gameWallet = api.createBisGameWallet?.({playerProfileId:()=>current.context.getState().profileId});
       if(current.gameWallet && api.createBisLto)current.lto=api.createBisLto({context:current.context,gameWallet:current.gameWallet});
       await current.context.ready(); if (disposed) return;
-      current.ui = api.createBisUi(current.context); current.ui.mount(mount);
+      current.ui = api.createBisUi(current.context, {gameWallet: current.gameWallet}); current.ui.mount(mount);
       if (!active) passive();
       return current;
     })().catch(error => { cleanup(session); session = undefined; initialization = undefined; throw error; });

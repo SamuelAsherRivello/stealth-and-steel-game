@@ -12,6 +12,7 @@ export function createTreasureSession({ context, offers, gameWallet, now = Date.
     let status = session.status;
     if (session.offered && !remainingSeconds && !['claimed', 'rejected'].includes(status)) status = 'expired';
     if (session.playerId !== context.getState().profileId && status !== 'missing-player') status = 'no-offer';
+    if (gameWallet.getState().selectionVersion !== session.gameVersion) status = 'no-offer';
     return { status, remainingSeconds, sessionId: session.id, contractId: session.contractId };
   }
   function end() {
@@ -36,19 +37,20 @@ export function createTreasureSession({ context, offers, gameWallet, now = Date.
     } catch { if (current === generation && session) { session.status = 'unavailable'; publish(); } }
     finally { reading = false; }
   }
+  const unsubscribeGameWallet = gameWallet.subscribe?.(() => { if (session && gameWallet.getState().selectionVersion !== session.gameVersion) publish(); });
   return {
     getState, subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     snapshot() {return session?{...session}:undefined;},
     restore(saved) {
       if(session||!saved||typeof saved.id!=='string'||saved.reference!==`treasure:${saved.id}`||!Number.isSafeInteger(saved.expiresAt)||typeof saved.status!=='string')return false;
-      session={id:saved.id,reference:saved.reference,expiresAt:saved.expiresAt,status:saved.status,offered:saved.offered===true,
+      session={id:saved.id,reference:saved.reference,expiresAt:saved.expiresAt,gameVersion:typeof saved.gameVersion==='number'?saved.gameVersion:gameWallet.getState().selectionVersion,status:saved.status,offered:saved.offered===true,
         playerId:typeof saved.playerId==='string'?saved.playerId:undefined,gameId:typeof saved.gameId==='string'?saved.gameId:undefined,contractId:typeof saved.contractId==='string'?saved.contractId:undefined};
       generation++;publish();return true;
     },
     start() {
       end(); const current = generation, startedAt = now();
       const player = context.getState(), game = gameWallet.getState(), id = newId();
-      session = {id,reference:`treasure:${id}`,playerId:player.profileId,gameId:game.profileId,expiresAt:startedAt+90000,offered:false,
+      session = {id,reference:`treasure:${id}`,playerId:player.profileId,gameId:game.profileId,gameVersion:game.selectionVersion,expiresAt:startedAt+90000,offered:false,
         status:!player.profileId?'missing-player':player.phase!=='active'||game.status!=='ready'||!game.profileId||game.profileId===player.profileId?'no-offer':'preparing'};
       publish();
       if (session.status !== 'preparing') return;
@@ -73,7 +75,7 @@ export function createTreasureSession({ context, offers, gameWallet, now = Date.
       } catch {if(current===generation&&session){session.status='unavailable';publish();}return {status:'unavailable'};}
       finally {acting=false;}
     },
-    dispose({preserveSession=false}={}) {if(!preserveSession)end();listeners.clear();},
+    dispose({preserveSession=false}={}) {if(!preserveSession)end();unsubscribeGameWallet?.();listeners.clear();},
   };
 }
 

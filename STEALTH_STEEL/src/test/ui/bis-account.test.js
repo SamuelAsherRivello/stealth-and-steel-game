@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBisAccount} from '../../runtime/integration/bis-account.js';
 import {createPauseController} from '../../runtime/ui/pause-controller.js';
-import gameWallet from '../../runtime/integration/game-wallet-public.json' with {type:'json'};
 class Element extends EventTarget {
   children=[];hidden=false;inert=false;
   append(...items){for(const item of items){item.parent=this;this.children.push(item);}}
@@ -45,17 +44,12 @@ test('restart is host-owned and deduplicated without returning to Settings or re
  const f=fixture();await f.adapter.open();f.publish('empty');f.emit({type:'restartRequested',reason:'logout',logoutId:'one'});f.emit({type:'restartRequested',reason:'logout',logoutId:'one'});await flush();
  assert.equal(f.counts().restarts,1);assert.equal(f.counts().closes,0);assert.equal(f.pause.isPaused,true);f.adapter.dispose();
 });
-test('the standalone account passes the project game wallet recipient to BIS', async () => {
- const previous = gameWallet.continueRecipient;
- gameWallet.continueRecipient = 'tark1public-recipient-fixture';
- const f = fixture();
- const create = f.api.createBisContext;
- let options;
+test('the standalone account reads its game recipient from the local BIS game wallet', async () => {
+ const f = fixture(); const create = f.api.createBisContext; let options;
  f.api.createBisContext = value => { options = value; return create(value); };
- try {
-   await f.adapter.open();
-   assert.equal(options.continueRecipient, gameWallet.continueRecipient);
- } finally { f.adapter.dispose(); gameWallet.continueRecipient = previous; }
+ f.api.createBisGameWallet = () => ({getState:()=>({addresses:{arkadeAddress:'tark1local-game-recipient'}}),dispose(){}});
+ try { await f.adapter.open(); assert.equal(options.continueRecipient,'tark1local-game-recipient'); }
+ finally { f.adapter.dispose(); }
 });
 
 test('game signer and LTO reuse one BIS session while the toast mount remains passive',async()=>{
@@ -64,7 +58,7 @@ test('game signer and LTO reuse one BIS session while the toast mount remains pa
  f.api.createBisGameWallet=options=>{walletOptions=options;creates++;return wallet;};
  f.api.createBisLto=options=>{ltoOptions=options;return {dispose:options=>disposed.push(options)};};
  const first=await f.adapter.ready(),second=await f.adapter.ready();
- assert.equal(first,second);assert.equal(creates,1);assert.equal(walletOptions.serviceUrl,'/__bis/wallet');assert.equal(ltoOptions.context,first.context);assert.equal(ltoOptions.gameWallet,wallet);
+ assert.equal(first,second);assert.equal(creates,1);assert.equal('serviceUrl' in walletOptions,false);assert.equal(ltoOptions.context,first.context);assert.equal(ltoOptions.gameWallet,wallet);
  assert.equal(f.overlay.hidden,false);assert.match(f.overlay.className,/game-account-passive/);assert.equal(f.counts().mounts,1);
  await f.adapter.open();f.back.dispatchEvent(new Event('click'));assert.match(f.overlay.className,/game-account-passive/);assert.equal(f.counts().mounts,1);
  f.adapter.dispose({preserveContracts:true});assert.deepEqual(disposed,[{endSessions:false},'wallet']);assert.equal(f.counts().mounts,0);
