@@ -1,10 +1,10 @@
 # G2. LTO Treasure Chest
 
-The game consumes the published BIS 0.14.1 release package recorded in `vendor/bis-package-inventory.json`.
+The game consumes the published BIS 0.14.2 release package recorded in `vendor/bis-package-inventory.json`.
 
 ## Setup and current availability
 
-No BIS wallet service is required. Open the game and use the gear → Account. After the player Account UI opens, select Account Details → Balance → Game Wallet Login. Create or restore the separate game wallet there. This F2 setup is local to the current browser origin and is the standalone game’s only game-wallet setup route.
+No BIS wallet service is required. Open the game and use the gear → Account → Developer → Game Wallet → Game Wallet Login. Create or restore the separate game wallet there. This F2 setup is local to the current browser origin and is the standalone game’s only game-wallet setup route.
 
 Open http://127.0.0.1:5173/. For first-time setup, click Start, then use the gear → Account to connect the player. The Start overlay covers Settings. Reload after connecting, let wallet readiness finish, then click Start for a fresh Level01 run. Walk two cells upward into the treasure within 90 seconds and choose Claim or Reject. Pending feedback closes the dialog; confirmed feedback is a passive toast during gameplay. The game also exposes Account → Contracts for inspection.
 
@@ -29,7 +29,7 @@ BIS package hash/inventory verification and the game production build pass. Real
 The BIS Admin G2 demonstration uses the same local controller as Runtime Preview. The actual game retains its collision-driven dialogue.
 
 
-Historical client acceptance: 17 focused game tests passed for the account host, session persistence/continuation, all treasure states, duplicate/late responses, keyboard/touch isolation, focus, signer setup, sensor placement and runtime artwork. A late Claim result now closes only its originating chest window. The actual game Account UI reports BIS v0.14.1. The current archive is recorded in the inventory and provenance. Tiled headless map/tileset export was attempted but crashed, so editor save/reload remains unverified. No additional human testing handoff is requested.
+Historical client acceptance: 17 focused game tests passed for the account host, session persistence/continuation, all treasure states, duplicate/late responses, keyboard/touch isolation, focus, signer setup, sensor placement and runtime artwork. A late Claim result now closes only its originating chest window. The actual game Account UI reports BIS v0.14.2. The current archive is recorded in the inventory and provenance. Tiled headless map/tileset export was attempted but crashed, so editor save/reload remains unverified. No additional human testing handoff is requested.
 
 Runtime acceptance restructuring (2026-09-09): the unconditional live-acceptance disable was removed at the user's request. BIS 54 focused tests and the isolated two-tab browser suite pass. Historical live probes and unobserved extended live scenarios are reported separately from automated acceptance. Current runtime package and its hash are recorded in the vendor inventory; both builds pass.
 

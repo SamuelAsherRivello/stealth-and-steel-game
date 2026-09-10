@@ -1,10 +1,10 @@
 # Current BIS release package (2026-09-10)
 
-Current artifact: bis-integration-0.14.1-f3-00fe4633d56223313da6cb948feb9fe9025ab97ba30a972f7218fe17f377036b.tgz. SHA-256: 00fe4633d56223313da6cb948feb9fe9025ab97ba30a972f7218fe17f377036b. The 102-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This serverless local package supersedes every historical package below.
+Current artifact: bis-integration-0.14.2-0adbf7fe124e818413c122664b67eaae335594242ae0c48c0f1f8cd405c9991c.tgz. SHA-256: 0adbf7fe124e818413c122664b67eaae335594242ae0c48c0f1f8cd405c9991c. The 102-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This serverless local package supersedes every historical package below.
 
-Release: https://github.com/SamuelAsherRivello/blockchain-integration-service/releases/tag/v0.14.1
+Release: https://github.com/SamuelAsherRivello/blockchain-integration-service/releases/tag/v0.14.2
 
-Includes F1/F2 shared local game-wallet selection, F3 Admin-only board controls, generic Contracts UI and direct local G2 LTO flow, stable logout cleanup, durable continuation records, and the generic asset detail field. The game configures its wallet through the BIS Account UI; no hosted wallet endpoint or service URL is included. See [play and setup instructions](../documentation/treasure-lto.md).
+Includes F1/F2 shared local game-wallet selection, F3 Admin-only board controls, generic Contracts UI and direct local G2 LTO flow, stable logout cleanup, durable continuation records, and the Developer dialog route to user-facing Game Wallet Login. The game configures its wallet through the BIS Account UI; no hosted wallet endpoint or service URL is included. See [play and setup instructions](../documentation/treasure-lto.md).
 
 ## Historical package records
 
