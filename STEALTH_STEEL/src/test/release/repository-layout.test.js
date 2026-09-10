@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,6 +29,33 @@ test("root commands target the contained application and preserve Pages output",
     assert.equal(existsSync(join(root, legacy)), false, `Legacy root path: ${legacy}`);
   }
   assert.ok(existsSync(join(root, ".openspec/config.yaml")));
+});
+
+test("the repository OpenSpec adapter supports the pinned latest CLI in .openspec", () => {
+  const result = spawnSync(process.execPath, [join(root, ".openspec/cli.mjs"), "context", "--json"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, OPENSPEC_TELEMETRY: "0" },
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const context = JSON.parse(result.stdout);
+  assert.equal(context.root.path, resolve(root));
+  assert.equal(context.root.source, "nearest");
+  assert.equal(context.root.role, "openspec_root");
+});
+
+test("the expanded OpenSpec skills route commands through the .openspec adapter", () => {
+  const generatedSkills = [
+    "apply-change", "archive-change", "bulk-archive-change", "continue-change",
+    "explore", "ff-change", "new-change", "onboard", "propose", "sync-specs",
+    "update-change", "verify-change",
+  ];
+  for (const name of generatedSkills) {
+    const contents = readFileSync(join(root, `.agents/skills/openspec-${name}/SKILL.md`), "utf8");
+    assert.match(contents, /generatedBy: "1\.13\.0"/, name);
+    assert.match(contents, /npm run openspec -- /, name);
+    assert.doesNotMatch(contents, /(?:`|^\s+)openspec (?:archive|config|context|doctor|feedback|instructions|list|new|schemas|show|status|store|update|validate|view)\b/m, name);
+  }
 });
 
 test("every active Tiled image and external tileset resolves inside the public asset tree", () => {

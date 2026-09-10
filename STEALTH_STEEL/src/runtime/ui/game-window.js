@@ -7,6 +7,7 @@ export class GameWindow {
     host,
     title,
     content,
+    buttons = [],
     onClose,
     opener = null,
     closeLabel = "Close window",
@@ -29,9 +30,19 @@ export class GameWindow {
     this.closeButton.setAttribute("aria-label", closeLabel);
     this.closeButton.textContent = "";
 
-    const menu = createMenu({ titleText: title, titleId, content, closeButton: this.closeButton, documentRef });
+    const menu = createMenu({
+      titleText: title,
+      titleId,
+      content,
+      buttons,
+      closeButton: this.closeButton,
+      documentRef,
+    });
     this.panel = menu.panel;
     this.panel.className += " game-window";
+    this.bodyArea = menu.bodyArea;
+    this.actions = menu.actions;
+    this.buttons = menu.buttons;
     this.backdrop = menu.backdrop;
     this.backdrop.className += " game-window-backdrop";
 

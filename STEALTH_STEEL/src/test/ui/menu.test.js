@@ -29,6 +29,11 @@ test("menus accept independent content, unique accessible labels, and no logo by
   assert.equal(first.title.textContent, "Example");
   assert.equal(first.body.textContent, "Instructions");
   assert.equal(first.buttons[0].textContent, "Proceed");
+  assert.equal(first.bodyArea.children[0], first.body);
+  assert.equal(first.actions.children[0], first.buttons[0]);
+  assert.ok(first.bodyArea.className.split(" ").includes("menu-body"));
+  assert.ok(first.body.className.split(" ").includes("tiny-swords-body-text"));
+  assert.ok(first.actions.className.split(" ").includes("menu-actions"));
   assert.equal(first.logo, null);
   assert.equal(first.composition.children.length, 1);
   assert.notEqual(first.title.id, second.title.id);
@@ -36,8 +41,46 @@ test("menus accept independent content, unique accessible labels, and no logo by
   assert.equal(first.panel.attributes.get("aria-describedby"), first.body.id);
 });
 
+test("menus combine optional body text, custom content, and shared actions", () => {
+  const content = new Element();
+  content.textContent = "Controls";
+  const menu = createMenu({
+    titleText: "Example",
+    bodyText: "Instructions",
+    content,
+    buttons: [{ displayText: "Accept" }, { displayText: "Cancel" }],
+    documentRef,
+  });
+
+  assert.deepEqual(menu.bodyArea.children, [menu.body, content]);
+  assert.deepEqual(menu.actions.children, menu.buttons);
+  assert.ok(!menu.panel.children.includes(menu.buttons[0]));
+  assert.ok(menu.panel.children.includes(menu.actions));
+});
+
+test("menus can omit the visible header while retaining an accessible name", () => {
+  const menu = createMenu({
+    showHeader: false,
+    titleText: "Hidden Title",
+    bodyText: "Body",
+    documentRef,
+  });
+
+  assert.equal(menu.header, null);
+  assert.equal(menu.title, null);
+  assert.equal(menu.panel.attributes.get("aria-label"), "Hidden Title");
+  assert.equal(menu.panel.children[0], menu.bodyArea);
+});
+
 test("a menu can explicitly opt into a logo without changing other instances", () => {
-  const menu = createMenu({ titleText: "Start Menu", bodyText: "Use bushes to hide.", logo: {src:"/logo.png",alt:"Game"}, documentRef });
+  const menu = createMenu({
+    titleText: "Start Menu",
+    bodyText: "Use bushes to hide.",
+    showLogo: true,
+    logoSrc: "/logo.png",
+    logoAlt: "Game",
+    documentRef,
+  });
   assert.equal(menu.logo.src, "/logo.png");
   assert.equal(menu.logo.alt, "Game");
   assert.equal(menu.composition.children[0], menu.logo);

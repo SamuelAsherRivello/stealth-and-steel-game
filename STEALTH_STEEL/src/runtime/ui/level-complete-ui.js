@@ -4,7 +4,7 @@ export function createLevelLostUi({ host, onPay, onRestart, documentRef = global
   const menu = createMenu({titleText:'You Lost',bodyText:'Try again!',documentRef,
     buttonClicksOnly: true,
     buttons:[{displayText:'Pay … Sats To Continue',icon:'⚡',className:'level-lost-pay'},{displayText:'Restart Game',className:'level-lost-restart'}]});
-  const {backdrop,panel,body,buttons:[payButton,restartButton]} = menu;
+  const {backdrop,panel,body,actions,buttons:[payButton,restartButton]} = menu;
   backdrop.className += ' level-complete-backdrop'; panel.className += ' level-complete-panel outcome-loss';
   backdrop.hidden = true; payButton.disabled = true;
   body.setAttribute('role','status'); body.setAttribute('aria-live','polite');
@@ -21,7 +21,7 @@ export function createLevelLostUi({ host, onPay, onRestart, documentRef = global
   };
   backdrop.addEventListener('keydown',containKey); backdrop.addEventListener('keyup',containKey);
   payButton.addEventListener('click',pay); restartButton.addEventListener('click',restart); host.append(backdrop);
-  return {backdrop,panel,payButton,restartButton,
+  return {backdrop,panel,actions,payButton,restartButton,
     setState({sats,canPay,status,message}) {
       payButton.menuLabel.textContent = `Pay ${sats ?? '…'} Sats To Continue`;
       payButton.disabled = !canPay;
@@ -44,7 +44,8 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
       {displayText:'Restart Game',className:'level-complete-restart'},
       {displayText:'Check Trophy Status',className:'level-complete-check'},
       {displayText:'OK',className:'level-complete-acknowledge'}]});
-  const {backdrop,panel,title,body,buttons:[collectButton,continueButton,restartButton,checkButton,acknowledgeButton]}=menu;
+  const {backdrop,panel,title,body,actions,
+    buttons:[collectButton,continueButton,restartButton,checkButton,acknowledgeButton]}=menu;
   backdrop.className += ' level-complete-backdrop'; panel.className += ' level-complete-panel outcome-win'; backdrop.hidden=true;
   body.setAttribute('aria-live','polite');
   let completion={levelNumber:1,levelsCompleted:1,totalLevels:1,hasNext:true,collected:0,total:0};
@@ -67,7 +68,7 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
     acknowledgeButton.hidden=!state.needsAcknowledgment; acknowledgeButton.disabled=state.busy;
     panel.setAttribute('aria-busy',String(state.busy));
   }
-  const actions=[[collectButton,onCollect],[continueButton,onContinue],[restartButton,onRestart],[checkButton,onCheck],[acknowledgeButton,onAcknowledge]].map(([button,callback])=>{
+  const actionHandlers=[[collectButton,onCollect],[continueButton,onContinue],[restartButton,onRestart],[checkButton,onCheck],[acknowledgeButton,onAcknowledge]].map(([button,callback])=>{
     const handler=()=>{if(!button.disabled && !button.hidden)void callback();};button.addEventListener('click',handler);return [button,handler];
   });
   const keydown=event=>{
@@ -80,10 +81,10 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
     }
   };
   backdrop.addEventListener('keydown',keydown);backdrop.addEventListener('keyup',keydown);host.append(backdrop);render();
-  return {backdrop,panel,button:continueButton,collectButton,continueButton,restartButton,checkButton,acknowledgeButton,
+  return {backdrop,panel,actions,button:continueButton,collectButton,continueButton,restartButton,checkButton,acknowledgeButton,
     setCompletion(value){completion={...completion,...value};render();},
     setState(value){state={...state,...value};render();if(state.needsAcknowledgment)acknowledgeButton.focus();},
     show(){render();backdrop.hidden=false;(menu.buttons.find(button=>!button.hidden&&!button.disabled)??panel).focus();},
-    dispose(){for(const [button,handler]of actions)button.removeEventListener('click',handler);backdrop.removeEventListener('keydown',keydown);backdrop.removeEventListener('keyup',keydown);backdrop.remove();},
+    dispose(){for(const [button,handler]of actionHandlers)button.removeEventListener('click',handler);backdrop.removeEventListener('keydown',keydown);backdrop.removeEventListener('keyup',keydown);backdrop.remove();},
   };
 }

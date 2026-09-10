@@ -23,7 +23,7 @@ test('paid loss has BIS-priced Pay first, Restart second and guards disabled act
  ui.setState({sats:2345,canPay:false,status:'idle',message:''});ui.show();
  assert.equal(ui.payButton.textContent,'⚡Pay 2345 Sats To Continue');assert.equal(ui.restartButton.textContent,'Restart Game');
  assert.equal(ui.payButton.children[0].textContent,'⚡');
- assert.ok(ui.panel.children.indexOf(ui.payButton)<ui.panel.children.indexOf(ui.restartButton));
+ assert.deepEqual(ui.actions.children, [ui.payButton, ui.restartButton]);
  ui.payButton.dispatchEvent(new Event('click'));assert.equal(pays,0);
  ui.setState({sats:2345,canPay:true,status:'failed',message:'Try again'});ui.payButton.dispatchEvent(new Event('click'));assert.equal(pays,1);
  ui.setState({sats:2345,canPay:false,status:'pending',message:'Processing'});ui.restartButton.dispatchEvent(new Event('click'));assert.equal(restarts,0);
@@ -36,6 +36,7 @@ test('loss prompt has restart copy and cannot be dismissed by backdrop', () => {
   ui.show();
   assert.equal(ui.panel.children[0].textContent, 'You Lost');
   assert.equal(ui.panel.children[1].textContent, 'Try again!');
+  assert.deepEqual(ui.actions.children, [ui.payButton, ui.restartButton]);
   ui.backdrop.dispatchEvent(new Event('click'));
   assert.equal(host.children.length, 1);
 });
@@ -47,6 +48,7 @@ test("level complete requires Continue and ignores background clicks", () => {
   ui.show();
   const panel = ui.panel;
   const button = ui.continueButton;
+  assert.ok(ui.actions.children.includes(button));
   ui.backdrop.dispatchEvent(new Event("click", { bubbles: true }));
   assert.equal(host.children.length, 1);
   assert.equal(continued, 0);

@@ -96,6 +96,7 @@ export function createSettingsUi({
     const musicSlider = musicControl.slider;
     const sfxSlider = sfxControl.slider;
     const developerButton = createMenuButton({ displayText: "Developer", className: "developer-settings-button", documentRef });
+    const settingsButtons = [];
 
     const developerContent = documentRef.createElement("div");
     developerContent.className = "settings-controls developer-settings-controls";
@@ -138,7 +139,6 @@ export function createSettingsUi({
     renderMapOrder();
     developerContent.append(debugHeading, ...debugControls.map(control => control.row));
     if (catalog.length) developerContent.append(mapHeading, mapButtons);
-    developerContent.append(githubButton, resetButton);
     resetButton.addEventListener("click", () => {
       store.reset();
       renderMapOrder();
@@ -154,6 +154,7 @@ export function createSettingsUi({
         host: modalHost,
         title: "Developer",
         content: developerContent,
+        buttons: [githubButton, resetButton],
         documentRef,
         opener: developerButton,
         closeLabel: "Close developer settings",
@@ -184,15 +185,16 @@ export function createSettingsUi({
         activeWindow?.setVisible(false);
         void openAccount();
       });
-      content.append(accountButton);
+      settingsButtons.push(accountButton);
     }
-    content.append(developerButton);
+    settingsButtons.push(developerButton);
     pauseController.pause('settings');
     gear.setAttribute("aria-label", "Close settings");
     activeWindow = new GameWindow({
       host: modalHost,
       title: "Settings Menu",
       content,
+      buttons: settingsButtons,
       documentRef,
       opener: gear,
       closeLabel: "Close settings",

@@ -100,7 +100,7 @@ test("Developer lists five independent visualizations and clears all their setti
     row.children[1].dispatchEvent(new Event("change"));
     keys.forEach((key, i) => assert.equal(store.get(key), i <= index));
   });
-  click(content.children.at(-1));
+  click(elementByClass(ui.developerWindow.actions, "settings-reset"));
   keys.forEach(key => assert.equal(store.get(key), false));
   rows.forEach(row => assert.equal(row.children[1].checked, false));
 });
@@ -209,6 +209,26 @@ test("X closes the window once and returns focus", () => {
   assert.equal(opener.focused, true);
 });
 
+test("game window places caller buttons in the shared action area", () => {
+  const documentRef = createDocument();
+  const host = new FakeElement();
+  host.isConnected = true;
+  const action = documentRef.createElement("button");
+  action.type = "button";
+  action.textContent = "Action";
+  const gameWindow = new GameWindow({
+    host,
+    title: "Settings Menu",
+    content: new FakeElement(),
+    buttons: [action],
+    documentRef,
+  });
+
+  assert.equal(gameWindow.actions.children[0], action);
+  assert.ok(!gameWindow.panel.children.includes(action));
+  gameWindow.close();
+});
+
 test("settings source composes required controls, persistence, and pause lifecycle", async () => {
   const [source, main] = await Promise.all([
     readFile(new URL("../../runtime/ui/settings-ui.js", import.meta.url), "utf8"),
@@ -237,7 +257,7 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /pauseController\.pause\('settings'\)/);
   assert.match(source, /pauseController\.resume\('settings'\)/);
   assert.doesNotMatch(source, /Skip Start Menu/);
-  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: \(\) => accountHost.open\(\), openGameWallet:/);
+  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: \(\) => accountHost\.open\(\) \}\)/);
   assert.match(main, /updateSpriteAnimationManager\(animationManager, activeDelta \* 1000\)/);
   assert.match(main, /playerRecord\.actor\.update\(activeDelta, dynamicColliders\)/);
   assert.match(main, /showColliders = runtimeSettingsStore\.get\(RUNTIME_DEBUG_SETTING_KEYS\.showColliders\)/);
@@ -299,8 +319,8 @@ test("developer settings opens the related GitHub project above Reset", () => {
   settingsUi.open();
   click(elementByClass(settingsUi.activeWindow.panel, "developer-settings-button"));
   const developerContent = elementByClass(settingsUi.developerWindow.panel, "developer-settings-controls");
-  const githubButton = developerContent.children.at(-2);
-  const resetButton = developerContent.children.at(-1);
+  const githubButton = elementByClass(settingsUi.developerWindow.actions, "settings-github-button");
+  const resetButton = elementByClass(settingsUi.developerWindow.actions, "settings-reset");
 
   assert.equal(githubButton.textContent, "Open GitHub");
   assert.equal(resetButton.textContent, "Clear All Settings");
@@ -348,10 +368,12 @@ test("Account is styled and placed immediately before Developer", () => {
     store: {get: () => 100}, pauseController: {pause() {}, resume() {}}, openAccount() {} });
   settings.open();
   const content = elementByClass(settings.activeWindow.panel, "settings-controls");
-  assert.equal(content.children[3].textContent, '⚡ Account');
-  assert.equal(content.children[4].textContent, 'Developer');
-  assert.ok(content.children[3].className.split(' ').includes('settings-account-button'));
-  assert.ok(content.children[3].className.split(' ').includes('tiny-swords-button'));
+  const accountButton = elementByClass(settings.activeWindow.actions, "settings-account-button");
+  const developerButton = elementByClass(settings.activeWindow.actions, "developer-settings-button");
+  assert.equal(content.children.length, 3);
+  assert.equal(accountButton.textContent, '⚡ Account');
+  assert.equal(developerButton.textContent, 'Developer');
+  assert.ok(accountButton.className.split(' ').includes('tiny-swords-button'));
   assert.ok(content.children[0].className.split(' ').includes('slider-control'));
   settings.close();
 });
@@ -370,6 +392,6 @@ test("Enemy Tasks control writes independently and Clear All Settings clears the
   checkbox.checked = true; checkbox.dispatchEvent(new Event('change'));
   assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyAiLabels), true);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
-  click(content.children.at(-1));
+  click(elementByClass(ui.developerWindow.actions, "settings-reset"));
   assert.equal(checkbox.checked, false);
 });

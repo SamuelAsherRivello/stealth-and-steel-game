@@ -32,9 +32,10 @@ export function createTreasureUi({host,screenLayer,pauseController,session,docum
       countdown=documentRef.createElement('p');
       claim=createMenuButton({displayText:'Claim',documentRef});reject=createMenuButton({displayText:'Reject',documentRef});back=createMenuButton({displayText:'Back',documentRef});
       claim.addEventListener('click',()=>void act('claim'));reject.addEventListener('click',()=>void act('reject'));back.addEventListener('click',()=>window?.close());
-      content.append(message,countdown,claim,reject,back);
+      content.append(message,countdown);
       pauseController.pause('treasure');
-      window=new GameWindow({host,screenLayer,title:'Treasure Chest',content,documentRef,onClose:()=>{window=null;pauseController.resume('treasure');}});
+      window=new GameWindow({host,screenLayer,title:'Treasure Chest',content,
+        buttons:[claim,reject,back],documentRef,onClose:()=>{window=null;pauseController.resume('treasure');}});
       for(const eventName of ['keydown','keyup','pointerdown','pointerup','touchstart','touchend'])window.backdrop.addEventListener(eventName,event=>{
         event.stopPropagation();
         if(eventName==='keydown'&&event.key==='Escape'){event.preventDefault();window?.close();}

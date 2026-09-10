@@ -12,13 +12,12 @@ export function shouldSkipIntro({ isDevelopment = false, search = "" } = {}) {
 
 export function createStartGamePrompt({ host, onStart, documentRef = globalThis.document }) {
   const menu = createMenu({
-    titleText: "Start Menu", bodyText: START_PROMPT_BODY,
+    titleText: "Start Menu",
+    bodyText: START_PROMPT_BODY,
     buttonClicksOnly: true,
     titleId: "start-game-prompt-title",
-    logo: {
-      src: `${import.meta.env?.BASE_URL ?? "/"}ui/tiny-swords/stealth-and-steel-logo-transparent.png`,
-      alt: "Stealth & Steel",
-    },
+    showLogo: true,
+    logoAlt: "Stealth & Steel",
     buttons: [{ displayText: "Start", className: "start-game-prompt-start" }],
     documentRef,
   });
