@@ -257,7 +257,9 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /pauseController\.pause\('settings'\)/);
   assert.match(source, /pauseController\.resume\('settings'\)/);
   assert.doesNotMatch(source, /Skip Start Menu/);
-  assert.match(main, /createSettingsUi\(\{ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: \(\) => accountHost\.open\(\) \}\)/);
+  assert.match(main, /settingsUi = createSettingsUi\(\{/);
+  assert.match(main, /openAccount: \(\) => accountHost\.open\(\)/);
+  assert.match(main, /equipmentProvider: \(\) => equipmentControllerPromise/);
   assert.match(main, /updateSpriteAnimationManager\(animationManager, activeDelta \* 1000\)/);
   assert.match(main, /playerRecord\.actor\.update\(activeDelta, dynamicColliders\)/);
   assert.match(main, /showColliders = runtimeSettingsStore\.get\(RUNTIME_DEBUG_SETTING_KEYS\.showColliders\)/);

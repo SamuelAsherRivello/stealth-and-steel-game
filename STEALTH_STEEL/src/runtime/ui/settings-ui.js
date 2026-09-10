@@ -9,6 +9,7 @@ import { applyFullscreenPreference } from "./fullscreen-settings.js";
 import { GameWindow } from "./game-window.js";
 import { createMenuButton } from "./menu.js";
 import { createSliderControl, createToggleControl } from "./menu-controls.js";
+import { createItemsUi } from "./items-ui.js";
 
 const ASSET_BASE = import.meta.env?.BASE_URL ?? "/";
 const PROJECT_GITHUB_URL = "https://github.com/SamuelAsherRivello/stealth-and-steel-game";
@@ -56,6 +57,8 @@ export function createSettingsUi({
   screenLayer = modalHost,
   pauseController,
   openAccount,
+  equipmentProvider,
+  onEquipmentState = () => {},
   catalog = [],
   store = runtimeSettingsStore,
   documentRef = globalThis.document,
@@ -75,6 +78,7 @@ export function createSettingsUi({
 
   let activeWindow = null;
   let developerWindow = null;
+  let itemsWindow = null;
   let accountButton = null;
   let accountActive = false;
   const close = () => { if (!accountActive) activeWindow?.close(); };
@@ -187,6 +191,27 @@ export function createSettingsUi({
       });
       settingsButtons.push(accountButton);
     }
+    if (equipmentProvider) {
+      const itemsButton = createMenuButton({ displayText: "Items", className: "settings-items-button", documentRef });
+      itemsButton.addEventListener("click", event => {
+        event.stopPropagation();
+        if (itemsWindow) return;
+        activeWindow?.setVisible(false);
+        itemsWindow = createItemsUi({
+          host: modalHost,
+          screenLayer,
+          opener: itemsButton,
+          equipmentProvider,
+          onState: onEquipmentState,
+          documentRef,
+          onClose: () => {
+            itemsWindow = null;
+            activeWindow?.setVisible(true);
+          },
+        });
+      });
+      settingsButtons.push(itemsButton);
+    }
     settingsButtons.push(developerButton);
     pauseController.pause('settings');
     gear.setAttribute("aria-label", "Close settings");
@@ -201,6 +226,7 @@ export function createSettingsUi({
       screenLayer,
       onClose: () => {
         developerWindow?.close();
+        itemsWindow?.window.close();
         fullscreenControl.dispose();
         activeWindow = null;
         gear.setAttribute("aria-label", "Open settings");

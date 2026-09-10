@@ -1,5 +1,6 @@
 import { collidersOverlap } from './game-logic.js';
 import { GRID } from '../systems/environment/grid-contract.js';
+import { getPlayerIncomingDamage } from './equipment-effects.js';
 
 export const PLAYER_KNOCKBACK_CELLS = Object.freeze({ goblin: .25, archer: .5, warrior: .75, lancer: 1 });
 
@@ -26,7 +27,7 @@ export function createDistanceImpulse() {
 
 export function damagePlayer(player, source, direction) {
   if (!player?.combat.isAlive || !(source in PLAYER_KNOCKBACK_CELLS)) return false;
-  player.combat.applyDamage(25, direction, { distance: PLAYER_KNOCKBACK_CELLS[source] * GRID.tileSizePx });
+  player.combat.applyDamage(getPlayerIncomingDamage(player, 25), direction, { distance: PLAYER_KNOCKBACK_CELLS[source] * GRID.tileSizePx });
   return true;
 }
 

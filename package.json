@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@babylonjs/lite": "^1.25.0",
-    "@bis/integration": "file:STEALTH_STEEL/vendor/bis-integration-0.14.3-6f6036191c1a8890a9c2def929ce1b80857bf6782bbf4f13e0b6355bfa99c8e0.tgz",
+    "@bis/integration": "file:STEALTH_STEEL/vendor/bis-integration-0.14.3-5554d0d7b00b99d7ac7b11965d71091d04ffc28e9ec30312ae2f05c850c94fb7.tgz",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   }

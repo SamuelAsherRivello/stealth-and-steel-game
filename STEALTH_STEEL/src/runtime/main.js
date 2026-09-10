@@ -103,6 +103,7 @@ import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
+import { createItemsHudUi } from "./ui/items-hud-ui.js";
 import { loadStatusBadgeArt } from "./ui/status-badge.js";
 import { createCharacterOverhead, drawCharacterOverheads } from "./ui/character-overhead.js";
 import { createBisAccount } from "./integration/bis-account.js";
@@ -112,6 +113,7 @@ import { createLevelProgress } from "./gameplay/level-progress.js";
 import { revivePaidPlayer } from "./gameplay/paid-revival.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
+import { createEquipmentSnapshot, EMPTY_EQUIPMENT_SNAPSHOT } from "./gameplay/equipment-effects.js";
 import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui.js";
 import {createTreasureRuntime} from './integration/treasure-runtime.js';
 import {createTreasureUi} from './ui/treasure-ui.js';
@@ -548,6 +550,7 @@ export async function start({ showStartPrompt = true } = {}) {
       obstacles: obstacleColliders,
       initialPosition: position,
       initialLoadout: loadout,
+      movementMultiplier: equipmentSnapshot.movementMultiplier,
       onAttackImpact: () => resolvePlayerKnifeImpact(
         getRecordsByType(SpawnerType.PLAYER).find(record => record.actor === actor),
         getRecordsByType(SpawnerType.ENEMY),
@@ -586,7 +589,7 @@ export async function start({ showStartPrompt = true } = {}) {
       onDeathStart: () => { actor.setInputEnabled(false); gameStateMachine.playerDefeated(); playSfx("lose"); },
       onDeathComplete: () => { gameStateMachine.deathCompleted(); pauseController.pause('player-loss'); void paidContinue.show(); },
     });
-    return attachActor({ type: SpawnerType.PLAYER, actor, combat });
+    return attachActor({ type: SpawnerType.PLAYER, actor, combat, equipment: equipmentSnapshot });
   }
 
   function createSheepRecord(position) {
@@ -742,6 +745,31 @@ export async function start({ showStartPrompt = true } = {}) {
     const combat = createCombatActorState({ label: `monk-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, MONK_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [MONK_FRAME.width * value, MONK_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
     return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.MONK, actor, combat, controller: null });
   }
+
+  let settingsUi;
+  const pauseController = createPauseController({
+    onPause: () => {
+      spawnerByType.get(SpawnerType.PLAYER).actors[0]?.actor.setInputEnabled(false, { preserveAttack: true });
+    },
+    onResume: () => {
+      const player = spawnerByType.get(SpawnerType.PLAYER).actors[0];
+      player?.actor.setInputEnabled(player.combat.isAlive && gameStateMachine.state === GameState.LEVEL_PLAYING);
+      previousTime = performance.now();
+    },
+  });
+  const accountHost = createBisAccount({
+    host: domScreen, pauseController,
+    restartGame: () => progress.restart(),
+    onClose: () => settingsUi?.returnFromAccount(),
+  });
+  let equipmentSnapshot = EMPTY_EQUIPMENT_SNAPSHOT;
+  let unsubscribeEquipment = () => {};
+  const equipmentControllerPromise = accountHost.createEquipment();
+  const initialEquipmentState = equipmentControllerPromise.then(controller => controller.refresh());
+  equipmentSnapshot = createEquipmentSnapshot(await Promise.race([
+    initialEquipmentState.catch(() => ({ status: "unavailable" })),
+    new Promise(resolve => setTimeout(() => resolve({ status: "unavailable" }), 1500)),
+  ]));
 
   const spawnerConfigs = createInitialSpawnerConfigs({
     screenWidth: SCREEN_WIDTH,
@@ -939,26 +967,25 @@ export async function start({ showStartPrompt = true } = {}) {
       }
     },
   );
-  const pauseController = createPauseController({
-    onPause: () => {
-      spawnerByType.get(SpawnerType.PLAYER).actors[0]?.actor.setInputEnabled(false, { preserveAttack: true });
-    },
-    onResume: () => {
-      const player = spawnerByType.get(SpawnerType.PLAYER).actors[0];
-      player?.actor.setInputEnabled(player.combat.isAlive && gameStateMachine.state === GameState.LEVEL_PLAYING);
-      previousTime = performance.now();
-    },
-  });
-  const accountHost = createBisAccount({
-    host: domScreen, pauseController,
-    restartGame: () => progress.restart(),
-    onClose: () => settingsUi.returnFromAccount(),
-  });
   const treasure = createTreasureRuntime({accountHost,resumeRun:progress.completed>0});
   const treasureUi = createTreasureUi({host:domBody,screenLayer:domScreen,pauseController,session:treasure});
-  const settingsUi = createSettingsUi({ host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController, catalog: __GAME_LEVELS__, openAccount: () => accountHost.open() });
+  settingsUi = createSettingsUi({
+    host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController,
+    catalog: __GAME_LEVELS__, openAccount: () => accountHost.open(),
+    equipmentProvider: () => equipmentControllerPromise,
+    onEquipmentState: state => { equipmentSnapshot = createEquipmentSnapshot(state); itemsHud?.render(equipmentSnapshot); },
+  });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
+  const itemsHud = createItemsHudUi({ host: gameUi, snapshot: equipmentSnapshot });
+  void equipmentControllerPromise.then(controller => {
+    unsubscribeEquipment = controller.subscribe(() => {
+      equipmentSnapshot = createEquipmentSnapshot(controller.getState());
+      itemsHud.render(equipmentSnapshot);
+    });
+    equipmentSnapshot = createEquipmentSnapshot(controller.getState());
+    itemsHud.render(equipmentSnapshot);
+  }).catch(() => {});
   const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
   const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown.png`, {
     gridSize: [64, 64], sampling: "nearest",
@@ -1548,6 +1575,7 @@ export async function start({ showStartPrompt = true } = {}) {
     treasureUi.dispose();treasure.dispose({preserveSession:preserveContracts});
     for(const spawner of treasureSpawners)spawner.dispose();
     for(const layer of treasureLayers)removeSpriteRendererLayer(renderer,layer);
+    unsubscribeEquipment();
     accountHost.dispose({preserveContracts});
     canvas.removeEventListener("pointerup", handleGridSelection);
     viewportSafeArea.dispose();

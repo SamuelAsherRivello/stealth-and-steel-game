@@ -64,7 +64,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     pauseController.resume('bis-account');
   }
   back.addEventListener('click', close);
-  const cleanup = (current, preserveContracts = false) => { current?.lto?.dispose({endSessions:!preserveContracts}); current?.gameWallet?.dispose(); current?.unsubscribe?.(); current?.unsubscribeEvents?.(); current?.ui?.unmount(); current?.context?.dispose(); };
+  const cleanup = (current, preserveContracts = false) => { current?.equipment?.dispose(); current?.lto?.dispose({endSessions:!preserveContracts}); current?.gameWallet?.dispose(); current?.unsubscribe?.(); current?.unsubscribeEvents?.(); current?.ui?.unmount(); current?.context?.dispose(); };
   function initialize() {
     if (initialization) return initialization;
     initialization = (async () => {
@@ -112,7 +112,12 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     } catch { if (!disposed && active && visit === currentVisit) { status.hidden = false; message.textContent = 'Account is unavailable. Return to Settings and try again.'; back.focus(); } }
     finally { clearTimeout(timer); }
   }
-  return {open, getSession:()=>session, ready: () => initialize(), async createAssetCollection(options) {
+  return {open, getSession:()=>session, ready: () => initialize(), async createEquipment() {
+    const current = await initialize();
+    if (disposed || !current) throw Error('Game session ended.');
+    current.equipment ??= current.api.createBisEquipment(current.context);
+    return current.equipment;
+  }, async createAssetCollection(options) {
     let timer;
     try {
       const current = await Promise.race([initialize(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Trophies unavailable')),timeoutMs);})]);

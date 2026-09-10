@@ -1,6 +1,7 @@
 import { collidersOverlap } from './game-logic.js';
 import { PLAYER_PAWN_ANIMATION_CATALOG, PLAYER_WEAPON_DAMAGE } from '../characters/player/player-pawn-catalog.js';
 import { SpawnerType } from '../systems/spawners/spawner-catalog.js';
+import { getPlayerOutgoingDamage } from './equipment-effects.js';
 
 const animation = PLAYER_PAWN_ANIMATION_CATALOG.weapons.knife.attack;
 const duration = animation.frameCount * animation.frameDurationMs / 1000;
@@ -41,6 +42,6 @@ export function resolvePlayerKnifeImpact(player, enemies) {
     const to = enemy.actor.getPosition();
     const length = Math.hypot(to.x - from.x, to.y - from.y);
     const direction = length ? { x: (to.x - from.x) / length, y: (to.y - from.y) / length } : { x: 1, y: 0 };
-    enemy.combat.applyDamage(PLAYER_WEAPON_DAMAGE.knife, direction);
+    enemy.combat.applyDamage(getPlayerOutgoingDamage(player, PLAYER_WEAPON_DAMAGE.knife), direction);
   }
 }

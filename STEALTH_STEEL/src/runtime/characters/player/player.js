@@ -126,6 +126,7 @@ export function createPlayer({
   obstacles,
   initialPosition,
   initialLoadout = {},
+  movementMultiplier = 1,
   onAttackImpact = () => {},
   onDropItem = () => {},
 }) {
@@ -494,7 +495,7 @@ export function createPlayer({
         : selectedMovement);
       const distance = knockbackMovement
         ? Math.hypot(knockbackMovement.x, knockbackMovement.y) * deltaSeconds
-        : PLAYER_SPEED * deltaSeconds;
+        : PLAYER_SPEED * movementMultiplier * deltaSeconds;
       const activeObstacles = [
         ...obstacles,
         ...dynamicColliders.map(({ collider }) => collider),
