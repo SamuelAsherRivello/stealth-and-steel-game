@@ -1,10 +1,4 @@
-# player-melee-combat Specification
-
-## Purpose
-
-Provide a repeatable player knife attack whose visible swing, collider overlap, damage event, and gameplay lifecycle remain consistent across keyboard and touch input.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Attack always uses the existing knife animation
 Every accepted Attack activation SHALL play the existing four-frame knife animation as the only player attack animation, independently of equipped weapon or held item. C072 MAY play those frames forward or backward and at a configured speed for a classified combo move, including a visual-only jump on the Rapid Triple finisher. Attack SHALL emit no projectile. Completion SHALL restore the appropriate current idle or running presentation. Movement SHALL remain available during every dagger move, and visual combo motion SHALL not alter ground movement or collider placement.

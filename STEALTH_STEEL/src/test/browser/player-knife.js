@@ -16,9 +16,14 @@ const engine = await createEngine(canvas, {maxDevicePixelRatio:1}); engine._w=76
 const manager = createSpriteAnimationManager();
 const [playerAtlases, enemyAtlases] = await Promise.all([loadPlayerAtlases(engine),loaders[source](engine)]);
 const bounds = {width:768,height:576};
-let impacts=0, paused=false;
+let impacts=0, moves=[], paused=false;
 const playerActor = createPlayer({atlases:playerAtlases,bounds,obstacles:[],initialPosition:{x:352,y:288},
-  onAttackImpact: () => {impacts++;resolvePlayerKnifeImpact(player,enemies);}});
+  onAttackStart: move => moves.push(move.id),
+  onAttackImpact: (move = {}, eligibleTargetIds) => {
+    impacts++;
+    const resolved = resolvePlayerKnifeImpact(player,enemies,{multiplier:move.multiplier ?? 1,eligibleTargetIds,collectImpacts:true});
+    return {confirmedTargetIds:resolved.map(hit=>hit.targetId),advancedTargetIds:(move.multiplier ?? 1)>1?resolved.filter(hit=>hit.upgraded).map(hit=>hit.targetId):resolved.map(hit=>hit.targetId)};
+  }});
 const player = {actor:playerActor,combat:createCombatActorState({label:'player',getCombatCollider:()=>playerActor.getCombatCollider(),
   setVisualTransform:t=>playerActor.setVisualTransform(t),onDeathStart:()=>playerActor.setInputEnabled(false)})};
 playerActor.playAnimation(manager);
@@ -38,8 +43,8 @@ function place(index, dx, dy=0) {
 place(0,40); place(1,180);
 function snapshot() {
   const layer=playerActor.layers.find(l=>l.visible);
-  return {source,impacts,health:enemies.map(e=>e.combat.health),dying:enemies.map(e=>e.combat.isDying),dead:enemies.map(e=>e.combat.isDead),
-    state:playerActor.state,position:playerActor.getPosition(),loadout:playerActor.getLoadout(),
+  return {source,impacts,moves,health:enemies.map(e=>e.combat.health),dying:enemies.map(e=>e.combat.isDying),dead:enemies.map(e=>e.combat.isDead),
+    state:playerActor.state,cooldown:playerActor.daggerComboCooldown,position:playerActor.getPosition(),loadout:playerActor.getLoadout(),
     animation:Object.keys(playerAtlases).find(key=>playerAtlases[key]===layer?.atlas),
     uv:layer ? Array.from(layer._instanceData.slice(4,8)) : [], playerCollider:playerActor.getCombatCollider(),enemyColliders:enemies.map(e=>e.combat.getCombatCollider())};
 }
@@ -50,9 +55,14 @@ function step(dt) {
   for(const e of enemies)e.combat.updateDeath(dt);
   draw();return snapshot();
 }
-window.knifeQA = {snapshot,step,place,advance(dt){for(let left=dt;left>1e-9;left-=.01)step(Math.min(.01,left));return snapshot();},
+function advance(dt){for(let left=dt;left>1e-9;left-=.01)step(Math.min(.01,left));return snapshot();}
+function requestAttack(){window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyV'}));}
+function runCombo(gaps, settle=2){requestAttack();for(const gap of gaps){advance(gap);requestAttack();}return advance(settle);}
+window.knifeQA = {snapshot,step,place,advance,runCombo,
   pause(value){paused=value;playerActor.setInputEnabled(!value,{preserveAttack:true});},
   cancel(){playerActor.setInputEnabled(false);},resume(){playerActor.setInputEnabled(true);},kill(){player.combat.applyDamage(100);},
   dispose(){playerActor.dispose();},setPlayer(p){playerActor.setPosition(p);},
 };
+document.querySelector('#rapid-combo').addEventListener('click',()=>runCombo([.5,.5]));
+document.querySelector('#over-fast-combo').addEventListener('click',()=>runCombo([.05,.05],1.21));
 draw();

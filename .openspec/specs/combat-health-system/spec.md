@@ -15,13 +15,7 @@ Each player, sheep, and goblin entity SHALL start with exactly 100 health points
 - **THEN** the hero, sheep, and enemy each have 100 current health points
 
 ### Requirement: Damage is applied only by defined sources and amounts
-The system SHALL apply damage only through the defined interaction matrix and
-SHALL ignore all other contact sources for damage. A successful player knife swing SHALL deal exactly 25 damage once to each eligible living Goblin, Warrior, Lancer, Archer, or Monk through direct damage-collider overlap at the swing midpoint. Knife hits SHALL retain existing hit feedback, supported knockback, and death handling; projectile-only defense SHALL not reject knife hits. An arrow approaching from
-the direction the Warrior is already facing SHALL always trigger defense and
-deal no damage. An arrow approaching from behind SHALL never trigger defense
-and SHALL reduce Warrior health by 50. An upward-moving arrow SHALL be defended
-only when its 50% defense attempt succeeds. A downward-moving arrow SHALL never
-be defended and SHALL reduce Warrior health by 50.
+The system SHALL apply damage only through the defined interaction matrix and SHALL ignore all other contact sources for damage. A successful ordinary player dagger move SHALL deal exactly 25 base damage once to each eligible living Goblin, Warrior, Lancer, Archer, or Monk through direct damage-collider overlap at that move's configured impact. A confirmed C072 combo move SHALL instead deal its configured dagger multiplier times the same 25 base damage once to every eligible overlapping enemy. Dagger hits SHALL retain existing hit feedback, supported knockback, and death handling; projectile-only defense SHALL not reject dagger damage. An arrow approaching from the direction the Warrior is already facing SHALL always trigger defense and deal no damage. An arrow approaching from behind SHALL never trigger defense and SHALL reduce Warrior health by 50. An upward-moving arrow SHALL be defended only when its 50% defense attempt succeeds. A downward-moving arrow SHALL never be defended and SHALL reduce Warrior health by 50.
 
 #### Scenario: Sheep is hit by goblin
 - **WHEN** the sheep collider overlaps a goblin collider as a result of touch
@@ -53,7 +47,7 @@ be defended and SHALL reduce Warrior health by 50.
 
 #### Scenario: Hero walks into goblin
 - **WHEN** the hero collider overlaps the goblin collider while the hero is moving
-- **THEN** goblin health is unchanged unless a knife swing reaches its midpoint with overlapping damage colliders
+- **THEN** goblin health is unchanged unless a dagger move reaches its configured impact with overlapping damage colliders
 
 #### Scenario: Goblin damages hero only during attack swing
 - **WHEN** the goblin reaches its swing damage event and the living hero overlaps its committed directional damage area, including the cardinally adjacent cell
@@ -64,11 +58,11 @@ be defended and SHALL reduce Warrior health by 50.
 - **THEN** the hero health does not change
 
 #### Scenario: Knife hits each enemy type
-- **WHEN** a successful knife swing hits a living Goblin, Warrior, Lancer, Archer, or Monk
-- **THEN** its health decreases by exactly 25 once and existing hit or lethal feedback runs
+- **WHEN** a successful ordinary or confirmed combo dagger move hits a living Goblin, Warrior, Lancer, Archer, or Monk
+- **THEN** its health decreases by that move's base or configured combo damage once and existing hit or lethal feedback runs
 
 #### Scenario: Four isolated knife hits defeat an enemy
-- **WHEN** an enemy starting at its existing 100 health receives four successful knife hits with no other damage
+- **WHEN** an enemy starting at its existing 100 health receives four successful ordinary dagger impacts with no other damage
 - **THEN** its health progresses through 75, 50, 25, and 0
 - **AND** at zero health its existing death lifecycle begins and it stops accepting damage
 

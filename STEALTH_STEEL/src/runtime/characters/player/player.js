@@ -1,4 +1,5 @@
 import { createKnifeSwing } from "../../gameplay/player-melee.js";
+import { createDaggerComboController } from "../../gameplay/player-dagger-combo.js";
 import { createDistanceImpulse } from "../../gameplay/player-damage.js";
 import { createBushGravity } from "./bush-gravity.js";
 import {
@@ -127,6 +128,7 @@ export function createPlayer({
   initialPosition,
   initialLoadout = {},
   movementMultiplier = 1,
+  onAttackStart = () => {},
   onAttackImpact = () => {},
   onDropItem = () => {},
 }) {
@@ -164,10 +166,14 @@ export function createPlayer({
   const knockbackImpulse = createDistanceImpulse();
   const stateMachine = createPlayerStateMachine();
   const knifeSwing = createKnifeSwing();
+  const daggerCombo = createDaggerComboController();
+  let activeDaggerMove = null;
+  let comboEligibleTargetIds = new Set();
   let weaponSlot = initialLoadout.weapon ?? null;
   let itemSlot = initialLoadout.item ?? null;
   let presentationOverride = null;
   let presentationOverrideTimer = 0;
+  let comboFlashTimer = 0;
   let animationManager = null;
   let activeAnimation = null;
   let visualAlpha = 1;
@@ -228,13 +234,26 @@ export function createPlayer({
   }
 
   function attack() {
-    if (!inputEnabled || !knifeSwing.start()) return;
+    if (!inputEnabled) return;
+    const request = daggerCombo.request();
+    if (!request.accepted || request.buffered) return;
+    if (!knifeSwing.start(request.move)) return;
+    activeDaggerMove = request.move;
+    if (activeDaggerMove.id === "ordinary") comboEligibleTargetIds.clear();
+    if (activeDaggerMove.multiplier > 1) {
+      comboFlashTimer = 0.12;
+      setVisualTransform({ color: [1.15, 1.35, 1.6, 1] });
+    }
+    onAttackStart(activeDaggerMove);
     const transition = stateMachine.startAttack("knife");
     if (transition.changed) playStateAnimation("attack");
   }
 
   function cancelAttack() {
     knifeSwing.cancel();
+    daggerCombo.cancel();
+    activeDaggerMove = null;
+    comboEligibleTargetIds.clear();
     const transition = stateMachine.completeAttack(getSelectedMovement());
     if (transition.changed) playStateAnimation(getAnimationName(transition.state));
   }
@@ -403,6 +422,8 @@ export function createPlayer({
   return {
     layers: Object.values(layers),
     get state() { return stateMachine.state; },
+    get daggerComboCooldown() { return daggerCombo.cooldown; },
+    getFacing() { return stateMachine.facing; },
     cancelAttack,
     observeHidingBushes(bushes) {
       const wasActive = bushGravity.active;
@@ -471,6 +492,10 @@ export function createPlayer({
       updateSprites();
     },
     update(deltaSeconds, dynamicColliders = []) {
+      if (comboFlashTimer > 0) {
+        comboFlashTimer = Math.max(0, comboFlashTimer - Math.max(0, deltaSeconds));
+        if (comboFlashTimer === 0) setVisualTransform({ color: [1, 1, 1, 1] });
+      }
       if (presentationOverrideTimer > 0) {
         presentationOverrideTimer = Math.max(
           0,
@@ -553,24 +578,49 @@ export function createPlayer({
 
       gridSpot.update(position);
 
+      if (inputEnabled) daggerCombo.advance(deltaSeconds);
       if (inputEnabled && knifeSwing.active) {
         const { impact, completed } = knifeSwing.advance(deltaSeconds);
         updateSprite2D(sprites.attack, { frame: knifeSwing.frame });
-        if (impact) onAttackImpact();
+        if (impact) {
+          const result = onAttackImpact(activeDaggerMove, comboEligibleTargetIds) ?? {};
+          if (activeDaggerMove?.id === "rapid-final" && result.confirmedTargetIds?.length > 0) {
+            daggerCombo.confirmRapidFinisherHit();
+          }
+          const advancedTargetIds = result.advancedTargetIds ?? result.confirmedTargetIds ?? result;
+          comboEligibleTargetIds = new Set(Array.isArray(advancedTargetIds) ? advancedTargetIds : []);
+        }
         if (completed) {
-          const result = stateMachine.completeAttack(getSelectedMovement());
-          if (result.changed) playStateAnimation(getAnimationName(result.state));
+          const nextMove = daggerCombo.complete();
+          if (nextMove) {
+            activeDaggerMove = nextMove;
+            if (nextMove.id === "ordinary") comboEligibleTargetIds.clear();
+            knifeSwing.start(nextMove);
+            if (nextMove.multiplier > 1) {
+              comboFlashTimer = 0.12;
+              setVisualTransform({ color: [1.15, 1.35, 1.6, 1] });
+            }
+            onAttackStart(nextMove);
+            playStateAnimation("attack");
+          } else {
+            activeDaggerMove = null;
+            if (!daggerCombo.awaitingRapidFinisher) comboEligibleTargetIds.clear();
+            const result = stateMachine.completeAttack(getSelectedMovement());
+            if (result.changed) playStateAnimation(getAnimationName(result.state));
+          }
         }
       }
-
       const screenPosition = getArtScreenPosition(position);
+      const comboJumpHeight = activeDaggerMove?.visualJump && knifeSwing.active
+        ? Math.sin(Math.PI * Math.max(0, Math.min(1, (knifeSwing.elapsed - activeDaggerMove.delay) / activeDaggerMove.duration))) * 12
+        : 0;
       const order = renderOrderOverride ?? getCharacterLayerOrder(this.getMovementCollider(), bounds);
       for (const layer of Object.values(layers)) {
         layer.order = order;
       }
       for (const sprite of Object.values(sprites)) {
         updateSprite2D(sprite, {
-          positionPx: [screenPosition.x, screenPosition.y],
+          positionPx: [screenPosition.x, screenPosition.y - comboJumpHeight],
           flipX: stateMachine.facing < 0,
         });
       }

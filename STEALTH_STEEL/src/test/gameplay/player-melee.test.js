@@ -57,16 +57,32 @@ test('impact uses current collider overlap, hits all directions, and excludes ot
   const enemies = [record('goblin', -40), record('warrior', 40), record('archer', 0, -40), record('monk', 0, 40)];
   const missed = record('lancer', 100);
   const sheep = {...record('sheep'), type: 'sheep'};
-  resolvePlayerKnifeImpact(hero, [...enemies, missed, sheep]);
+  assert.equal(resolvePlayerKnifeImpact(hero, [...enemies, missed, sheep]), 4);
   assert.deepEqual(enemies.map(e => e.combat.health), [75, 75, 75, 75]);
   assert.equal(missed.combat.health, 100); assert.equal(sheep.combat.health, 100);
   missed.collider.x = 40;
   enemies[0].collider.x = -100;
-  resolvePlayerKnifeImpact(hero, [missed, enemies[0]]);
+  assert.equal(resolvePlayerKnifeImpact(hero, [missed, enemies[0]]), 1);
   assert.equal(missed.combat.health, 75); assert.equal(enemies[0].combat.health, 75);
   hero.combat.applyDamage(100);
-  resolvePlayerKnifeImpact(hero, [missed]);
+  assert.equal(resolvePlayerKnifeImpact(hero, [missed]), 0);
   assert.equal(missed.combat.health, 75);
+});
+
+test('combo damage upgrades only targets confirmed by the preceding impact', () => {
+  const hero = player();
+  const confirmed = record('warrior', 40);
+  const newcomer = record('goblin', -40);
+  const impacts = resolvePlayerKnifeImpact(hero, [confirmed, newcomer], {
+    multiplier: 2,
+    eligibleTargetIds: new Set(['warrior']),
+    collectImpacts: true,
+  });
+  assert.equal(confirmed.combat.health, 50);
+  assert.equal(newcomer.combat.health, 75);
+  assert.deepEqual(impacts.map(({ targetId, upgraded }) => [targetId, upgraded]), [
+    ['warrior', true], ['goblin', false],
+  ]);
 });
 
 test('the spawned player snapshot applies the selected Dagger bonus to committed knife damage', () => {

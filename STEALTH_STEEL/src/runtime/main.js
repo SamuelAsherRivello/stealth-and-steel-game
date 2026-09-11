@@ -25,6 +25,7 @@ import {
   loadSpriteAtlas,
   removeSprite2D,
   setSprite2DFrame,
+  updateSprite2D,
   registerSpriteRenderer,
   removeSpriteRendererLayer,
   startEngine,
@@ -98,7 +99,7 @@ import {
 import { resolveProjectileHit } from "./systems/objects/projectile-combat.js";
 import { createPauseController } from "./ui/pause-controller.js";
 import { createStartGamePrompt, shouldShowStartGamePrompt, shouldSkipIntro } from "./ui/start-game-prompt.js";
-import { Fire03ParticleEffect } from "./particle-fx/index.js";
+import { Dust02ParticleEffect, Fire03ParticleEffect } from "./particle-fx/index.js";
 import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
@@ -173,6 +174,8 @@ const ENEMY_EXPRESSION_INSTANCE_FADE_SECONDS = ENEMY_EXPRESSION_FADE_SECONDS / 2
 const EMOTIONAL_JUMP_DURATION_SECONDS = 0.096;
 const EMOTIONAL_JUMP_HEIGHT_PIXELS = 8;
 const ENEMY_EXPRESSION_GRID_OFFSET = TILE_SIZE;
+// Measured from the combo placement guide: point 1 to point 2.
+const DAGGER_COMBO_CLOUD_SCREEN_OFFSET = Object.freeze([10, 64]);
 const EMPTY_TERRAIN_FRAMES = new Set([
   4, 13, 22, 31, 37, 38, 40, 46, 47, 49,
 ]);
@@ -369,6 +372,42 @@ export async function start({ showStartPrompt = true } = {}) {
       visible: false,
     })
   )));
+  const daggerComboEffects = await Promise.all(Array.from({ length: 4 }, () => (
+    Dust02ParticleEffect.create({
+      engine,
+      animationManager,
+      position: [-64, -64],
+      // Combo clouds must remain behind the player, even at the top of the map.
+      order: GAME_DEPTH.npcs - 1,
+      visible: false,
+    })
+  )));
+  let nextDaggerComboEffect = 0;
+  function playDaggerComboEffect(position, multiplier, facing = 1) {
+    if (multiplier <= 1) return;
+    const sizeScale = multiplier >= 3 ? 0.6 : 0.5;
+    const size = Dust02ParticleEffect.descriptor.displaySize[0] * sizeScale;
+    const effect = daggerComboEffects[nextDaggerComboEffect++ % daggerComboEffects.length];
+    const spawnPositionPx = getCenteredEffectPosition({
+        position: {
+          x: position.x + facing * TILE_SIZE * 0.5,
+          y: position.y - TILE_SIZE * 0.5,
+        },
+        frameSize: PLAYER_FRAME,
+        effectSize: { width: size, height: size },
+        screenHeight: SCREEN_HEIGHT,
+      });
+    updateSprite2D(effect.sprite, {
+      positionPx: [
+        spawnPositionPx[0] + DAGGER_COMBO_CLOUD_SCREEN_OFFSET[0],
+        spawnPositionPx[1] + DAGGER_COMBO_CLOUD_SCREEN_OFFSET[1],
+      ],
+      sizePx: [size, size],
+      color: multiplier >= 3 ? [1.35, 1.12, 0.45, 1] : [0.7, 1.15, 1.5, 1],
+    });
+    effect.layer.visible = true;
+    effect.playOnce(() => { effect.layer.visible = false; });
+  }
   const bushLeafAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/particles/bush-particle.png`, {
     gridSize: [16, 14], sampling: "nearest",
   });
@@ -551,10 +590,30 @@ export async function start({ showStartPrompt = true } = {}) {
       initialPosition: position,
       initialLoadout: loadout,
       movementMultiplier: equipmentSnapshot.movementMultiplier,
-      onAttackImpact: () => resolvePlayerKnifeImpact(
-        getRecordsByType(SpawnerType.PLAYER).find(record => record.actor === actor),
-        getRecordsByType(SpawnerType.ENEMY),
-      ),
+      onAttackStart: (move = {}) => {
+        playSfx("warrior", { pitch: move.multiplier >= 3 ? 1.42 : move.multiplier >= 2 ? 1.12 : 1 });
+      },
+      onAttackImpact: (move = {}, eligibleTargetIds) => {
+        const impacts = resolvePlayerKnifeImpact(
+          getRecordsByType(SpawnerType.PLAYER).find(record => record.actor === actor),
+          getRecordsByType(SpawnerType.ENEMY),
+          {
+            multiplier: move.multiplier ?? 1,
+            eligibleTargetIds,
+            collectImpacts: true,
+          },
+        );
+        if (impacts.length > 0) playSfx("lancer", { pitch: move.multiplier >= 3 ? 1.52 : move.multiplier >= 2 ? 1.15 : 1 });
+        if ((move.multiplier ?? 1) > 1) {
+          playDaggerComboEffect(actor.getPosition(), move.multiplier, actor.getFacing());
+        }
+        return {
+          confirmedTargetIds: impacts.map(({ targetId }) => targetId),
+          advancedTargetIds: (move.multiplier ?? 1) > 1
+            ? impacts.filter(({ upgraded }) => upgraded).map(({ targetId }) => targetId)
+            : impacts.map(({ targetId }) => targetId),
+        };
+      },
       onDropItem: (item, startPosition, movement) => {
         if (item !== "gold") return;
         const direction = movement.x !== 0 || movement.y !== 0
@@ -921,6 +980,7 @@ export async function start({ showStartPrompt = true } = {}) {
       ...goldStoneObjects.map((object) => object.layer),
       ...pickupSystem.pickups.map((pickup) => pickup.layer),
       ...bushFireEffects.map((effect) => effect.layer),
+      ...daggerComboEffects.map((effect) => effect.layer),
       ...spawnerMarkers.map((marker) => marker.layer),
       ...spawners.flatMap((spawner) => (
         spawner.actors.flatMap((record) => record.actor.layers)
@@ -1598,6 +1658,7 @@ export async function start({ showStartPrompt = true } = {}) {
     startGamePrompt?.close();
     pickupSystem.dispose();
     projectiles.dispose();
+    for (const effect of daggerComboEffects) effect.dispose();
   }, { once: true });
   await startEngine(engine);
 }

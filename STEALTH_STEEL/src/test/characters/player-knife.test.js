@@ -20,22 +20,33 @@ function harness() {
   globalThis.document = {querySelector: selector => controls[selector.slice(1)] ?? null};
   const atlas = {frames: Array.from({length: 8}, () => ({uvMin: [0,0], uvMax: [1,1], sourceSizePx: [192,192]}))};
   const atlases = Object.fromEntries(['idle','run','attack', 'shoot', ...['axe','hammer','knife','pickaxe','gold','meat','wood'].flatMap(s => [`idle-${s}`, `run-${s}`])].map(n => [n, atlas]));
-  let hits = 0, arrows = 0, drops = 0;
+  let attacks = 0, hits = 0, arrows = 0, drops = 0;
   const actor = createPlayer({atlases, bounds: {width:1024,height:1024}, obstacles: [], initialPosition: {x:320,y:320},
-    onAttackImpact: () => hits++, onShoot: () => arrows++, onDropItem: () => drops++});
+    onAttackStart: () => attacks++, onAttackImpact: () => hits++, onShoot: () => arrows++, onDropItem: () => drops++});
   const manager = createSpriteAnimationManager(); actor.playAnimation(manager);
-  return {actor, controls, manager, get hits() {return hits;}, get arrows() {return arrows;}, get drops() {return drops;},
+  return {actor, controls, manager, get attacks() {return attacks;}, get hits() {return hits;}, get arrows() {return arrows;}, get drops() {return drops;},
     key(code, repeat = false) { window.dispatchEvent(event('keydown', {code, repeat})); },
     step(dt) { updateSpriteAnimationManager(manager, dt*1000); actor.update(dt); }};
 }
 
-test('empty-slot Attack plays a complete knife swing once and no arrow', () => {
+test('empty-slot Attack queues a deliberate rapid follow-up and no arrow', () => {
   const h = harness();
   try {
-    h.key('KeyV'); h.step(.199); assert.equal(h.hits,0);
+    h.key('KeyV'); assert.equal(h.attacks, 1); h.step(.199); assert.equal(h.hits,0);
     h.key('KeyV'); h.step(.001); assert.equal(h.hits,1);
-    h.step(.2); h.key('KeyV',true); h.step(.5); assert.equal(h.hits,1);
-    h.key('KeyV'); h.step(.5); assert.equal(h.hits,2); assert.equal(h.arrows,0);
+    h.step(.2); h.key('KeyV',true); h.step(.5); assert.equal(h.hits,2); assert.equal(h.attacks, 2);
+    h.key('KeyV'); h.step(.7); assert.equal(h.attacks, 3); assert.equal(h.hits,3); assert.equal(h.arrows,0);
+  } finally { h.actor.dispose(); }
+});
+
+test('a relaxed Rapid Triple accepts its third swing after the short second animation finishes', () => {
+  const h = harness();
+  try {
+    h.key('KeyV'); h.step(.5);
+    h.key('KeyV'); h.step(.4);
+    h.key('KeyV'); h.step(.7);
+    assert.equal(h.attacks, 3);
+    assert.equal(h.hits, 3);
   } finally { h.actor.dispose(); }
 });
 
