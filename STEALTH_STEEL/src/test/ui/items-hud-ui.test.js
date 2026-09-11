@@ -13,3 +13,13 @@ test("HUD shows three ordered empty slots and chain icons for selected items", (
   assert.equal(hud.element.children[2].textContent,"[]");
   assert.equal(hud.element.children[3].textContent,"[]");
 });
+
+test("HUD can move from mixed to full slots without changing its Shoes, Dagger, Shield order", () => {
+  const host=new Element();
+  const hud=createItemsHudUi({host,documentRef,snapshot:{slots:{Dagger:{name:"Dagger II",effect:"20% damage",iconUrl:"https://chain.example/dagger.png"}}}});
+  assert.equal(hud.element.children[1].textContent,"[]");
+  assert.equal(hud.element.children[2].children[1].src,"https://chain.example/dagger.png");
+  assert.equal(hud.element.children[3].textContent,"[]");
+  hud.render({slots:{Shoes:{name:"Shoes III",effect:"30% speed",iconUrl:"https://chain.example/shoes.png"},Dagger:{name:"Dagger II",effect:"20% damage",iconUrl:"https://chain.example/dagger.png"},Shield:{name:"Shield I",effect:"10% defense",iconUrl:"https://chain.example/shield.png"}}});
+  assert.deepEqual([hud.element.children[1].children[1].src,hud.element.children[2].children[1].src,hud.element.children[3].children[1].src],["https://chain.example/shoes.png","https://chain.example/dagger.png","https://chain.example/shield.png"]);
+});

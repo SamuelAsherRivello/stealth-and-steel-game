@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKnifeSwing, resolvePlayerKnifeImpact } from '../../runtime/gameplay/player-melee.js';
 import { createCombatActorState } from '../../runtime/gameplay/combat-actor.js';
+import { createEquipmentSnapshot } from '../../runtime/gameplay/equipment-effects.js';
 
 test('knife has one midpoint event, ignores overlapping requests, and completes at 400ms', () => {
   const swing = createKnifeSwing();
@@ -66,4 +67,11 @@ test('impact uses current collider overlap, hits all directions, and excludes ot
   hero.combat.applyDamage(100);
   resolvePlayerKnifeImpact(hero, [missed]);
   assert.equal(missed.combat.health, 75);
+});
+
+test('the spawned player snapshot applies the selected Dagger bonus to committed knife damage', () => {
+  const hero = { ...player(), equipment: createEquipmentSnapshot({ status: 'ready', effective: { Dagger: { effectPercent: 30 } } }) };
+  const enemy = record('goblin', 40);
+  resolvePlayerKnifeImpact(hero, [enemy]);
+  assert.equal(enemy.combat.health, 67.5);
 });

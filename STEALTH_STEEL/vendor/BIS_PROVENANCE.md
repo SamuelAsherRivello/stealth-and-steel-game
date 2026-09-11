@@ -1,10 +1,8 @@
-# Current BIS release package (2026-09-10)
+# Current BIS local package snapshot (2026-09-10)
 
-Current artifact: bis-integration-0.14.3-6f6036191c1a8890a9c2def929ce1b80857bf6782bbf4f13e0b6355bfa99c8e0.tgz. SHA-256: 6f6036191c1a8890a9c2def929ce1b80857bf6782bbf4f13e0b6355bfa99c8e0. The 102-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This serverless local package supersedes every historical package below.
+Current artifact: bis-integration-0.14.5-30bfc5c267414b55c21d7c6ced64a3b7b97b5e695e2ca5ef55e5d824e63e5b21.tgz. SHA-256: 30bfc5c267414b55c21d7c6ced64a3b7b97b5e695e2ca5ef55e5d824e63e5b21. The 105-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This serverless local package supersedes every historical package below.
 
-Release: https://github.com/SamuelAsherRivello/blockchain-integration-service/releases/tag/v0.14.3
-
-Includes F1/F2 shared local game-wallet selection, F3 Admin-only board controls, generic Contracts UI and direct local G2 LTO flow, stable logout cleanup, durable continuation records, and the Developer dialog route to user-facing Game Wallet Login. The game configures its wallet through the BIS Account UI; no hosted wallet endpoint or service URL is included. See [play and setup instructions](../documentation/treasure-lto.md).
+This is a locally built vendor snapshot, not a published release. It exposes the public equipment API consumed by Settings → Items and preserves the Marketplace atomic-exchange gate; it does not add a hosted service or an alternate trade path. The game configures its wallet through the BIS Account UI. See [play and setup instructions](../documentation/treasure-lto.md).
 
 ## Historical package records
 

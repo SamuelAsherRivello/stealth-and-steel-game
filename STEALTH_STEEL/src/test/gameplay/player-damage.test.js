@@ -7,6 +7,7 @@ import { createWarrior } from '../../runtime/characters/enemies/warrior/warrior.
 import { createLancer } from '../../runtime/characters/enemies/lancer/lancer.js';
 import { createSpriteAnimationManager, updateSpriteAnimationManager } from '@babylonjs/lite';
 import { resolveMeleeImpacts, damagePlayer, resolveEnemyArrowPlayerHit } from '../../runtime/gameplay/player-damage.js';
+import { createEquipmentSnapshot } from '../../runtime/gameplay/equipment-effects.js';
 
 test('player routing excludes own and unowned arrows and stops damage after death', () => {
   const collider={x:10,y:10,width:20,height:20};
@@ -18,6 +19,16 @@ test('player routing excludes own and unowned arrows and stops damage after deat
     assert.equal(player.combat.health,health);
   }
   assert.equal(resolveEnemyArrowPlayerHit({ownerId:'removed-archer',collider,direction:{x:1,y:0}},player),false);
+});
+
+test('the spawned player snapshot applies the selected Shield reduction to each damage source', () => {
+  const collider={x:10,y:10,width:20,height:20};
+  const player={combat:createCombatActorState({label:'player',getCombatCollider:()=>collider,setVisualTransform:()=>{}}),
+    equipment:createEquipmentSnapshot({status:'ready',effective:{Shield:{effectPercent:20}}})};
+  assert.equal(damagePlayer(player,'goblin',{x:1,y:0}),true);
+  assert.equal(player.combat.health,80);
+  assert.equal(resolveEnemyArrowPlayerHit({ownerId:'archer',collider,direction:{x:1,y:0}},player),true);
+  assert.equal(player.combat.health,60);
 });
 
 test('adjacent melee misses outside its committed direction and counts independent swings', () => {

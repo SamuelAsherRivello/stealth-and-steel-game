@@ -18,3 +18,22 @@ test("unavailable equipment never prevents baseline gameplay", () => {
   const snapshot = createEquipmentSnapshot({ status: "unavailable" });
   assert.deepEqual([snapshot.movementMultiplier, snapshot.outgoingDamageMultiplier, snapshot.incomingDamageMultiplier], [1, 1, 1]);
 });
+
+test("every approved family and tier maps to its exact gameplay multiplier", () => {
+  const cases = [
+    ["Shoes", 10, "movementMultiplier", 1.1], ["Shoes", 20, "movementMultiplier", 1.2], ["Shoes", 30, "movementMultiplier", 1.3],
+    ["Dagger", 10, "outgoingDamageMultiplier", 1.1], ["Dagger", 20, "outgoingDamageMultiplier", 1.2], ["Dagger", 30, "outgoingDamageMultiplier", 1.3],
+    ["Shield", 10, "incomingDamageMultiplier", 0.9], ["Shield", 20, "incomingDamageMultiplier", 0.8], ["Shield", 30, "incomingDamageMultiplier", 0.7],
+  ];
+  for (const [family, effectPercent, property, expected] of cases) {
+    const snapshot = createEquipmentSnapshot({ status: "ready", effective: { [family]: { effectPercent } } });
+    assert.equal(snapshot[property], expected, `${family} ${effectPercent}%`);
+  }
+});
+
+test("each spawn snapshot stays stable after a later selection state is read", () => {
+  const firstSpawn = createEquipmentSnapshot({ status: "ready", effective: { Dagger: { effectPercent: 10 } } });
+  const nextSpawn = createEquipmentSnapshot({ status: "ready", effective: { Dagger: { effectPercent: 30 } } });
+  assert.equal(firstSpawn.outgoingDamageMultiplier, 1.1);
+  assert.equal(nextSpawn.outgoingDamageMultiplier, 1.3);
+});
