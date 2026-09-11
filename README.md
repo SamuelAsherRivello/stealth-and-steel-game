@@ -155,53 +155,11 @@ served and copied into builds, including locally present Git-ignored source art.
 Babylon.js Lite powers the graphics and gameplay systems, WebGPU renders the
 game in supported browsers, and Tiled authors the terrain map and layers.
 
-## Deep Dive
-
-Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. Start with the [Stealth and Steel Deep Dive](STEALTH_STEEL/documentation/deep-dive.md).
-
 ### 📦 AI
 
 <!-- AI: List AI tools and specification workflows configured or documented here. Keep official links and concise descriptions; do not copy unverified template claims. -->
 - [Codex](https://openai.com/codex/): Agent-assisted development with repository-local skills in `.agents/skills/`.
 - [OpenSpec](https://openspec.dev/): Specification-driven development that keeps feature intent, implementation, and current specifications aligned.
-
-#### OpenSpec Workflow
-
-Planning lives only in `.openspec/`. With Node.js 22.15+ and OpenSpec 1.13.0
-installed, use `npm run openspec -- <command>` from the repository root, for
-example `npm run openspec -- list` or
-`npm run openspec -- validate restructure-project-folders --strict`.
-The repository adapter handles the CLI's hardcoded folder paths without a
-second folder or link and without modifying the installed CLI. If OpenSpec
-is installed in a custom location, set `OPENSPEC_CLI` to its `bin/openspec.js`.
-The full Expanded workflow selection is installed (stored by the CLI as the
-`custom` profile with all 12 official workflows selected).
-
-| # | Name | Command | Custom | Comment |
-| --- | --- | --- | :---: | --- |
-| 1 | [Explore](.agents/skills/openspec-explore/SKILL.md) | `/opsx:explore` | ☐ | Optional feature discovery and planning. |
-| 2 | [Propose](.agents/skills/openspec-propose/SKILL.md) | `/opsx:propose <name>` | ☐ | Creates one focused feature change. |
-| 3 | [New](.agents/skills/openspec-new-change/SKILL.md) | `/opsx:new <name>` | ☐ | Scaffolds a change without generating every artifact. |
-| 4 | [Continue](.agents/skills/openspec-continue-change/SKILL.md) | `/opsx:continue <name>` | ☐ | Creates the next available artifact. |
-| 5 | [Fast Forward](.agents/skills/openspec-ff-change/SKILL.md) | `/opsx:ff <name>` | ☐ | Generates all planning artifacts. |
-| 6 | [Grill Me](.agents/skills/openspec-grill-me/SKILL.md) | `/openspec-grill-me <name>` | ☑ | Resolves design decisions before implementation. |
-| 7 | [Apply](.agents/skills/openspec-apply-change/SKILL.md) | `/opsx:apply <name>` | ☐ | Implements and completes one change. |
-| 8 | [Update](.agents/skills/openspec-update-change/SKILL.md) | `/opsx:update <name>` | ☐ | Revises existing planning artifacts. |
-| 9 | [Verify](.agents/skills/openspec-verify-change/SKILL.md) | `/opsx:verify <name>` | ☐ | Checks implementation against the artifacts. |
-| 10 | [Sync](.agents/skills/openspec-sync-specs/SKILL.md) | `/opsx:sync <name>` | ☐ | Updates main specs without archiving. |
-| 11 | [Archive](.agents/skills/openspec-archive-change/SKILL.md) | `/opsx:archive <name>` | ☐ | Finalizes and archives a change. |
-| 12 | [Bulk Archive](.agents/skills/openspec-bulk-archive-change/SKILL.md) | `/opsx:bulk-archive` | ☐ | Archives multiple completed changes. |
-| 13 | [Onboard](.agents/skills/openspec-onboard/SKILL.md) | `/opsx:onboard` | ☐ | Walks through an end-to-end change. |
-
-##### Workflow Depth
-
-- LOW: Use no steps. Just chat with a fast model like
-  [Spark](https://developers.openai.com/api/docs/models/gpt-5.3-codex).
-- MED: Use Propose and Apply with a
-  [Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) or
-  [Terra](https://developers.openai.com/api/docs/models/gpt-5.6-terra).
-- HIGH: Use the Expanded planning, implementation, verification, and archive workflows with
-  [Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
 
 ### 📦 Packages
 
@@ -254,6 +212,10 @@ Third-party references:
 - [WebGPU Check](https://webgpucheck.com/) provides browser-specific enablement
   guidance and diagnostics.
 - [Can I use: WebGPU](https://caniuse.com/webgpu) tracks current browser support.
+
+## Deep Dive
+
+Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. Start with the [Stealth and Steel Deep Dive](STEALTH_STEEL/documentation/deep-dive.md).
 
 ## Resources
 
