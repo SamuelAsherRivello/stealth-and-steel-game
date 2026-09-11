@@ -2,7 +2,7 @@
 const loadPackage = () => Promise.all([import('@bis/integration'), import('@bis/integration/style.css')]).then(([api]) => api);
 
 export function createBisAccount({host, pauseController, restartGame, documentRef = globalThis.document,
-  load = loadPackage, timeoutMs = 15000, onClose = () => {}}) {
+  load = loadPackage, timeoutMs = 15000, onClose = () => {}, getGameHost = () => undefined}) {
   const overlay = documentRef.createElement('div');
   overlay.className = 'game-account-host'; overlay.hidden = true; overlay.tabIndex = -1;
   const status = documentRef.createElement('section'); status.className = 'game-account-status';
@@ -64,13 +64,18 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     pauseController.resume('bis-account');
   }
   back.addEventListener('click', close);
-  const cleanup = (current, preserveContracts = false) => { current?.equipment?.dispose(); current?.lto?.dispose({endSessions:!preserveContracts}); current?.gameWallet?.dispose(); current?.unsubscribe?.(); current?.unsubscribeEvents?.(); current?.ui?.unmount(); current?.context?.dispose(); };
+  const cleanup = (current, preserveContracts = false) => { current?.equipment?.dispose(); current?.unsubscribe?.(); current?.unsubscribeEvents?.(); if (current?.services) current.services.dispose({preserveContracts}); else { current?.lto?.dispose({endSessions:!preserveContracts}); current?.gameWallet?.dispose(); current?.ui?.unmount(); current?.context?.dispose(); } };
   function initialize() {
     if (initialization) return initialization;
     initialization = (async () => {
       const api = await load(); if (disposed) return;
       const current = {api};
-      current.context = api.createBisContext({get continueRecipient(){return current.gameWallet?.getState().addresses?.arkadeAddress;}});
+      if (api.BisGameServices) {
+        current.services = new api.BisGameServices({getGameHost});
+        current.context = current.services.context;
+        current.gameWallet = current.services.gameWallet;
+        current.lto = current.services.lto;
+      } else current.context = api.createBisContext({get continueRecipient(){return current.gameWallet?.getState().addresses?.arkadeAddress;}});
       session = current;
       current.unsubscribeEvents = current.context.onEvent(event => {
         if (disposed || event.type !== 'restartRequested' || restarts.has(event.logoutId)) return;
@@ -86,10 +91,13 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
         // restartRequested follows the state publication in the same turn.
         queueMicrotask(() => { if (active && !restarting && current.context.getState().view === 'empty') close(); });
       });
-      current.gameWallet = api.createBisGameWallet?.({playerProfileId:()=>current.context.getState().profileId});
-      if(current.gameWallet && api.createBisLto)current.lto=api.createBisLto({context:current.context,gameWallet:current.gameWallet});
+      if (!current.services) {
+        current.gameWallet = api.createBisGameWallet?.({playerProfileId:()=>current.context.getState().profileId});
+        if(current.gameWallet && api.createBisLto)current.lto=api.createBisLto({context:current.context,gameWallet:current.gameWallet});
+      }
       await current.context.ready(); if (disposed) return;
-      current.ui = api.createBisUi(current.context, {gameWallet: current.gameWallet}); current.ui.mount(mount);
+      if (current.services) current.services.mount(mount);
+      else { current.ui = api.createBisUi(current.context, {gameWallet: current.gameWallet}); current.ui.mount(mount); }
       if (!active) passive();
       return current;
     })().catch(error => { cleanup(session); session = undefined; initialization = undefined; throw error; });
@@ -115,21 +123,21 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
   return {open, getSession:()=>session, ready: () => initialize(), async createEquipment() {
     const current = await initialize();
     if (disposed || !current) throw Error('Game session ended.');
-    current.equipment ??= current.api.createBisEquipment(current.context);
+    current.equipment ??= current.services ? current.services.createEquipment() : current.api.createBisEquipment(current.context);
     return current.equipment;
   }, async createAssetCollection(options) {
     let timer;
     try {
       const current = await Promise.race([initialize(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Trophies unavailable')),timeoutMs);})]);
       if(disposed || !current)throw Error('Game session ended.');
-      const controller=current.api.createBisAssetCollection(current.context,options);
+      const controller=current.services ? current.services.createAssetCollection(options) : current.api.createBisAssetCollection(current.context,options);
       continuations.add(controller);
       return {...controller,dispose(){continuations.delete(controller);controller.dispose();}};
     } finally {clearTimeout(timer);}
   }, async createContinue(options) {
     const current = await initialize();
     if (disposed || !current) throw Error('Game session ended.');
-    const controller = current.api.createBisContinue(current.context, options);
+    const controller = current.services ? current.services.createContinue(options) : current.api.createBisContinue(current.context, options);
     continuations.add(controller);
     return {...controller, dispose() { continuations.delete(controller); controller.dispose(); }};
   }, get isOpen() { return active; }, dispose({preserveContracts=false}={}) {

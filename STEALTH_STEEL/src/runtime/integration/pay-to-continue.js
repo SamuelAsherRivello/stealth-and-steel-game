@@ -1,5 +1,5 @@
 /** Game-owned loss lifecycle. BIS owns price, payment, toast and result delivery. */
-export function createPayToContinue({ accountHost, ui, revive, restart, newId = () => crypto.randomUUID() }) {
+export function createPayToContinue({ accountHost, ui, restart }) {
   let generation = 0, disposed = false, controller, unsubscribe;
   const clear = () => { unsubscribe?.(); controller?.dispose(); controller = undefined; unsubscribe = undefined; };
   return {
@@ -8,11 +8,12 @@ export function createPayToContinue({ accountHost, ui, revive, restart, newId = 
       const current = ++generation; clear();
       ui.setState({sats:null,canPay:false,status:'idle',message:'Loading payment service…'}); ui.show();
       try {
-        const next = await accountHost.createContinue({context: newId(), onSuccess() {
+        const next = await accountHost.createContinue({onEffectReceipt(receipt) {
           if (disposed || current !== generation) return;
-          // Invalidate delivery before touching game state, even if a host callback is replayed.
+          if (receipt.status !== 'applied') return;
+          // Invalidate delivery before changing the loss UI, even if a receipt is replayed.
           generation++;
-          if (revive()) ui.hide();
+          ui.hide();
           clear();
         }});
         if (disposed || current !== generation) { next.dispose(); return; }

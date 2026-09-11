@@ -109,6 +109,7 @@ import { createItemsHudUi } from "./ui/items-hud-ui.js";
 import { loadStatusBadgeArt } from "./ui/status-badge.js";
 import { createCharacterOverhead, drawCharacterOverheads } from "./ui/character-overhead.js";
 import { createBisAccount } from "./integration/bis-account.js";
+import { createBisHostGame } from "./integration/bis-host-game.js";
 import { createPayToContinue } from "./integration/pay-to-continue.js";
 import { createLevelReward } from "./integration/level-reward.js";
 import { createLevelProgress } from "./gameplay/level-progress.js";
@@ -863,10 +864,12 @@ export async function start({ showStartPrompt = true } = {}) {
       previousTime = performance.now();
     },
   });
+  let bisHostGame;
   const accountHost = createBisAccount({
     host: domScreen, pauseController,
     restartGame: () => progress.restart(),
     onClose: () => settingsUi?.returnFromAccount(),
+    getGameHost: () => bisHostGame,
   });
   let equipmentSnapshot = EMPTY_EQUIPMENT_SNAPSHOT;
   let unsubscribeEquipment = () => {};
@@ -1140,8 +1143,16 @@ export async function start({ showStartPrompt = true } = {}) {
   const gameStateMachine = createGameStateMachine();
   const levelLostUi = createLevelLostUi({host:domBody,onPay:()=>paidContinue.pay(),onRestart:()=>paidContinue.restart()});
   const paidContinue = createPayToContinue({accountHost,ui:levelLostUi,restart:()=>progress.restart(),
-    revive:()=>revivePaidPlayer({machine:gameStateMachine,player:getRecordsByType(SpawnerType.PLAYER)[0],spawners,
-      enemyType:SpawnerType.ENEMY,tileSize:TILE_SIZE,spawnPlayer,resume:()=>pauseController.resume('player-loss')})});
+  });
+  const bisGameSessionId = crypto.randomUUID();
+  bisHostGame = createBisHostGame({
+    gameId: 'stealth-and-steel',
+    getActiveGameSessionId: () => [GameState.LEVEL_PLAYING, GameState.LEVEL_LOST, GameState.LEVEL_COMPLETE].includes(gameStateMachine.state) ? bisGameSessionId : undefined,
+    canCaptureContinuation: () => gameStateMachine.state === GameState.LEVEL_LOST,
+    applyContinuation: () => revivePaidPlayer({machine:gameStateMachine,player:getRecordsByType(SpawnerType.PLAYER)[0],spawners,
+      enemyType:SpawnerType.ENEMY,tileSize:TILE_SIZE,spawnPlayer,resume:()=>pauseController.resume('player-loss')}),
+    presentPlayerReward: () => gameStateMachine.state === GameState.LEVEL_COMPLETE,
+  });
   const startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
     ? createStartGamePrompt({
       host: domBody,

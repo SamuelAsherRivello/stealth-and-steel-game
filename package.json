@@ -9,15 +9,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node STEALTH_STEEL/src/test/run-tests.mjs",
-    "test:publish": "node --test STEALTH_STEEL/src/test/release/pages-publishing.test.js STEALTH_STEEL/src/test/release/release-metadata.test.js"
+    "test:publish": "node --test STEALTH_STEEL/src/test/release/pages-publishing.test.js STEALTH_STEEL/src/test/release/release-metadata.test.js",
+    "typecheck:bis-contract": "tsc --project tsconfig.bis-contract.json"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
     "vite": "^7.1.3"
   },
   "dependencies": {
     "@babylonjs/lite": "^1.25.0",
-    "@bis/integration": "file:STEALTH_STEEL/vendor/bis-integration-0.14.5-30bfc5c267414b55c21d7c6ced64a3b7b97b5e695e2ca5ef55e5d824e63e5b21.tgz",
+    "@bis/integration": "file:STEALTH_STEEL/vendor/bis-integration-1.0.0.tgz",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   }

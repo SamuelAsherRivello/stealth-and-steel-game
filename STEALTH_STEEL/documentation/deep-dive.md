@@ -1,0 +1,39 @@
+# Stealth and Steel Deep Dive
+
+This is the game half of a two-repository integration. BIS is the separately versioned library that owns account and verified-operation workflows; this repository owns Babylon scenes, player state, pause/focus/fullscreen behavior, and the game consequences of a confirmed result. Read the [BIS Deep Dive](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/documentation/deep-dive.md) beside this document to see both sides of the contract.
+
+## Shared showcase: `BisHostGame`
+
+The published [`BisHostGame`](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/packages/integration/src/core/bis-host-game.ts) interface is the complete handoff from BIS to a game. It does not expose Arkade types and it does not let BIS inspect game scenes. Its clear names define the sequence: find a current session, capture a continuation target, apply a confirmed continuation, or present a confirmed player reward.
+
+```ts
+type BisHostGameEffectReceipt = { status: 'applied' | 'already-applied' | 'not-applicable' };
+```
+
+The receipt is deliberately only about the game effect. A `not-applicable` result for an old/reloaded session leaves the current run unchanged; it cannot retry or reverse a confirmed payment or mint.
+
+## Game-specific showcase: `createBisHostGame`
+
+[`createBisHostGame`](../src/runtime/integration/bis-host-game.js) implements the published contract in the game’s integration folder. It has three important jobs:
+
+1. It obtains the active `{ gameId, gameSessionId }` without leaking scene objects to BIS.
+2. It permits a continuation target only for the current defeat state.
+3. It keeps a per-session operation ledger, so a replay returns `already-applied` and a previous run returns `not-applicable`.
+
+```js
+const host = createBisHostGame({
+  gameId: 'stealth-and-steel',
+  getActiveGameSessionId,
+  canCaptureContinuation: () => gameStateMachine.state === GameState.LEVEL_LOST,
+  applyContinuation: revivePaidPlayer,
+  presentPlayerReward: showGameOwnedReward,
+});
+```
+
+The adapter calls the existing paid-revival function, preserving the current player replacement, local enemy cleanup, and pause resume behavior. It does not make the game depend on a BIS account: regular play proceeds when the package, account, or connection is unavailable.
+
+## Composition boundary
+
+[`bis-account.js`](../src/runtime/integration/bis-account.js) dynamically loads the public package and passes the adapter to `BisGameServices`. The library composes its context, UI, and game wallet; the game retains account overlay placement, focus trapping, pause/resume, restart, fullscreen, and teardown. The only approved direction is game integration code → published `@bis/integration`; neither gameplay systems nor BIS source internals cross that boundary.
+
+For the architectural assessment and template plan, see [Project Refactor Thoughts](PROJECT_REFACTOR_THOUGHTS.md). For the library’s public-facade explanation, return to the [BIS Deep Dive](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/documentation/deep-dive.md).

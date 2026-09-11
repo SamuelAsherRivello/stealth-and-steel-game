@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": { "@bis/integration": ["STEALTH_STEEL/src/runtime/integration/bis-contract.d.ts"] }
+  },
+  "files": ["STEALTH_STEEL/src/runtime/integration/bis-host-game.js"]
+}
