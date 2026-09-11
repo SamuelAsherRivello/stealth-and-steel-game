@@ -26,6 +26,18 @@ The player will use a separate rear-cell gravity controller with the same 0.75-g
 
 Alternative: merge zone state into bush gravity. Rejected because bush exit/rearm semantics differ and would couple unrelated terrain behavior to enemy state.
 
+### Limit opportunities to horizontal enemy facings
+
+The opportunity controller will accept only `left` and `right` headings. It will continue to track vertical headings for stability/invalidation, but it will publish no token or yellow shadow for `up` or `down`. This keeps the rear-cell approach understandable in the 2D play space without changing enemy-facing or perception behavior.
+
+### Make stealth entry quiet and readable
+
+An armed gravity state will retain its selected source enemy identity and source position. While pull or hold owns player movement, the player actor will face that source enemy and expose an audio-suppression query. The perception integration will set the player's moving-audio signal false for every enemy during that ownership interval; visual perception remains unchanged. Leaving, invalidation, cancellation, or execution consumption clears the suppression immediately.
+
+### Give the source enemy an idle opportunity window
+
+On a successful entry, the selected source enemy brain will cancel its current voluntary action, stop movement, and enter a one-shot 2–3 second active-time idle gate. The sampled duration will be injectable for deterministic tests. Death, disposal, or an existing movement lock still takes precedence; once the gate expires, ordinary sensing and planning resume.
+
 ### Add an explicit execution player state
 
 An armed Attack will atomically validate its token, select the target, consume the rear-cell arm, start player execution state, and start target execution death. The player center and grid spot stay fixed while rendering applies a temporary lunge offset based on the target vector. Execution state controls its 0.8-second lock, input handling, visual reset, and damage-immunity query; it must clear on pause-compatible teardown, player death, level reset, and completion.

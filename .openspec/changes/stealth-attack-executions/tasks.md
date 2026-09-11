@@ -8,7 +8,7 @@
 
 - [x] `C073-T004` Implement independently owned rear-cell gravity using the established bush distance, pull, hold, collision cancellation, and deterministic zone-selection semantics; verify player movement tests cover reachable, blocked, centered, interrupted, and overlapping opportunities.
 - [x] `C073-T005` Add a dedicated player execution lifecycle that atomically validates and consumes an armed token, locks gameplay position in the rear cell for 0.8 active seconds, applies a visual-only lunge using existing knife frames, and resets presentation safely on completion or teardown; verify player input/state tests cover no stale lock, no physical lunge, and pause behavior.
-- [ ] `C073-T006` Compose the armed execution branch with C072's dagger-combo lifecycle so a valid rear-cell Attack suppresses ordinary/combo midpoint damage and buffers while all unarmed behavior remains governed by its existing or C072 rules; verify player-melee tests cover ordinary attacks, combo compatibility, execution-only targeting, and repeated input.
+- [x] `C073-T006` Compose the armed execution branch with C072's dagger-combo lifecycle so a valid rear-cell Attack suppresses ordinary/combo midpoint damage and buffers while all unarmed behavior remains governed by its existing or C072 rules; verify player-melee tests cover ordinary attacks, combo compatibility, execution-only targeting, and repeated input.
 
 ## 3. Combat death and immunity integration
 
@@ -19,3 +19,10 @@
 
 - [x] `C073-T009` Add a browser-visible stealth-execution scenario that demonstrates yellow fade, rear-cell pull, immediate invalidation on turn/movement, deterministic overlapping-zone selection, visual lunge, target execution, and immunity; verify it passes in a real browser at the current Vite URL.
 - [x] `C073-T010` Run focused unit and browser tests, the relevant broader suite, `npm.cmd run build`, `npm.cmd run openspec -- validate stealth-attack-executions --strict`, and `git diff --check`; report unrelated concurrent-change failures separately.
+
+## 5. Horizontal stealth entry refinement
+
+- [x] `C073-T011` Restrict rear-cell opportunity publication to stable left/right enemy headings while preserving immediate invalidation and yellow fade-out; add focused controller coverage for vertical headings and horizontal recovery.
+- [x] `C073-T012` Retain the selected source through stealth gravity so the player faces that enemy and emits no movement-audio perception during pull/hold; add player and perception integration coverage for activation and immediate cleanup.
+- [x] `C073-T013` Add a per-enemy, injectable randomized 2–3 second active-time idle gate that begins on successful owned entry, cancels voluntary action, and yields to death/disposal; add brain/game-loop coverage.
+- [x] `C073-T014` Extend the browser scenario and run focused, full, build, strict OpenSpec, and whitespace validation for the refined behavior.

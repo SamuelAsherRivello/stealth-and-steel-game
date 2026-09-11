@@ -108,3 +108,21 @@ test('an armed rear-cell attack replaces the ordinary midpoint and locks only ga
     assert.equal(h.hits, 1);
   } finally { h.actor.dispose(); }
 });
+
+test('an execution cancels an in-flight or buffered dagger combo before it can deal ordinary damage', () => {
+  let armed = false;
+  const h = harness({ onExecutionStart: () => armed ? { direction: { x: 1, y: 0 } } : null });
+  try {
+    h.key('KeyV'); h.step(.1);
+    h.key('KeyV'); // buffer the normal follow-up
+    armed = true;
+    h.key('KeyV');
+    assert.equal(h.actor.isExecuting, true);
+    h.step(.3);
+    assert.equal(h.hits, 0, 'the cancelled first move has no midpoint');
+    h.step(.5);
+    armed = false;
+    h.key('KeyV'); h.step(.2);
+    assert.equal(h.hits, 1, 'unarmed attacks resume through the combo lifecycle');
+  } finally { h.actor.dispose(); }
+});

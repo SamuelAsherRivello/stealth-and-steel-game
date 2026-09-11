@@ -637,6 +637,12 @@ export async function start({ showStartPrompt = true } = {}) {
         playSfx("lancer");
         return { direction: makeDirection(actor.getPosition(), target.actor.getPosition()) };
       },
+      onStealthAttackEnter: (entry) => {
+        const target = getRecordsByType(SpawnerType.ENEMY).find((record) => (
+          record.combat.label === entry.enemyId && record.combat.isAlive
+        ));
+        target?.brain?.beginStealthIdle?.();
+      },
       onAttackStart: (move = {}) => {
         playSfx("warrior", { pitch: move.multiplier >= 3 ? 1.42 : move.multiplier >= 2 ? 1.12 : 1 });
       },
@@ -1353,6 +1359,7 @@ export async function start({ showStartPrompt = true } = {}) {
           isMoving: record === playerRecord && playerPositionBeforeUpdate != null
             && (record.actor.getPosition().x !== playerPositionBeforeUpdate.x
               || record.actor.getPosition().y !== playerPositionBeforeUpdate.y),
+          suppressAudio: record === playerRecord && record.actor.isStealthAttackAudioSuppressed?.(),
           targetState: record === playerRecord && isPlayerHidden(playerCombatCollider, reactiveDecorations)
             ? PerceptionTargetState.Hidden
             : PerceptionTargetState.Default,

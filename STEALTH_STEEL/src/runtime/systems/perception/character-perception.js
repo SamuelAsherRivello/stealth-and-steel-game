@@ -60,7 +60,7 @@ export function evaluatePerception({ detector, target, isWalkable = () => true, 
   if (visualIndex >= 0 && isWalkable(targetCell) && !visualTargetIsBlocked && !visualPathIsBlocked) {
     detections.push({ type: PERCEPTION_TYPES.VISUAL, strength: getVisualStrength(visualIndex + 1), cell: copyCell(targetCell) });
   }
-  if (target.isMoving === true && getAudioCells(origin).some((cell) => cellKey(cell) === cellKey(targetCell))
+  if (target.isMoving === true && target.suppressAudio !== true && getAudioCells(origin).some((cell) => cellKey(cell) === cellKey(targetCell))
     && !audioBlockers.some(({ cell }) => sameCell(cell, targetCell))) {
     detections.push({ type: PERCEPTION_TYPES.AUDIO, strength: 1, cell: copyCell(targetCell) });
   }

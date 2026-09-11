@@ -48,6 +48,13 @@ test("audio is negated by an enemy but not by a bush", () => {
   assert.deepEqual(evaluatePerception({ detector, target, blockers: [{ type: "enemy", isAlive: true, cell: target.cell }] }), []);
 });
 
+test("a stealth-owned moving player emits no audio perception while visual rules remain unchanged", () => {
+  const detector = { cell: { x: 0, y: 0 }, heading: "right" };
+  const target = { isMoving: true, suppressAudio: true, cell: { x: 1, y: 1 } };
+  assert.deepEqual(evaluatePerception({ detector, target }), []);
+  assert.equal(evaluatePerception({ detector, target: { ...target, suppressAudio: false } })[0].type, "audio");
+});
+
 test("dead visual and audio blockers are transparent", () => {
   const detector = { cell: { x: 0, y: 0 }, heading: "right" };
   const deadBush = { type: "bush", isAlive: false, cell: { x: 1, y: 0 } };

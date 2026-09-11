@@ -28,6 +28,8 @@ const fadedIn = shadows.update(zones, .125)[0];
 const player = { x: 184, y: 96 };
 gravity.observe(zones, player);
 Object.assign(player, gravity.step(.125));
+const sourcePosition = gravity.getSourcePosition();
+const audioSuppressed = gravity.isAudioSuppressed();
 const armed = gravity.consume(player);
 const lunge = execution.start({ x: 1, y: 0 }) && execution.advance(.4);
 if (armed) killed = combat.applyStealthKill({ x: 1, y: 0 });
@@ -47,9 +49,13 @@ const result = {
   rearPull: player,
   immediateTurnCancellation: cancelled,
   deterministicOverlapOwner: overlap.getArmed()?.enemyId,
+  horizontalOnly: cancelled,
+  playerFacesSource: sourcePosition?.x > player.x,
+  audioSuppressedDuringEntry: audioSuppressed,
   visualOnlyLungePixels: lunge.visualOffset.x,
   targetDead: combat.health === 0,
   executionDurationSeconds: .8,
 };
+result.complete &&= result.horizontalOnly && result.playerFacesSource && result.audioSuppressedDuringEntry;
 output.dataset.result = JSON.stringify(result);
 output.textContent = `${result.complete ? 'PASS' : 'FAIL'}\n${JSON.stringify(result, null, 2)}`;

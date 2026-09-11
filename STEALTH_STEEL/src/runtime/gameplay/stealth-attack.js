@@ -11,6 +11,7 @@ const HEADING_STEP = Object.freeze({
   left: Object.freeze({ x: -1, y: 0 }),
   right: Object.freeze({ x: 1, y: 0 }),
 });
+const HORIZONTAL_HEADINGS = new Set(['left', 'right']);
 
 function samePosition(a, b) {
   return a && b && Math.abs(a.x - b.x) <= 1e-6 && Math.abs(a.y - b.y) <= 1e-6;
@@ -21,7 +22,12 @@ export function createStealthAttackController({ tileSize = GRID.tileSizePx } = {
   const states = new Map();
   let zones = [];
   return {
-    getZones() { return zones.map((zone) => ({ ...zone, cell: { ...zone.cell }, interactionPosition: { ...zone.interactionPosition } })); },
+    getZones() { return zones.map((zone) => ({
+      ...zone,
+      cell: { ...zone.cell },
+      interactionPosition: { ...zone.interactionPosition },
+      sourcePosition: { ...zone.sourcePosition },
+    })); },
     update(enemies, deltaSeconds) {
       const active = new Set();
       const delta = Math.max(0, deltaSeconds);
@@ -37,12 +43,13 @@ export function createStealthAttackController({ tileSize = GRID.tileSizePx } = {
         state.heading = enemy.heading;
         state.position = { ...enemy.position };
         states.set(enemy.id, state);
-        if (state.elapsed <= STEALTH_ATTACK_READY_SECONDS) continue;
+        if (state.elapsed <= STEALTH_ATTACK_READY_SECONDS || !HORIZONTAL_HEADINGS.has(enemy.heading)) continue;
         const direction = HEADING_STEP[enemy.heading];
         const cell = { x: enemy.cell.x - direction.x, y: enemy.cell.y - direction.y };
         zones.push(Object.freeze({
           id: `${enemy.id}:stealth`, enemyId: enemy.id, cell,
           interactionPosition: { x: (cell.x + .5) * tileSize, y: (cell.y + .5) * tileSize },
+          sourcePosition: { ...enemy.position },
           heading: enemy.heading, token: state.token, order,
         }));
       }
@@ -153,6 +160,15 @@ export function createStealthAttackGravity({ gridWidth = GRID.tileSizePx } = {})
   return {
     get active() { return pull !== null; },
     get movementLocked() { return pull !== null || hold !== null; },
+    getSourcePosition() {
+      const source = (pull ?? hold)?.zone?.sourcePosition;
+      return source ? { ...source } : null;
+    },
+    isAudioSuppressed() { return pull !== null || hold !== null; },
+    getEntry() {
+      const zone = (pull ?? hold)?.zone;
+      return zone && { id: zone.id, enemyId: zone.enemyId, token: zone.token };
+    },
     cancel() { pull = null; hold = null; armed = null; },
     observe(zones, position, enabled = true) {
       activeZones = new Map((zones ?? []).map((zone) => [zone.id, zone]));

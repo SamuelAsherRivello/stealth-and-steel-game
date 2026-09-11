@@ -58,6 +58,9 @@ export function createPlayerStateMachine({ releaseFrame = 5 } = {}) {
           : PlayerState.IDLE,
       );
     },
+    faceDirection(direction) {
+      updateFacing(direction);
+    },
     startShooting(direction = { x: facing, y: 0 }, weapon = null) {
       if (state === PlayerState.ATTACKING) {
         return { changed: false, state };

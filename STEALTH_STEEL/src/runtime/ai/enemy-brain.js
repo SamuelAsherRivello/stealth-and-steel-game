@@ -18,6 +18,7 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
   let normalStage = 'idle', sampledDuration = null, bushRoll = null, goldRoll = null, bushScan = null, goldScan = null, suppressedSheep = null;
   let failureKey = null, failureRemaining = 0, lastReason = 'spawn', lastPlan = [], expanded = 0, evidence = null;
   let escapeAttempted = false, fleeSequence = 0;
+  let stealthIdleRemaining = 0;
   let readyPlan = null;
   let patrolDestination = null;
   const stop = () => actor.setMovementIntent({ x: 0, y: 0 });
@@ -245,10 +246,25 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
       return 'fight';
     },
     cancel() { this.cancelNavigation(); },
+    beginStealthIdle({ seconds } = {}) {
+      if (disposed || !isAlive()) return false;
+      const sampled = Number.isFinite(seconds) ? seconds : 2 + Math.max(0, Math.min(1, random()));
+      stealthIdleRemaining = Math.max(2, Math.min(3, sampled));
+      executor.cancel('stealth-entry', true); navigation.cancel(); scheduler?.cancel(id); cancelPlayerAttackPreparation(actor);
+      readyPlan = null; goal = { name: 'stealth idle', key: 'stealth-idle', activity: 'wait' };
+      goalKey = 'stealth-idle'; binding = null; stop();
+      return true;
+    },
     dispose() { if (disposed) return; disposed = true; readyPlan = null; scheduler?.cancel(id); executor.cancel('disposed', true); navigation.cancel(); cancelPlayerAttackPreparation(actor); reaction.reset(); },
     update(delta) {
       if (disposed || !isAlive()) { this.dispose(); return; }
       if (delta <= 0) return;
+      if (stealthIdleRemaining > 0) {
+        stealthIdleRemaining = Math.max(0, stealthIdleRemaining - delta);
+        stop();
+        if (stealthIdleRemaining > 1e-9) return;
+        goal = null; goalKey = null; binding = null;
+      }
       const raw = getPlayer();
       if (raw?.hidden && raw.isAlive !== false && raw.cell) reaction.trackHiddenPlayer(raw.cell);
       failureRemaining = Math.max(0, failureRemaining - delta);
@@ -289,7 +305,7 @@ export function createEnemyBrain({ id, actor, grid, isWalkable, profile, getPlay
         action: actor.isDefending ? 'defense' : execution.phase ?? (scheduler ? 'waiting' : 'idle'),
         phase: execution.phase, mode: this.mode, target: binding?.type === 'evidence' ? { ...binding.cell } : null,
         targetId: binding && binding.type !== 'evidence' ? binding.id : null,
-        lastReason, planningExpanded: expanded, retryRemaining: failureRemaining, disposed };
+        lastReason, planningExpanded: expanded, retryRemaining: failureRemaining, stealthIdleRemaining, disposed };
       const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
       return freeze(snapshot);
     },

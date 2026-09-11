@@ -21,7 +21,7 @@ test('an enemy exposes one yellow stealth space directly behind only after a qua
   const [zone] = attacks.update([enemy()], .001);
   assert.deepEqual(zone, {
     id: 'goblin-1:stealth', enemyId: 'goblin-1', cell: { x: 3, y: 5 },
-    interactionPosition: { x: 224, y: 352 }, heading: 'right', token: 0, order: 0,
+    interactionPosition: { x: 224, y: 352 }, sourcePosition: { x: 288, y: 352 }, heading: 'right', token: 0, order: 0,
   });
   assert.deepEqual(createStealthAttackShadowDrawCommands([zone], 64, { screenHeight: 1024 }), [{
     id: 'goblin-1:stealth', enemyId: 'goblin-1', positionPx: [224, 672], sizePx: [64, 64], frame: 0,
@@ -36,13 +36,10 @@ test('turning or moving an enemy immediately invalidates its armed space and res
   assert.deepEqual(attacks.update([enemy({ position: { x: 289, y: 352 } })], .1), []);
   assert.deepEqual(attacks.update([enemy({ position: { x: 289, y: 352 } })], .251), [{
     id: 'goblin-1:stealth', enemyId: 'goblin-1', cell: { x: 3, y: 5 },
-    interactionPosition: { x: 224, y: 352 }, heading: 'right', token: 1, order: 0,
+    interactionPosition: { x: 224, y: 352 }, sourcePosition: { x: 289, y: 352 }, heading: 'right', token: 1, order: 0,
   }]);
   assert.deepEqual(attacks.update([enemy({ position: { x: 289, y: 352 }, heading: 'up' })], .1), []);
-  assert.deepEqual(attacks.update([enemy({ position: { x: 289, y: 352 }, heading: 'up' })], .251), [{
-    id: 'goblin-1:stealth', enemyId: 'goblin-1', cell: { x: 4, y: 6 },
-    interactionPosition: { x: 288, y: 416 }, heading: 'up', token: 2, order: 0,
-  }]);
+  assert.deepEqual(attacks.update([enemy({ position: { x: 289, y: 352 }, heading: 'up' })], .251), []);
 });
 
 test('stealth attack gravity matches bush pull timing and only consumes a still-armed position', () => {
@@ -72,13 +69,15 @@ test('a stealth takedown is a one-shot with a longer spinning death and forceful
   assert.equal(combat.isDead, true);
 });
 
-test('rear-cell positions cover every cardinal direction, invalidate on death, and choose overlap by record order', () => {
+test('rear-cell positions cover horizontal facings only, invalidate on death, and choose overlap by record order', () => {
   const attacks = createStealthAttackController({ tileSize: 64 });
-  const directions = { up: { x: 4, y: 6 }, down: { x: 4, y: 4 }, left: { x: 5, y: 5 }, right: { x: 3, y: 5 } };
+  const directions = { left: { x: 5, y: 5 }, right: { x: 3, y: 5 } };
   for (const [heading, cell] of Object.entries(directions)) {
     const [zone] = attacks.update([enemy({ id: heading, heading })], .251);
     assert.deepEqual(zone.cell, cell);
   }
+  assert.deepEqual(attacks.update([enemy({ id: 'vertical', heading: 'up' })], .251), []);
+  assert.deepEqual(attacks.update([enemy({ id: 'vertical', heading: 'down' })], .251), []);
   assert.deepEqual(attacks.update([enemy({ id: 'dead', isAlive: false })], .1), []);
   const gravity = createStealthAttackGravity();
   const position = { x: 224, y: 352 };
@@ -87,6 +86,22 @@ test('rear-cell positions cover every cardinal direction, invalidate on death, a
     { id: 'first', enemyId: 'first', token: 0, order: 0, interactionPosition: position },
   ], position);
   assert.equal(gravity.getArmed().enemyId, 'first');
+});
+
+test('stealth gravity retains its selected source while it owns pull and hold', () => {
+  const gravity = createStealthAttackGravity();
+  const zone = {
+    id: 'goblin-1:stealth', enemyId: 'goblin-1', token: 0,
+    interactionPosition: { x: 224, y: 352 }, sourcePosition: { x: 288, y: 352 },
+  };
+  gravity.observe([zone], { x: 184, y: 352 });
+  assert.deepEqual(gravity.getSourcePosition(), { x: 288, y: 352 });
+  assert.equal(gravity.isAudioSuppressed(), true);
+  gravity.step(.125);
+  assert.deepEqual(gravity.getSourcePosition(), { x: 288, y: 352 });
+  gravity.step(.25);
+  assert.equal(gravity.isAudioSuppressed(), false);
+  assert.equal(gravity.getSourcePosition(), null);
 });
 
 test('yellow shadow instances fade independently from gameplay tokens and pause without progress', () => {

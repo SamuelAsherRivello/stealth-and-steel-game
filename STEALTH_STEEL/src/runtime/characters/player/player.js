@@ -131,6 +131,7 @@ export function createPlayer({
   movementMultiplier = 1,
   onAttackStart = () => {},
   onExecutionStart = () => null,
+  onStealthAttackEnter = () => {},
   onAttackImpact = () => {},
   onDropItem = () => {},
 }) {
@@ -241,6 +242,9 @@ export function createPlayer({
     if (!inputEnabled || stealthExecution.active) return;
     const execution = onExecutionStart();
     if (execution && stealthExecution.start(execution.direction)) {
+      // An execution owns this Attack completely: discard an in-flight normal
+      // move as well as any buffered combo input before it can reach a midpoint.
+      knifeSwing.cancel();
       daggerCombo.cancel();
       activeDaggerMove = null;
       comboEligibleTargetIds.clear();
@@ -496,6 +500,7 @@ export function createPlayer({
     getHeading() {
       return stateMachine.heading;
     },
+    isStealthAttackAudioSuppressed() { return stealthAttackGravity.isAudioSuppressed(); },
     resetInput,
     setInputEnabled(enabled, { preserveAttack = false } = {}) {
       inputEnabled = Boolean(enabled);
@@ -534,6 +539,13 @@ export function createPlayer({
       }
       const gravity = stealthExecution.active ? null : bushGravity.movementLocked ? bushGravity
         : stealthAttackGravity.movementLocked ? stealthAttackGravity : null;
+      const stealthSourcePosition = stealthAttackGravity.getSourcePosition();
+      if (stealthSourcePosition) {
+        stateMachine.faceDirection({
+          x: stealthSourcePosition.x - position.x,
+          y: stealthSourcePosition.y - position.y,
+        });
+      }
       const selectedMovement = gravity || stealthExecution.active ? { x: 0, y: 0 } : getSelectedMovement();
       const knockbackMovement = getKnockbackMovement(deltaSeconds);
       const transition = stateMachine.updateLocomotion(selectedMovement);
@@ -565,6 +577,7 @@ export function createPlayer({
         gridAlignedMovement.reset();
         const target = gravity.step(deltaSeconds);
         if (target) {
+          const stealthEntry = gravity === stealthAttackGravity ? stealthAttackGravity.getEntry() : null;
           const dx = target.x - position.x;
           const dy = target.y - position.y;
           const length = Math.hypot(dx, dy);
@@ -579,6 +592,9 @@ export function createPlayer({
               break;
             }
             if (step === steps - 1) position = target;
+          }
+          if (stealthEntry && Math.hypot(position.x - target.x, position.y - target.y) <= 1e-6) {
+            onStealthAttackEnter(stealthEntry);
           }
         }
       } else if (ENABLE_QUANTIZE_MOVEMENT) {

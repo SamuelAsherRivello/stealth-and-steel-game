@@ -64,3 +64,10 @@ test("PlayerState machine releases one shot at the configured frame", () => {
   assert.equal(machine.releaseShot(5), true);
   assert.equal(machine.releaseShot(6), false);
 });
+
+test("PlayerState can face a stealth source while movement is locked", () => {
+  const machine = createPlayerStateMachine();
+  machine.faceDirection({ x: -64, y: 0 });
+  assert.equal(machine.heading, "left");
+  assert.equal(machine.facing, -1);
+});

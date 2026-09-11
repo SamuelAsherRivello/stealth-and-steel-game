@@ -182,6 +182,18 @@ test('real spawn wiring attaches GOAP exclusively for every enemy factory', () =
   assert.doesNotMatch(archer, /chooseArcherAction|requestPlayerAttack|autonomous/);
 });
 
+test('a stealth entry makes only its source brain idle for its sampled active-time window', () => {
+  const f = fixture(warriorProfile, { random: () => 0 });
+  f.brain.beginStealthIdle({ seconds: 2 });
+  assert.deepEqual(f.intent, { x: 0, y: 0 });
+  assert.equal(f.brain.getNavigationSnapshot().goal, 'stealth idle');
+  f.tick(1.9);
+  assert.equal(f.brain.getNavigationSnapshot().goal, 'stealth idle');
+  f.tick(.1);
+  assert.notEqual(f.brain.getNavigationSnapshot().goal, 'stealth idle');
+  f.brain.dispose();
+});
+
 test('a Monk flees a permitted player within two cells without attacking, then may seek a reachable gold pickup', () => {
   const fleeing = fixture(monkProfile, { random: () => 0 });
   fleeing.player = { ...fleeing.player, position: { x: 288, y: 160 }, cell: { x: 4, y: 2 } };
