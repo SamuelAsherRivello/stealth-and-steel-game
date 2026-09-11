@@ -3,7 +3,13 @@ export function moveToAction(binding, { cost = 1 } = {}) {
     let context;
     return { get phase() { return context?.navigation.snapshot().navigationStatus === 'searching' ? 'finding route' : 'move-to'; },
       get reason() { return context?.navigation.snapshot().recoveryReason; },
-      start(ctx) { context = ctx; ctx.navigation.start(candidates => ctx.selectDestination(candidates, binding), binding.type === 'escape' ? { maxDepth: 1 } : undefined); },
+      start(ctx) {
+        context = ctx;
+        const maxDepth = binding.type === 'escape' ? 1
+          : binding.type === 'flee' ? binding.maxCells
+            : undefined;
+        ctx.navigation.start(candidates => ctx.selectDestination(candidates, binding), maxDepth ? { maxDepth } : undefined);
+      },
       update(ctx, delta) {
         if (!ctx.bindingValid(binding)) return 'failed';
         return ctx.navigation.update(delta);

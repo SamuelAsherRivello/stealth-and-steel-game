@@ -14,7 +14,7 @@ function event(type, props = {}) {
   for (const [key, value] of Object.entries(props)) Object.defineProperty(e, key, {value});
   return e;
 }
-function harness() {
+function harness({ onExecutionStart = () => null } = {}) {
   globalThis.window = new EventTarget();
   const controls = Object.fromEntries(['movement-joystick', 'movement-puck', 'attack-action'].map(id => [id, new Control()]));
   globalThis.document = {querySelector: selector => controls[selector.slice(1)] ?? null};
@@ -22,7 +22,7 @@ function harness() {
   const atlases = Object.fromEntries(['idle','run','attack', 'shoot', ...['axe','hammer','knife','pickaxe','gold','meat','wood'].flatMap(s => [`idle-${s}`, `run-${s}`])].map(n => [n, atlas]));
   let attacks = 0, hits = 0, arrows = 0, drops = 0;
   const actor = createPlayer({atlases, bounds: {width:1024,height:1024}, obstacles: [], initialPosition: {x:320,y:320},
-    onAttackStart: () => attacks++, onAttackImpact: () => hits++, onShoot: () => arrows++, onDropItem: () => drops++});
+    onAttackStart: () => attacks++, onExecutionStart, onAttackImpact: () => hits++, onShoot: () => arrows++, onDropItem: () => drops++});
   const manager = createSpriteAnimationManager(); actor.playAnimation(manager);
   return {actor, controls, manager, get attacks() {return attacks;}, get hits() {return hits;}, get arrows() {return arrows;}, get drops() {return drops;},
     key(code, repeat = false) { window.dispatchEvent(event('keydown', {code, repeat})); },
@@ -84,4 +84,27 @@ test('pause preserves swing time; disabled input, death and disposal cannot rele
   h.key('KeyV'); h.step(.1); h.actor.setInputEnabled(false); h.step(.5); assert.equal(h.hits,1);
   h.actor.setInputEnabled(true); h.step(.5); assert.equal(h.hits,1);
   h.key('KeyV'); h.actor.dispose(); h.step(.5); assert.equal(h.hits,1);
+});
+
+test('an armed rear-cell attack replaces the ordinary midpoint and locks only gameplay movement for 0.8 seconds', () => {
+  let armed = true;
+  const h = harness({ onExecutionStart: () => {
+    if (!armed) return null;
+    armed = false;
+    return { direction: { x: 1, y: 0 } };
+  }});
+  try {
+    const start = h.actor.getPosition();
+    h.key('KeyV');
+    assert.equal(h.actor.isExecuting, true);
+    assert.equal(h.attacks, 0);
+    h.key('KeyD'); h.step(.4);
+    assert.equal(h.hits, 0);
+    assert.deepEqual(h.actor.getPosition(), start);
+    h.step(.4);
+    assert.equal(h.actor.isExecuting, false);
+    h.key('KeyV'); h.step(.2);
+    assert.equal(h.attacks, 1);
+    assert.equal(h.hits, 1);
+  } finally { h.actor.dispose(); }
 });

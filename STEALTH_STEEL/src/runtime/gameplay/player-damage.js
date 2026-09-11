@@ -27,6 +27,9 @@ export function createDistanceImpulse() {
 
 export function damagePlayer(player, source, direction) {
   if (!player?.combat.isAlive || !(source in PLAYER_KNOCKBACK_CELLS)) return false;
+  // A valid execution still consumes a struck arrow / committed melee event,
+  // but its player-owned presentation window cannot take damage.
+  if (player.actor?.isExecuting) return true;
   player.combat.applyDamage(getPlayerIncomingDamage(player, 25), direction, { distance: PLAYER_KNOCKBACK_CELLS[source] * GRID.tileSizePx });
   return true;
 }

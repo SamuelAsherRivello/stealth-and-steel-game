@@ -8,7 +8,11 @@ import {
   SETTINGS_VERSION,
   createSettingsStore,
 } from "../../runtime/runtime-settings/runtime-settings-store.js";
-import { applyCategoryVolume, normalizeVolume } from "../../runtime/runtime-settings/runtime-audio-settings.js";
+import {
+  applyCategoryVolume,
+  applyUrlAudioMuteParameters,
+  normalizeVolume,
+} from "../../runtime/runtime-settings/runtime-audio-settings.js";
 
 function createStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -185,4 +189,23 @@ test("category volume normalizes, clamps, mutes, and tolerates no playback", () 
   assert.equal(applyCategoryVolume(2, 100), 1);
   assert.equal(applyCategoryVolume(0.7, 0), 0);
   assert.doesNotThrow(() => applyCategoryVolume(undefined, undefined));
+});
+
+test("URL mute parameters initialize their matching audio settings independently", () => {
+  const store = createSettingsStore(createStorage());
+
+  assert.deepEqual(
+    applyUrlAudioMuteParameters({ search: "?muteMusic=true&muteSFX=true", store }),
+    { musicMuted: true, sfxMuted: true },
+  );
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 0);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 0);
+
+  const musicOnly = createSettingsStore(createStorage());
+  assert.deepEqual(
+    applyUrlAudioMuteParameters({ search: "?muteMusic=true", store: musicOnly }),
+    { musicMuted: true, sfxMuted: false },
+  );
+  assert.equal(musicOnly.get(AUDIO_SETTING_KEYS.music), 0);
+  assert.equal(musicOnly.get(AUDIO_SETTING_KEYS.sfx), 100);
 });

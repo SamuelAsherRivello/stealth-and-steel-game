@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { DEBUG_SETTING_KEYS, createSettingsStore } from "../../runtime/runtime-settings/runtime-settings-store.js";
+import { AUDIO_SETTING_KEYS, DEBUG_SETTING_KEYS, createSettingsStore } from "../../runtime/runtime-settings/runtime-settings-store.js";
+import { applyUrlAudioMuteParameters } from "../../runtime/runtime-settings/runtime-audio-settings.js";
 import { GameWindow } from "../../runtime/ui/game-window.js";
 import {
   createDebugControl,
@@ -377,6 +378,21 @@ test("Account is styled and placed immediately before Developer", () => {
   assert.equal(developerButton.textContent, 'Developer');
   assert.ok(accountButton.className.split(' ').includes('tiny-swords-button'));
   assert.ok(content.children[0].className.split(' ').includes('slider-control'));
+  settings.close();
+});
+
+test("URL-muted audio is displayed as muted in Settings", () => {
+  const store = createSettingsStore(null);
+  applyUrlAudioMuteParameters({ search: "?muteMusic=true&muteSFX=true", store });
+  const settings = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
+    pauseController: { pause() {}, resume() {} } });
+
+  settings.open();
+  const controls = elementByClass(settings.activeWindow.panel, "settings-controls");
+  assert.equal(controls.children[0].children[1].children[0].value, "0");
+  assert.equal(controls.children[1].children[1].children[0].value, "0");
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 0);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 0);
   settings.close();
 });
 

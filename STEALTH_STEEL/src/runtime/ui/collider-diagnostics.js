@@ -123,6 +123,21 @@ export function createEnemyVisionShadowDrawCommands(snapshot, tileSize, options 
     })));
 }
 
+/** Uses the same tile-shadow art as enemy vision, recolored for a takedown space. */
+export function createStealthAttackShadowDrawCommands(zones, tileSize, options = {}) {
+  return (zones ?? []).filter((zone) => zone?.enemyId && zone?.interactionPosition).map((zone) => ({
+    id: zone.id,
+    enemyId: zone.enemyId,
+    positionPx: [
+      zone.interactionPosition.x,
+      (options.screenHeight ?? 1024) - zone.interactionPosition.y,
+    ],
+    sizePx: [tileSize, tileSize],
+    frame: 0,
+    color: [1, .84, .1, .68 * (zone.opacity ?? 1)],
+  }));
+}
+
 export function createActivePerceptionMarkerCommands(snapshot, tileSize = 64) {
   const detections = snapshot?.knownDetections ?? snapshot?.detections ?? [];
   const seen = new Set();

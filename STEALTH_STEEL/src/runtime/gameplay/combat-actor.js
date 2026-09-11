@@ -2,6 +2,10 @@ const SPAWN_ANIMATION_DURATION_SECONDS = 0.25;
 const DEATH_ANIMATION_DURATION_SECONDS = 0.25;
 const DAMAGE_FLASH_DURATION_SECONDS = 0.6;
 const DEATH_ROTATION_DEGREES = 20;
+export const STEALTH_DEATH_DURATION_SECONDS = 0.8;
+export const STEALTH_DEATH_ROTATION_DEGREES = 1080;
+export const STEALTH_KNOCKBACK_DURATION_SECONDS = 0.8;
+const STEALTH_KNOCKBACK_SPEED_PIXELS_PER_SECOND = 450;
 const MAX_HEALTH = 100;
 const KNOCKBACK_DURATION_SECONDS = 0.2;
 const KNOCKBACK_SPEED_PIXELS_PER_SECOND = 17.28;
@@ -35,19 +39,21 @@ export function createCombatActorState({
   let spawnElapsedSeconds = SPAWN_ANIMATION_DURATION_SECONDS;
   let deathElapsedSeconds = 0;
   let deathRotation = 0;
+  let deathDurationSeconds = DEATH_ANIMATION_DURATION_SECONDS;
   let hitFlashRemainingSeconds = 0;
 
   if (onSpawnProgress) {
     onSpawnProgress(1);
   }
 
-  function startDeath() {
+  function startDeath({ duration = DEATH_ANIMATION_DURATION_SECONDS, rotationDegrees = DEATH_ROTATION_DEGREES } = {}) {
     if (isDying || isDead) {
       return;
     }
     isDying = true;
     deathElapsedSeconds = 0;
-    deathRotation = (Math.random() < 0.5 ? -1 : 1) * DEATH_ROTATION_DEGREES;
+    deathDurationSeconds = duration;
+    deathRotation = (Math.random() < 0.5 ? -1 : 1) * rotationDegrees;
     if (onDeathStart) {
       onDeathStart();
     }
@@ -95,6 +101,7 @@ export function createCombatActorState({
       const previousHealth = health;
       health = MAX_HEALTH; isDead = false; isDying = false;
       deathElapsedSeconds = 0; hitFlashRemainingSeconds = 0;
+      deathDurationSeconds = DEATH_ANIMATION_DURATION_SECONDS;
       spawnElapsedSeconds = SPAWN_ANIMATION_DURATION_SECONDS;
       onDeathProgress?.(1);
       setVisualTransform({scaleX:1,scaleY:1,alpha:1,rotation:0,color:[1,1,1,1]});
@@ -145,6 +152,21 @@ export function createCombatActorState({
       }
       startHitFlash();
     },
+    applyStealthKill(hitDirection = { x: 1, y: 0 }) {
+      if (!this.isAlive) return false;
+      const previousHealth = health;
+      health = 0;
+      notifyHealthChanged(previousHealth);
+      if (onKnockback && hitDirection) {
+        onKnockback(hitDirection, {
+          duration: STEALTH_KNOCKBACK_DURATION_SECONDS,
+          speed: STEALTH_KNOCKBACK_SPEED_PIXELS_PER_SECOND,
+          distance: STEALTH_KNOCKBACK_SPEED_PIXELS_PER_SECOND * STEALTH_KNOCKBACK_DURATION_SECONDS / 2,
+        });
+      }
+      startDeath({ duration: STEALTH_DEATH_DURATION_SECONDS, rotationDegrees: STEALTH_DEATH_ROTATION_DEGREES });
+      return true;
+    },
     updateDamageFlash(deltaSeconds) {
       if (hitFlashRemainingSeconds <= 0) {
         return;
@@ -174,7 +196,7 @@ export function createCombatActorState({
       deathElapsedSeconds += Math.max(0, deltaSeconds);
       const progress = Math.min(
         1,
-        deathElapsedSeconds / DEATH_ANIMATION_DURATION_SECONDS,
+        deathElapsedSeconds / deathDurationSeconds,
       );
       const value = 1 - progress;
       if (onDeathProgress) {

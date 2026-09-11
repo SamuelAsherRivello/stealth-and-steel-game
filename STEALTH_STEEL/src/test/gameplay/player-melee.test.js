@@ -69,6 +69,30 @@ test('impact uses current collider overlap, hits all directions, and excludes ot
   assert.equal(missed.combat.health, 75);
 });
 
+test('an actively guarding Warrior blocks a knife impact without changing other melee targets', () => {
+  const hero = player();
+  const warrior = record('warrior', 40);
+  warrior.actor.isDefending = true;
+  const goblin = record('goblin', -40);
+  assert.equal(resolvePlayerKnifeImpact(hero, [warrior, goblin]), 1);
+  assert.equal(warrior.combat.health, 100);
+  assert.equal(goblin.combat.health, 75);
+});
+
+test('an eligible enemy can react before its knife damage resolves, while other overlaps remain independent', () => {
+  const hero = player();
+  const warrior = record('warrior', 40);
+  const goblin = record('goblin', -40);
+  const reactions = [];
+  Object.defineProperty(warrior.actor, 'isDefending', { get: () => reactions.includes(warrior) });
+  assert.equal(resolvePlayerKnifeImpact(hero, [warrior, goblin], {
+    onEligibleImpact(enemy) { reactions.push(enemy); },
+  }), 1);
+  assert.deepEqual(reactions, [warrior, goblin]);
+  assert.equal(warrior.combat.health, 100);
+  assert.equal(goblin.combat.health, 75);
+});
+
 test('combo damage upgrades only targets confirmed by the preceding impact', () => {
   const hero = player();
   const confirmed = record('warrior', 40);

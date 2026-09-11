@@ -2,6 +2,7 @@ import { createKnifeSwing } from "../../gameplay/player-melee.js";
 import { createDaggerComboController } from "../../gameplay/player-dagger-combo.js";
 import { createDistanceImpulse } from "../../gameplay/player-damage.js";
 import { createBushGravity } from "./bush-gravity.js";
+import { createStealthAttackGravity, createStealthExecution } from "../../gameplay/stealth-attack.js";
 import {
   addSprite2D,
   createSprite2DLayer,
@@ -129,6 +130,7 @@ export function createPlayer({
   initialLoadout = {},
   movementMultiplier = 1,
   onAttackStart = () => {},
+  onExecutionStart = () => null,
   onAttackImpact = () => {},
   onDropItem = () => {},
 }) {
@@ -163,6 +165,8 @@ export function createPlayer({
   const pressedKeys = new Set();
   let inputEnabled = true;
   const bushGravity = createBushGravity();
+  const stealthAttackGravity = createStealthAttackGravity();
+  const stealthExecution = createStealthExecution();
   const knockbackImpulse = createDistanceImpulse();
   const stateMachine = createPlayerStateMachine();
   const knifeSwing = createKnifeSwing();
@@ -234,7 +238,16 @@ export function createPlayer({
   }
 
   function attack() {
-    if (!inputEnabled) return;
+    if (!inputEnabled || stealthExecution.active) return;
+    const execution = onExecutionStart();
+    if (execution && stealthExecution.start(execution.direction)) {
+      daggerCombo.cancel();
+      activeDaggerMove = null;
+      comboEligibleTargetIds.clear();
+      const transition = stateMachine.startAttack("stealth-execution");
+      if (transition.changed) playStateAnimation("attack");
+      return;
+    }
     const request = daggerCombo.request();
     if (!request.accepted || request.buffered) return;
     if (!knifeSwing.start(request.move)) return;
@@ -254,6 +267,7 @@ export function createPlayer({
     daggerCombo.cancel();
     activeDaggerMove = null;
     comboEligibleTargetIds.clear();
+    stealthExecution.cancel();
     const transition = stateMachine.completeAttack(getSelectedMovement());
     if (transition.changed) playStateAnimation(getAnimationName(transition.state));
   }
@@ -408,6 +422,7 @@ export function createPlayer({
   } = {}) {
     knockbackImpulse.start(direction, { distance, duration });
     bushGravity.cancel();
+    stealthAttackGravity.cancel();
   }
 
   function getKnockbackMovement(deltaSeconds) {
@@ -422,6 +437,8 @@ export function createPlayer({
   return {
     layers: Object.values(layers),
     get state() { return stateMachine.state; },
+    get isAttacking() { return knifeSwing.active || stealthExecution.active; },
+    get isExecuting() { return stealthExecution.active; },
     get daggerComboCooldown() { return daggerCombo.cooldown; },
     getFacing() { return stateMachine.facing; },
     cancelAttack,
@@ -430,10 +447,16 @@ export function createPlayer({
       bushGravity.observe(bushes, position, inputEnabled && !knockbackImpulse.active);
       if (wasActive !== bushGravity.active) gridAlignedMovement.reset();
     },
+    observeStealthAttackZones(zones) {
+      stealthAttackGravity.observe(zones, position, inputEnabled && !knockbackImpulse.active);
+    },
+    getArmedStealthAttack() { return stealthAttackGravity.getArmed(); },
+    consumeStealthAttack() { return stealthAttackGravity.consume(position); },
     isGravityMoving() { return bushGravity.active; },
     dispose() {
       inputEnabled = false;
       cancelAttack();
+      stealthAttackGravity.cancel();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleBlur);
@@ -478,6 +501,7 @@ export function createPlayer({
       inputEnabled = Boolean(enabled);
       if (!inputEnabled) {
         bushGravity.cancel();
+        stealthAttackGravity.cancel();
         resetInput();
         if (!preserveAttack) cancelAttack();
       }
@@ -503,12 +527,14 @@ export function createPlayer({
         );
         if (presentationOverrideTimer === 0) {
           presentationOverride = null;
-          if (!knifeSwing.active) playStateAnimation(
+          if (!knifeSwing.active && !stealthExecution.active) playStateAnimation(
             stateMachine.state === PlayerState.RUNNING ? "run" : "idle",
           );
         }
       }
-      const selectedMovement = bushGravity.movementLocked ? { x: 0, y: 0 } : getSelectedMovement();
+      const gravity = stealthExecution.active ? null : bushGravity.movementLocked ? bushGravity
+        : stealthAttackGravity.movementLocked ? stealthAttackGravity : null;
+      const selectedMovement = gravity || stealthExecution.active ? { x: 0, y: 0 } : getSelectedMovement();
       const knockbackMovement = getKnockbackMovement(deltaSeconds);
       const transition = stateMachine.updateLocomotion(selectedMovement);
       if (transition.changed) {
@@ -535,9 +561,9 @@ export function createPlayer({
           const collider = getCharacterCollider(candidate, PLAYER_FRAME, PLAYER_PIVOT, PLAYER_MOVEMENT_COLLIDER);
           if (isColliderWithinBounds(collider, bounds)) position = candidate;
         }
-      } else if (bushGravity.movementLocked) {
+      } else if (gravity) {
         gridAlignedMovement.reset();
-        const target = bushGravity.step(deltaSeconds);
+        const target = gravity.step(deltaSeconds);
         if (target) {
           const dx = target.x - position.x;
           const dy = target.y - position.y;
@@ -549,7 +575,7 @@ export function createPlayer({
             const expected = { x: position.x + dx / steps, y: position.y + dy / steps };
             position = next;
             if (Math.hypot(next.x - expected.x, next.y - expected.y) > 1e-6) {
-              bushGravity.cancel();
+              gravity.cancel();
               break;
             }
             if (step === steps - 1) position = target;
@@ -610,6 +636,16 @@ export function createPlayer({
           }
         }
       }
+      let executionOffset = { x: 0, y: 0 };
+      if (inputEnabled && stealthExecution.active) {
+        const step = stealthExecution.advance(deltaSeconds);
+        executionOffset = step.visualOffset;
+        updateSprite2D(sprites.attack, { frame: step.frame });
+        if (step.completed) {
+          const result = stateMachine.completeAttack(getSelectedMovement());
+          if (result.changed) playStateAnimation(getAnimationName(result.state));
+        }
+      }
       const screenPosition = getArtScreenPosition(position);
       const comboJumpHeight = activeDaggerMove?.visualJump && knifeSwing.active
         ? Math.sin(Math.PI * Math.max(0, Math.min(1, (knifeSwing.elapsed - activeDaggerMove.delay) / activeDaggerMove.duration))) * 12
@@ -620,7 +656,7 @@ export function createPlayer({
       }
       for (const sprite of Object.values(sprites)) {
         updateSprite2D(sprite, {
-          positionPx: [screenPosition.x, screenPosition.y - comboJumpHeight],
+          positionPx: [screenPosition.x + executionOffset.x, screenPosition.y - executionOffset.y - comboJumpHeight],
           flipX: stateMachine.facing < 0,
         });
       }

@@ -31,6 +31,21 @@ test('the spawned player snapshot applies the selected Shield reduction to each 
   assert.equal(player.combat.health,60);
 });
 
+test('execution immunity consumes arrow and melee hits without changing health, then expires immediately', () => {
+  const collider={x:10,y:10,width:20,height:20};
+  const actor={isExecuting:true,getPosition:()=>({x:20,y:20})};
+  const player={actor,combat:createCombatActorState({label:'player',getCombatCollider:()=>collider,setVisualTransform:()=>{}})};
+  assert.equal(resolveEnemyArrowPlayerHit({ownerId:'archer',collider,direction:{x:1,y:0}},player),true);
+  assert.equal(player.combat.health,100);
+  let events=[{direction:{x:1,y:0}}];
+  const enemy={character:'goblin',combat:{isAlive:true},actor:{getGridPosition:()=>({x:0,y:0}),getPosition:()=>({x:0,y:0}),drainAttackImpacts:()=>events.splice(0)}};
+  resolveMeleeImpacts([enemy],player);
+  assert.equal(player.combat.health,100);
+  actor.isExecuting=false;
+  assert.equal(resolveEnemyArrowPlayerHit({ownerId:'archer',collider,direction:{x:1,y:0}},player),true);
+  assert.equal(player.combat.health,75);
+});
+
 test('adjacent melee misses outside its committed direction and counts independent swings', () => {
   let position={x:288,y:224}; const pushes=[];
   const combat=createCombatActorState({label:'player',getCombatCollider:()=>({x:position.x-10,y:position.y-10,width:20,height:20}),setVisualTransform:()=>{},onKnockback:(d,o)=>pushes.push(o.distance)});

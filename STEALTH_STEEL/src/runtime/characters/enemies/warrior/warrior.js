@@ -217,6 +217,19 @@ export function createWarrior({
     knockback.start(direction, options);
   }
 
+  function beginDefense(direction = { x: 0, y: 0 }, duration = defense.defenseDurationSeconds) {
+    if (disposed || defenseRemainingSeconds > 0) return false;
+    const selection = selectWarriorAction("guard", direction, facing);
+    facing = selection.facing;
+    currentFlipX = selection.flipX;
+    const transition = stateMachine.startDefense();
+    if (!transition.changed) return false;
+    defenseRemainingSeconds = Math.max(0, duration);
+    attackImpacts.cancel();
+    playStateAnimation(WarriorState.GUARD);
+    return true;
+  }
+
   return {
     layers: Object.values(layers),
     get isKnockedBack() { return knockback.active; },
@@ -232,6 +245,7 @@ export function createWarrior({
     get isDefending() {
       return defenseRemainingSeconds > 0;
     },
+    beginDefense,
     attack(name = WarriorState.ATTACK_1, direction = { x: 0, y: 0 }) {
       if (disposed) return false;
       const transition = stateMachine.startAttack(name);
@@ -334,13 +348,7 @@ export function createWarrior({
           defense,
           attemptedProjectileIds,
         );
-        if (incoming) {
-          currentFlipX = facing < 0;
-          defenseRemainingSeconds = defense.defenseDurationSeconds;
-          attackImpacts.cancel();
-          stateMachine.startDefense();
-          playStateAnimation(WarriorState.GUARD);
-        }
+        if (incoming) beginDefense({ x: -incoming.direction.x, y: -incoming.direction.y });
       }
       if (defenseRemainingSeconds > 0) {
         cancelPlayerAttackPreparation(this);

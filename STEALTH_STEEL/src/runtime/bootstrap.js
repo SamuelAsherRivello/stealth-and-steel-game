@@ -1,5 +1,8 @@
 import { installSfx } from "./audio/sfx.js";
+import { applyUrlAudioMuteParameters } from "./runtime-settings/runtime-audio-settings.js";
+import { runtimeSettingsStore } from "./runtime-settings/runtime-settings-store.js";
 
+applyUrlAudioMuteParameters({ search: globalThis.location?.search, store: runtimeSettingsStore });
 installSfx();
 import { loadWithPreloader } from "./ui/startup-preloader.js";
 

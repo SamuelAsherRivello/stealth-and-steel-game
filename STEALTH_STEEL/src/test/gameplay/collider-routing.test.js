@@ -52,6 +52,10 @@ test("an upper-body projectile can overlap combat geometry without the movement 
 
 test("player and enemy damage use committed impacts, with no player walking damage", () => {
   assert.match(mainSource, /resolveMeleeImpacts\(enemyRecords, playerRecord\)/);
-  assert.match(mainSource, /onAttackImpact: \(\) => resolvePlayerKnifeImpact\(/);
+  assert.match(mainSource, /onAttackStart: \(move = \{\}\) => \{/);
+  assert.match(mainSource, /actor\.consumeStealthAttack\(\)/);
+  assert.match(mainSource, /target\.combat\.applyStealthKill\(/);
+  assert.match(mainSource, /const impacts = resolvePlayerKnifeImpact\(/);
+  assert.match(mainSource, /if \(impacts\.length > 0\) playSfx\("lancer"/);
   assert.doesNotMatch(mainSource, /touching && \(playerMovement\.x !== 0/);
 });

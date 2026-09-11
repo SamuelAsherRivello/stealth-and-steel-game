@@ -1,4 +1,5 @@
 import { resolvePlayerKnifeImpact } from "./gameplay/player-melee.js";
+import { createStealthAttackController, createStealthAttackShadowLifecycle } from "./gameplay/stealth-attack.js";
 import { enemyAiLabel, drawEnemyAiLabels } from "./ai/enemy-ai-labels.js";
 import { snapshotPatrolPeers } from "./ai/patrol-selection.js";
 import { createEnemyBrain } from "./ai/enemy-brain.js";
@@ -156,6 +157,7 @@ import {
   createActivePerceptionMarkerCommands,
   drawPerceptionDiagnostics,
   createEnemyVisionShadowDrawCommands,
+  createStealthAttackShadowDrawCommands,
   TERRAIN_COLLIDER_STYLE,
 } from "./ui/collider-diagnostics.js";
 
@@ -429,11 +431,19 @@ export async function start({ showStartPrompt = true } = {}) {
 
   const { terrainLayers, animatedTerrain } = createTerrainRendering(terrainTiles, terrainAtlasByImage, undefined, level.layers.length);
   const visionShadowLayer = createSprite2DLayer(visionShadowAtlas, {
+    capacity: 128,
+    order: TILE_MAP_SUB_Z.ground + 1,
+    pivot: [0.5, 0.5],
+  });
+  const stealthShadowLayer = createSprite2DLayer(visionShadowAtlas, {
     capacity: 64,
     order: TILE_MAP_SUB_Z.ground + 1,
     pivot: [0.5, 0.5],
   });
   let visionShadowSprites = [];
+  const stealthAttacks = createStealthAttackController({ tileSize: TILE_SIZE });
+  const stealthShadowLifecycle = createStealthAttackShadowLifecycle();
+  const stealthShadowSprites = new Map();
   function getVisionOptions(snapshot) {
     const characterBlockers = snapshot.actors
       .filter((actor) => actor.isAlive !== false && actor.type !== "player")
@@ -447,7 +457,7 @@ export async function start({ showStartPrompt = true } = {}) {
       screenHeight: SCREEN_HEIGHT,
     };
   }
-  function syncVisionShadows(snapshot) {
+  function syncVisionShadows(snapshot, stealthInstances = []) {
     for (const sprite of visionShadowSprites) removeSprite2D(sprite);
     const commands = createEnemyVisionShadowDrawCommands(snapshot, TILE_SIZE, getVisionOptions(snapshot));
     visionShadowSprites = commands.map((command) => addSprite2D(visionShadowLayer, {
@@ -456,6 +466,24 @@ export async function start({ showStartPrompt = true } = {}) {
       frame: command.frame,
       color: command.color,
     }));
+    const current = new Set();
+    for (const command of createStealthAttackShadowDrawCommands(stealthInstances, TILE_SIZE, { screenHeight: SCREEN_HEIGHT })) {
+      current.add(command.id);
+      const sprite = stealthShadowSprites.get(command.id);
+      if (sprite) {
+        updateSprite2D(sprite, { positionPx: command.positionPx, color: command.color });
+      } else {
+        stealthShadowSprites.set(command.id, addSprite2D(stealthShadowLayer, {
+          positionPx: command.positionPx, sizePx: command.sizePx, frame: command.frame, color: command.color,
+        }));
+      }
+    }
+    for (const [id, sprite] of stealthShadowSprites) {
+      if (!current.has(id)) {
+        removeSprite2D(sprite);
+        stealthShadowSprites.delete(id);
+      }
+    }
   }
 
   // Once terrain sprites exist, phase water playback by the logical world column.
@@ -545,6 +573,9 @@ export async function start({ showStartPrompt = true } = {}) {
             id: target.combat.label, character: "sheep", isAlive: true, position: target.actor.getPosition(), cell: target.actor.getGridPosition(TILE_SIZE),
           })),
           bushes: reactiveDecorations.filter(decoration => !decoration.isDead).map(decoration => decoration.getSnapshot()),
+          gold: pickupSystem.pickups.filter(pickup => pickup.isAlive).map(pickup => ({
+            id: pickup.id, isAlive: true, position: { ...pickup.position }, cell: pickup.cell,
+          })),
         }),
         isWalkable: createActorWalkability(record.actor, geometry),
         isAlive: () => record.combat.isAlive,
@@ -590,6 +621,21 @@ export async function start({ showStartPrompt = true } = {}) {
       initialPosition: position,
       initialLoadout: loadout,
       movementMultiplier: equipmentSnapshot.movementMultiplier,
+      onExecutionStart: () => {
+        const armed = actor.getArmedStealthAttack();
+        if (!armed) return null;
+        const target = getRecordsByType(SpawnerType.ENEMY).find((record) => (
+          record.combat.label === armed.enemyId && record.combat.isAlive
+        ));
+        if (!target || !stealthAttacks.getZones().some((zone) => (
+          zone.id === armed.id && zone.enemyId === armed.enemyId && zone.token === armed.token
+        ))) return null;
+        const attack = actor.consumeStealthAttack();
+        if (!attack || attack.id !== armed.id || attack.token !== armed.token) return null;
+        target.combat.applyStealthKill(makeDirection(actor.getPosition(), target.actor.getPosition()));
+        playSfx("lancer");
+        return { direction: makeDirection(actor.getPosition(), target.actor.getPosition()) };
+      },
       onAttackStart: (move = {}) => {
         playSfx("warrior", { pitch: move.multiplier >= 3 ? 1.42 : move.multiplier >= 2 ? 1.12 : 1 });
       },
@@ -600,6 +646,7 @@ export async function start({ showStartPrompt = true } = {}) {
           {
             multiplier: move.multiplier ?? 1,
             eligibleTargetIds,
+            onEligibleImpact: enemy => enemy.brain?.respondToPlayerAttack?.(),
             collectImpacts: true,
           },
         );
@@ -976,6 +1023,7 @@ export async function start({ showStartPrompt = true } = {}) {
       ...terrainLayers,
       ...grassDecorations.layers,
       visionShadowLayer,
+      stealthShadowLayer,
       ...reactiveDecorations.flatMap((decoration) => decoration.layers),
       ...goldStoneObjects.map((object) => object.layer),
       ...pickupSystem.pickups.map((pickup) => pickup.layer),
@@ -1280,6 +1328,14 @@ export async function start({ showStartPrompt = true } = {}) {
                 || (playerSnapshot.hidden && record.reaction.canTrackHiddenPlayer())) }
           : null);
       }
+      const stealthZones = stealthAttacks.update(enemyRecords.map((record) => ({
+        id: record.combat.label,
+        isAlive: record.combat.isAlive,
+        cell: record.actor.getGridPosition(TILE_SIZE),
+        position: record.actor.getPosition(),
+        heading: record.actor.getHeading?.() ?? "right",
+      })), activeDelta);
+      playerRecord?.actor.observeStealthAttackZones(stealthZones);
       for (const record of [playerRecord, ...enemyRecords]) {
         if (record) characterPerception.updateActor(record.combat.label, {
           isAlive: record.combat.isAlive,
@@ -1520,7 +1576,7 @@ export async function start({ showStartPrompt = true } = {}) {
     const cameraDelta = gameStateMachine.state === GameState.LEVEL_PLAYING ? pauseController.getDelta(activeDelta) : 0;
     camera.update(trackedPlayer?.actor.getPosition(), cameraDelta);
     goal.updateView(camera);
-    syncVisionShadows(characterPerception.getSnapshot());
+    syncVisionShadows(characterPerception.getSnapshot(), stealthShadowLifecycle.update(stealthAttacks.getZones(), activeDelta));
     const diagnosticCharacters = [
       ...spawnerByType.get(SpawnerType.PLAYER).actors,
       ...getRecordsByType(SpawnerType.SHEEP),

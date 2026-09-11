@@ -45,6 +45,7 @@ export function createKnifeSwing() {
 export function resolvePlayerKnifeImpact(player, enemies, {
   multiplier = 1,
   eligibleTargetIds = null,
+  onEligibleImpact = () => {},
   collectImpacts = false,
 } = {}) {
   if (!player?.combat.isAlive) return 0;
@@ -56,6 +57,8 @@ export function resolvePlayerKnifeImpact(player, enemies, {
     if (enemy.type !== SpawnerType.ENEMY || !enemy.combat.isAlive) continue;
     const target = enemy.combat.getCombatCollider();
     if (!target || !collidersOverlap(collider, target)) continue;
+    onEligibleImpact(enemy);
+    if (enemy.actor.isDefending) continue;
     const to = enemy.actor.getPosition();
     const length = Math.hypot(to.x - from.x, to.y - from.y);
     const direction = length ? { x: (to.x - from.x) / length, y: (to.y - from.y) / length } : { x: 1, y: 0 };

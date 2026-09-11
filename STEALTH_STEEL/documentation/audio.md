@@ -14,6 +14,8 @@ The Settings SFX slider controls these sounds, including currently playing sound
 | Warrior starts an accepted attack | Attack02.mp3 |
 | Lancer starts an accepted attack | Attack03.wav |
 | Monk healing action | Attack04.mp3 |
+| Player starts a knife swing | Attack02.mp3 (Warrior swing) |
+| Player knife damages one or more enemies | Attack03.wav (Lancer swing) |
 | Suspicious (`?`) state entry | Alert01.mp3 at 0.65 playback rate |
 | Investigating (`i`) state entry | Alert01.mp3 at 0.82 playback rate |
 | Alert (`!`) state entry | Alert01.mp3 at original pitch (1.0) |
