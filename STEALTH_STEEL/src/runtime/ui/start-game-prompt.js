@@ -10,7 +10,7 @@ export function shouldSkipIntro({ isDevelopment = false, search = "" } = {}) {
   return isDevelopment && new URLSearchParams(search).get("skipIntro") === "true";
 }
 
-export function createStartGamePrompt({ host, onStart, documentRef = globalThis.document }) {
+export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = false, documentRef = globalThis.document }) {
   const menu = createMenu({
     titleText: "Start Menu",
     bodyText: START_PROMPT_BODY,
@@ -18,11 +18,15 @@ export function createStartGamePrompt({ host, onStart, documentRef = globalThis.
     titleId: "start-game-prompt-title",
     showLogo: true,
     logoAlt: "Stealth & Steel",
-    buttons: [{ displayText: "Start", className: "start-game-prompt-start" }],
+    buttons: [
+      { displayText: "Start", className: "start-game-prompt-start" },
+      { displayText: "Items", icon: "⚡", className: "start-game-prompt-items" },
+    ],
     documentRef,
   });
   const { backdrop, panel } = menu;
-  const [startButton] = menu.buttons;
+  const [startButton, itemsButton] = menu.buttons;
+  itemsButton.disabled = !itemsEnabled;
   backdrop.className += " start-game-prompt-backdrop";
   backdrop.setAttribute("data-start-game-prompt", "true");
   panel.className += " start-game-prompt-panel";
@@ -35,6 +39,8 @@ export function createStartGamePrompt({ host, onStart, documentRef = globalThis.
     prompt.close();
   };
   startButton.addEventListener("click", handleStart);
+  const handleItems = () => { if (!itemsButton.disabled) onItems?.(); };
+  itemsButton.addEventListener("click", handleItems);
 
   host.append(backdrop);
   startButton.focus();
@@ -43,8 +49,11 @@ export function createStartGamePrompt({ host, onStart, documentRef = globalThis.
     backdrop,
     panel,
     startButton,
+    itemsButton,
+    setItemsEnabled(enabled) { itemsButton.disabled = !enabled; },
     close() {
       startButton.removeEventListener("click", handleStart);
+      itemsButton.removeEventListener("click", handleItems);
       backdrop.remove();
     },
   };

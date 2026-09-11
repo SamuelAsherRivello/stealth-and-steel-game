@@ -1,6 +1,11 @@
 import { GameWindow } from "./game-window.js";
 
-const FAMILIES = ["Shoes", "Dagger", "Shield"];
+const BODY_TEXT = "Select 1 of each item type to activate it for gameplay";
+const STAT_VALUES = (item) => [
+  ["Speed", item.family === "Shoes" ? `+${item.effectPercent}%` : "0"],
+  ["Offense", item.family === "Dagger" ? `+${item.effectPercent}%` : "0"],
+  ["Defense", item.family === "Shield" ? `+${item.effectPercent}%` : "0"],
+];
 
 export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
   onClose = () => {}, onState = () => {}, documentRef = globalThis.document }) {
@@ -32,50 +37,51 @@ export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
   function render(state) {
     if (disposed) return;
     grid.textContent = "";
-    if (state?.status !== "ready") {
-      status.textContent = "Items are unavailable. The game continues without item bonuses.";
-      return;
-    }
-    if (!state.profileId) {
-      status.textContent = "Log in through Account to select owned items.";
-      return;
-    }
-    status.textContent = state.ownedItems.length
-      ? "Choose at most one Shoes, one Dagger, and one Shield. Changes apply on the next player spawn."
-      : "This wallet owns no game items.";
-    for (const family of FAMILIES) {
-      const group = documentRef.createElement("section");
-      group.className = "items-menu-family";
-      const heading = documentRef.createElement("h3");
-      heading.textContent = family;
-      group.append(heading);
-      for (const item of state.ownedItems.filter(candidate => candidate.family === family)) {
-        const selected = state.effective?.[family]?.assetId === item.assetId;
-        const button = documentRef.createElement("button");
-        button.type = "button";
-        button.className = `items-menu-card${selected ? " is-selected" : ""}`;
-        button.setAttribute("aria-pressed", String(selected));
-        button.setAttribute("data-asset-id", item.assetId);
-        const icon = documentRef.createElement("img");
-        icon.src = item.iconUrl;
-        icon.alt = "";
-        const name = documentRef.createElement("strong");
-        name.textContent = item.name;
-        const effect = documentRef.createElement("span");
-        effect.textContent = item.effect;
-        button.append(icon, name, effect);
-        button.addEventListener("click", async () => {
-          try {
-            const next = selected ? await equipment.clear(family) : await equipment.select(item.assetId);
-            onState(next);
-            render(next);
-          } catch {
-            status.textContent = "That selection could not be saved. Refresh Items and try again.";
-          }
-        });
-        group.append(button);
+    status.textContent = BODY_TEXT;
+    if (state?.status !== "ready" || !state.profileId) return;
+    for (const item of state.ownedItems) {
+      const selected = state.effective?.[item.family]?.assetId === item.assetId;
+      const button = documentRef.createElement("button");
+      button.type = "button";
+      button.className = `items-menu-card${selected ? " is-selected" : ""}`;
+      button.setAttribute("aria-pressed", String(selected));
+      button.setAttribute("data-asset-id", item.assetId);
+      const art = documentRef.createElement("div");
+      art.className = "items-menu-card-art";
+      const icon = documentRef.createElement("img");
+      icon.src = item.iconUrl;
+      icon.alt = "";
+      art.append(icon);
+      const details = documentRef.createElement("div");
+      details.className = "items-menu-card-details";
+      const name = documentRef.createElement("strong");
+      name.textContent = item.name;
+      const price = documentRef.createElement("span");
+      price.textContent = `${item.priceSats.toLocaleString("en-US")} sats`;
+      details.append(name, price);
+      const stats = documentRef.createElement("div");
+      stats.className = "items-menu-card-stats";
+      for (const [label, value] of STAT_VALUES(item)) {
+        const stat = documentRef.createElement("span");
+        stat.className = "items-menu-card-stat";
+        const labelElement = documentRef.createElement("b");
+        labelElement.textContent = label;
+        const valueElement = documentRef.createElement("em");
+        valueElement.textContent = value;
+        stat.append(labelElement, valueElement);
+        stats.append(stat);
       }
-      grid.append(group);
+      button.append(art, details, stats);
+      button.addEventListener("click", async () => {
+        try {
+          const next = selected ? await equipment.clear(item.family) : await equipment.select(item.assetId);
+          onState(next);
+          render(next);
+        } catch {
+          render(state);
+        }
+      });
+      grid.append(button);
     }
   }
 

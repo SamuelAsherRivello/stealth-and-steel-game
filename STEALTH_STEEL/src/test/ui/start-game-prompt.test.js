@@ -61,6 +61,21 @@ test("start prompt requires its Start button and ignores background clicks", () 
   secondPrompt.close();
 });
 
+test("start prompt places bolt Items below Start and enables it only for an active player", () => {
+  const host = new FakeElement();
+  let opens = 0;
+  const prompt = createStartGamePrompt({ host, onStart: () => {}, onItems: () => opens++, itemsEnabled: false, documentRef });
+  assert.equal(prompt.startButton.textContent, "Start");
+  assert.equal(prompt.itemsButton.textContent, "⚡Items");
+  assert.equal(prompt.itemsButton.disabled, true);
+  prompt.setItemsEnabled(true);
+  assert.equal(prompt.itemsButton.disabled, false);
+  click(prompt.itemsButton);
+  assert.equal(opens, 1);
+  assert.equal(host.children.length, 1);
+  prompt.close();
+});
+
 test("start prompt blocks keyboard button activation", () => {
   const host = new FakeElement();
   let starts = 0;

@@ -106,6 +106,7 @@ import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
 import { createItemsHudUi } from "./ui/items-hud-ui.js";
+import { createItemsUi } from "./ui/items-ui.js";
 import { loadStatusBadgeArt } from "./ui/status-badge.js";
 import { createCharacterOverhead, drawCharacterOverheads } from "./ui/character-overhead.js";
 import { createBisAccount } from "./integration/bis-account.js";
@@ -1089,19 +1090,33 @@ export async function start({ showStartPrompt = true } = {}) {
   settingsUi = createSettingsUi({
     host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController,
     catalog: __GAME_LEVELS__, openAccount: () => accountHost.open(),
-    equipmentProvider: () => equipmentControllerPromise,
-    onEquipmentState: state => { equipmentSnapshot = createEquipmentSnapshot(state); itemsHud?.render(equipmentSnapshot); },
   });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
   const itemsHud = createItemsHudUi({ host: gameUi, snapshot: equipmentSnapshot });
-  void equipmentControllerPromise.then(controller => {
-    unsubscribeEquipment = controller.subscribe(() => {
-      equipmentSnapshot = createEquipmentSnapshot(controller.getState());
-      itemsHud.render(equipmentSnapshot);
+  let startGamePrompt = null;
+  let itemsWindow = null;
+  let itemsEnabled = false;
+  const applyEquipmentState = state => {
+    equipmentSnapshot = createEquipmentSnapshot(state);
+    itemsHud?.render(equipmentSnapshot);
+    itemsEnabled = Boolean(state?.profileId);
+    startGamePrompt?.setItemsEnabled(itemsEnabled);
+  };
+  const openItems = () => {
+    if (itemsWindow || !itemsEnabled) return;
+    itemsWindow = createItemsUi({
+      host: domBody,
+      screenLayer: domScreen,
+      opener: startGamePrompt?.itemsButton,
+      equipmentProvider: () => equipmentControllerPromise,
+      onState: applyEquipmentState,
+      onClose: () => { itemsWindow = null; startGamePrompt?.itemsButton.focus(); },
     });
-    equipmentSnapshot = createEquipmentSnapshot(controller.getState());
-    itemsHud.render(equipmentSnapshot);
+  };
+  void equipmentControllerPromise.then(controller => {
+    unsubscribeEquipment = controller.subscribe(applyEquipmentState);
+    applyEquipmentState(controller.getState());
   }).catch(() => {});
   const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
   const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown.png`, {
@@ -1159,9 +1174,11 @@ export async function start({ showStartPrompt = true } = {}) {
       enemyType:SpawnerType.ENEMY,tileSize:TILE_SIZE,spawnPlayer,resume:()=>pauseController.resume('player-loss')}),
     presentPlayerReward: () => gameStateMachine.state === GameState.LEVEL_COMPLETE,
   });
-  const startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
+  startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
     ? createStartGamePrompt({
       host: domBody,
+      onItems: openItems,
+      itemsEnabled,
       onStart: () => {
         treasure.start();
         startGamePrompt.close();

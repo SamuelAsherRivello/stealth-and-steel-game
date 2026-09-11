@@ -250,15 +250,20 @@ body {
 }
 
 .ui-layer .menu-body > .items-menu { width: 100%; }
-.ui-layer .game-window .items-menu-status { margin: 0 0 4cqw; color: #513d2a; font: 700 3.8cqw/1.35 Georgia, serif; }
-.items-menu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2cqw; }
-.items-menu-family { display: grid; align-content: start; gap: 2cqw; }
-.items-menu-family h3 { margin: 0; text-align: center; font: 750 4cqw/1 system-ui, sans-serif; }
-.items-menu-card { display: grid; justify-items: center; gap: 1cqw; min-width: 0; padding: 2cqw 1cqw; border: .45cqw solid #52627f; border-radius: 2cqw; background: #15213a; color: #eef6ff; cursor: pointer; }
-.items-menu-card.is-selected { border-color: #facc15; background: #263451; box-shadow: 0 0 0 .5cqw rgb(250 204 21 / 24%); }
-.items-menu-card img { width: 12cqw; height: 12cqw; object-fit: contain; image-rendering: pixelated; }
-.items-menu-card strong { font: 750 3.2cqw/1.1 system-ui, sans-serif; }
-.items-menu-card span { font: 550 2.6cqw/1.2 system-ui, sans-serif; color: #cbd5e1; }
+.ui-layer .game-window .items-menu-status { margin: 0 0 2cqw; color: #294650; font: 700 3.5cqw/1.25 Georgia, serif; }
+.items-menu-grid { display: grid; grid-template: repeat(3, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr)); gap: 1.5cqw; aspect-ratio: 1; }
+.items-menu-card { position: relative; display: grid; grid-template: minmax(0, 1fr) auto / minmax(0, 1fr) minmax(0, 1fr); gap: 1.2cqw; min-width: 0; aspect-ratio: 1; padding: 1.5cqw; border: .45cqw solid #b8ccd5; border-radius: 3cqw; background: #fbfdff; color: #1e3540; cursor: pointer; text-align: left; }
+.items-menu-card-art { display: grid; place-items: center; min-width: 0; border-radius: 2.4cqw; background: #5b8395; }
+.items-menu-card img { width: 82%; height: 82%; object-fit: contain; image-rendering: pixelated; }
+.items-menu-card-details { display: grid; align-content: center; gap: .7cqw; min-width: 0; }
+.items-menu-card strong { overflow-wrap: anywhere; font: 800 3.2cqw/1.05 system-ui, sans-serif; }
+.items-menu-card-details span { color: #294650; font: 800 3cqw/1 system-ui, sans-serif; }
+.items-menu-card-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8cqw; }
+.items-menu-card-stat { display: grid; justify-items: center; gap: .4cqw; min-width: 0; padding: .7cqw .3cqw; border: .25cqw solid #d1dfe5; border-radius: 1.5cqw; background: #fff; }
+.items-menu-card-stat b { font: 800 2.15cqw/1 system-ui, sans-serif; }
+.items-menu-card-stat em { color: #3f7d69; font: 800 2.35cqw/1 system-ui, sans-serif; font-style: normal; }
+.items-menu-card.is-selected { border-color: #facc15; background: #fff5c9; box-shadow: inset 0 0 0 .6cqw #facc15, 0 0 0 .45cqw rgb(30 53 64 / 82%); }
+.items-menu-card.is-selected::after { content: "✓"; position: absolute; top: -1.1cqw; right: -1.1cqw; display: grid; place-items: center; width: 5.2cqw; height: 5.2cqw; border: .45cqw solid #fff; border-radius: 50%; background: #1f7a57; color: #fff; font: 900 3.5cqw/1 system-ui, sans-serif; box-shadow: 0 .5cqw 1cqw rgb(0 0 0 / 28%); }
 
 .settings-gear {
   position: absolute;
@@ -540,6 +545,7 @@ body {
 
 /* All menu actions share the Start button treatment. */
 .start-game-prompt-start,
+.start-game-prompt-items,
 .level-complete-continue,
 .settings-reset,
 .settings-github-button,
@@ -558,6 +564,8 @@ body {
 
 .start-game-prompt-start:hover,
 .start-game-prompt-start:focus-visible,
+.start-game-prompt-items:hover,
+.start-game-prompt-items:focus-visible,
 .level-complete-continue:hover,
 .level-complete-continue:focus-visible,
 .settings-reset:hover,
@@ -570,6 +578,8 @@ body {
   outline: 0.55cqw solid #2563eb;
   outline-offset: 0.55cqw;
 }
+
+.start-game-prompt-items:disabled { cursor: not-allowed; filter: saturate(.2); opacity: .48; }
 
 .developer-settings-backdrop {
   z-index: var(--z-developer-settings-backdrop);

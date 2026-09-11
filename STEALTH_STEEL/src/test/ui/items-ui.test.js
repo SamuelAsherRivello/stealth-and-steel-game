@@ -29,14 +29,19 @@ const find = (root, predicate) => {
   assert.fail("Expected matching element");
 };
 
-const item = (assetId, family, name, effect) => ({ assetId, family, name, effect, iconUrl: `https://chain.example/${assetId}.png` });
+const item = (assetId, family, name, priceSats, effectPercent) => ({ assetId, family, name, priceSats, effectPercent, iconUrl: `https://chain.example/${assetId}.png` });
 
-test("Items renders chain-owned cards and supports one-family selection and clearing", async () => {
+test("Items renders a non-scrolling square nine-card grid with the required instruction and unmistakable selected state", async () => {
   const ownedItems = [
-    item("shoes-1", "Shoes", "Shoes I", "10% speed"),
-    item("shoes-2", "Shoes", "Shoes II", "20% speed"),
-    item("dagger-1", "Dagger", "Dagger I", "10% damage"),
-    item("shield-1", "Shield", "Shield I", "10% defense"),
+    item("shoes-1", "Shoes", "Shoes I", 1000, 10),
+    item("shoes-2", "Shoes", "Shoes II", 2000, 20),
+    item("shoes-3", "Shoes", "Shoes III", 3000, 30),
+    item("dagger-1", "Dagger", "Dagger I", 1100, 10),
+    item("dagger-2", "Dagger", "Dagger II", 2100, 20),
+    item("dagger-3", "Dagger", "Dagger III", 3100, 30),
+    item("shield-1", "Shield", "Shield I", 1200, 10),
+    item("shield-2", "Shield", "Shield II", 2200, 20),
+    item("shield-3", "Shield", "Shield III", 3200, 30),
   ];
   let state = { status: "ready", profileId: "player", ownedItems, effective: { Shoes: ownedItems[0] } };
   const changes = [];
@@ -50,12 +55,16 @@ test("Items renders chain-owned cards and supports one-family selection and clea
     onState: next => changes.push(next), documentRef });
   await Promise.resolve(); await Promise.resolve();
 
-  assert.match(ui.content.children[0].textContent, /Changes apply on the next player spawn/);
-  assert.deepEqual(ui.content.children[1].children.map(group => group.children[0].textContent), ["Shoes", "Dagger", "Shield"]);
+  assert.equal(ui.content.children[0].textContent, "Select 1 of each item type to activate it for gameplay");
+  assert.equal(ui.content.children[1].children.length, 9);
   const initialShoes = find(ui.content, node => node.getAttribute?.("data-asset-id") === "shoes-1");
   assert.equal(initialShoes.type, "button");
   assert.equal(initialShoes.getAttribute("aria-pressed"), "true");
-  assert.equal(initialShoes.children[0].src, "https://chain.example/shoes-1.png");
+  assert.match(initialShoes.className, /is-selected/);
+  assert.equal(initialShoes.children[0].children[0].src, "https://chain.example/shoes-1.png");
+  assert.equal(initialShoes.children[1].children[0].textContent, "Shoes I");
+  assert.equal(initialShoes.children[1].children[1].textContent, "1,000 sats");
+  assert.deepEqual(initialShoes.children[2].children.map(stat => stat.textContent), ["Speed+10%", "Offense0", "Defense0"]);
 
   const shoesTwo = find(ui.content, node => node.getAttribute?.("data-asset-id") === "shoes-2");
   shoesTwo.dispatchEvent(new Event("click"));
