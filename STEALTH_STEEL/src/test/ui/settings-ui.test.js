@@ -239,6 +239,7 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /icon\.src = `\$\{ASSET_BASE\}ui\/tiny-swords\/Icon_10\.png`/);
   assert.match(source, /title:\s*"Settings Menu"/);
   assert.match(source, /createMenuButton\(\{ displayText: "Developer"/);
+  assert.doesNotMatch(source, /settings-items-button|createItemsUi/);
   assert.match(source, /title: "Developer"/);
   assert.match(source, /"Music", RUNTIME_AUDIO_SETTING_KEYS\.music/);
   assert.match(source, /"SFX", RUNTIME_AUDIO_SETTING_KEYS\.sfx/);
