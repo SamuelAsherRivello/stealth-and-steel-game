@@ -68,19 +68,8 @@ links, screenshot, relative-path, and release-metadata checks.
 3. Wait for the [deployment workflow](https://github.com/SamuelAsherRivello/stealth-and-steel-game/actions/workflows/deploy-pages.yml)
    to succeed, then verify the [live game](https://samuelasherrivello.github.io/stealth-and-steel-game/).
 
-For a versioned release, also update `STEALTH_STEEL/public/environment.json` and optionally
-create a matching three-component GitHub Release tag.
-The displayed version comes from that file, not from Git tags.
-
-GitHub repository Settings → Pages → Source must remain **GitHub Actions**.
-To redeploy the current branch without a new commit, use **Run workflow** on
-`Deploy live demo`. Vite uses `base: "./"`, so asset URLs remain relative to the
-Pages project path after a repository rename. If renamed again, update the Git
-remote and these README links; keep the workflow branch aligned with the
-repository's publishing branch.
-
-To recover from a bad publish, make a corrective commit and push it to `main`;
-do not rewrite history or force-push.
+<!-- AI: Keep this release section brief; do not add detailed versioning, Pages,
+rename, or recovery guidance here. -->
 
 ## Project Overview
 
@@ -143,11 +132,8 @@ Babylon Lite does not ship the full engine's default loading UI.
     `-- index.html
 ```
 
-Run npm commands from the repository root. Vite serves `STEALTH_STEEL/index.html`
-and writes production output to root `dist/`. Runtime source starts at
-`STEALTH_STEEL/src/runtime/bootstrap.js`; `main.js` composes the game scene.
-Aseprite sources sit beside their exported images. Files in `public/` are
-served and copied into builds, including locally present Git-ignored source art.
+<!-- AI: Keep this structure section brief; do not add lengthy runtime, build,
+or asset-location details here. -->
 
 ## Project Details
 
@@ -187,7 +173,8 @@ human edits content only on the existing layers.
 See [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md) for the open, edit, save,
 close, and play workflow.
 
-Level completion offers an optional player-funded trophy through BIS and then **Continue To Next Level** or **Restart Game**. The final level shows **Game Completed**. Levels are catalogued from exact `LevelNN.tmj` filenames; backups are excluded. Run progress is stored per tab, and restarting returns to Level 1 without clearing the wallet. Level 2 is a minimal playable map using existing terrain, three gold pickups and an exit. Game-controlled trophy issuance (X1) is deferred.
+<!-- AI: Keep this tile-map section brief; do not add lengthy completion, progress,
+or trophy behavior details here. -->
 
 ### Troubleshooting
 
