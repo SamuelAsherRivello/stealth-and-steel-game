@@ -26,3 +26,28 @@ test('host keeps reward presentation game-owned and session-scoped', async () =>
   assert.deepEqual(await host.presentConfirmedPlayerReward({...reward,operationId:'reward-2'}),{status:'not-applicable'});
   assert.equal(presentations,1);
 });
+
+test('a fresh host session rejects continuation and reward commands captured by the discarded run', async () => {
+  const oldSession = 'run-one';
+  const oldHost = createBisHostGame({
+    gameId:'stealth-and-steel', getActiveGameSessionId:()=>oldSession,
+    canCaptureContinuation:()=>true, applyContinuation:()=>true,
+  });
+  const oldReference = oldHost.getActiveGameSessionReference();
+  const continuation = {
+    operationId:'continue-old', gameSessionReference:oldReference,
+    continuationTarget:oldHost.captureContinuationTarget({gameSessionReference:oldReference}),
+  };
+  const reward = {operationId:'reward-old',gameSessionReference:oldReference,rewardId:'LVL1'};
+  let revives = 0, presentations = 0;
+  const freshHost = createBisHostGame({
+    gameId:'stealth-and-steel', getActiveGameSessionId:()=> 'run-two',
+    applyContinuation:()=>{revives++;return true;},
+    presentPlayerReward:()=>{presentations++;return true;},
+  });
+
+  assert.deepEqual(await freshHost.applyConfirmedContinuation(continuation),{status:'not-applicable'});
+  assert.deepEqual(await freshHost.presentConfirmedPlayerReward(reward),{status:'not-applicable'});
+  assert.equal(revives,0);
+  assert.equal(presentations,0);
+});

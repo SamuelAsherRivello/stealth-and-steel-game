@@ -80,6 +80,19 @@ The themed UI SHALL retain existing outcome messages, available action labels, s
 - **WHEN** the game changes a character's hidden or perception state
 - **THEN** the corresponding themed badge communicates the same state at the existing world position and timing
 
+### Requirement: End-level restart remains in the current document
+The themed Restart Game action on both loss and completion menus SHALL create a fresh game run without refreshing or navigating the browser document. It SHALL retain the existing themed Start Menu behavior and shall preserve the visible game frame, persistent settings, account data, and saved Map Order while resetting run-owned gameplay state.
+
+#### Scenario: Restart after completion
+- **WHEN** the player activates Restart Game from a Level Completed or Game Completed menu
+- **THEN** the themed menu closes and the first map in the saved Map Order begins as a fresh run in the current document
+- **AND** no browser navigation or document refresh occurs
+
+#### Scenario: Restart after loss
+- **WHEN** the player activates Restart Game from the themed loss menu
+- **THEN** the game returns to its fresh-run start presentation without stale loss, combat, pickup, or reward UI
+- **AND** no browser navigation or document refresh occurs
+
 ### Requirement: Responsive and accessible themed controls
 
 The UI SHALL remain legible and usable inside the visible game area at desktop and narrow portrait sizes, after viewport changes, browser zoom, and fullscreen transitions. Panel edges and icons SHALL remain undistorted. Interactive hit areas SHALL be at least 44 CSS pixels in each dimension. Text labels, accessible names, keyboard operation, and visible focus SHALL remain available independently of decorative images. Available hover, pressed, checked, and disabled states SHALL be visually distinguishable without relying on hover for touch operation.

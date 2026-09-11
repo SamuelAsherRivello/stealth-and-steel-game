@@ -23,6 +23,8 @@ import {
   createSprite2DLayer,
   createSpriteAnimationManager,
   createSpriteRenderer,
+  disposeEngine,
+  disposeSpriteRenderer,
   loadSpriteAtlas,
   removeSprite2D,
   setSprite2DFrame,
@@ -114,9 +116,11 @@ import { createBisHostGame } from "./integration/bis-host-game.js";
 import { createPayToContinue } from "./integration/pay-to-continue.js";
 import { createLevelReward } from "./integration/level-reward.js";
 import { createLevelProgress } from "./gameplay/level-progress.js";
+import { createGameRunCoordinator } from "./gameplay/game-run-lifecycle.js";
 import { revivePaidPlayer } from "./gameplay/paid-revival.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
+import { createRunPresentation } from "./ui/run-presentation.js";
 import { createEquipmentSnapshot, EMPTY_EQUIPMENT_SNAPSHOT } from "./gameplay/equipment-effects.js";
 import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui.js";
 import {createTreasureRuntime} from './integration/treasure-runtime.js';
@@ -187,6 +191,7 @@ const EMPTY_TERRAIN_FRAMES = new Set([
 const canvas = document.querySelector("#renderCanvas");
 const debugCanvas = document.querySelector("#debugCanvas");
 const debugContext = debugCanvas.getContext("2d");
+if (import.meta.env.DEV) document.documentElement.dataset.gameDocumentSession = crypto.randomUUID();
 const statusBadgeArt = loadStatusBadgeArt();
 const errorOutput = document.querySelector("#error");
   const gameUi = document.querySelector("#gameUi");
@@ -204,6 +209,9 @@ const uiLayer = document.querySelector("#uiLayer");
 const gameFrame = document.querySelector(".game-frame");
 const viewportSafeArea = createViewportSafeArea({ element: uiLayer, frameElement: gameFrame });
 const coordinatesUi = createCoordinatesUi();
+const runPresentation = createRunPresentation({
+  virtualController: document.querySelector(".virtual-controller"),
+});
 
 let latestGameViewport = null;
 
@@ -219,6 +227,16 @@ function refreshGameViewportDiagnostics() {
 const viewportResizeObserver = new ResizeObserver(refreshGameViewportDiagnostics);
 viewportResizeObserver.observe(gameFrame);
 window.addEventListener("resize", refreshGameViewportDiagnostics);
+
+let gameRunCoordinator = null;
+
+window.addEventListener("pagehide", () => {
+  gameRunCoordinator?.dispose();
+  viewportSafeArea.dispose();
+  viewportResizeObserver.disconnect();
+  promptBodyResizeObserver.disconnect();
+  window.removeEventListener("resize", refreshGameViewportDiagnostics);
+}, { once: true });
 
 
 function setCharacterSpawnProgress(actor, size, progress) {
@@ -244,8 +262,24 @@ function makeDirection(from, to) {
   };
 }
 
-export async function start({ showStartPrompt = true } = {}) {
-  const progress = createLevelProgress(__GAME_LEVELS__, {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)}, () => window.location.reload(), () => runtimeSettingsStore.get(MAP_ORDER_SETTING_KEY));
+export async function start(options = {}) {
+  if (!gameRunCoordinator) {
+    gameRunCoordinator = createGameRunCoordinator({
+      createRun: ({ run }) => createGameRun({ ...options, initialRun: run }),
+    });
+  }
+  return gameRunCoordinator.start(options.initialRun);
+}
+
+async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
+  let disposed = false;
+  const progress = createLevelProgress(
+    __GAME_LEVELS__,
+    {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)},
+    () => window.location.reload(),
+    () => runtimeSettingsStore.get(MAP_ORDER_SETTING_KEY),
+    { initialRun, onRestart: run => { if (!disposed) gameRunCoordinator?.restart(run); } },
+  );
   if (!navigator.gpu) {
     throw new Error("This Babylon Lite demo requires a browser with WebGPU enabled.");
   }
@@ -1115,6 +1149,7 @@ export async function start({ showStartPrompt = true } = {}) {
     });
   };
   void equipmentControllerPromise.then(controller => {
+    if (disposed) return;
     unsubscribeEquipment = controller.subscribe(applyEquipmentState);
     applyEquipmentState(controller.getState());
   }).catch(() => {});
@@ -1188,6 +1223,30 @@ export async function start({ showStartPrompt = true } = {}) {
     : null;
   if (startGamePrompt) {
     pauseController.pause();
+  }
+  runPresentation.show();
+  const restartQaOutcome = import.meta.env.DEV
+    ? new URLSearchParams(window.location.search).get("restartQaOutcome")
+    : null;
+  if (["loss", "completion"].includes(restartQaOutcome)
+    && sessionStorage.getItem("stealth-steel-restart-qa-outcome") !== restartQaOutcome) {
+    sessionStorage.setItem("stealth-steel-restart-qa-outcome", restartQaOutcome);
+    queueMicrotask(() => {
+      if (disposed) return;
+      startGamePrompt?.close();
+      startGamePrompt = null;
+      pauseController.resume();
+      gameStateMachine.assetsLoaded();
+      if (restartQaOutcome === "loss") {
+        gameStateMachine.playerDefeated();
+        gameStateMachine.deathCompleted();
+        pauseController.pause("player-loss");
+        void paidContinue.show();
+      } else {
+        gameStateMachine.goalReached();
+        levelReward.show();
+      }
+    });
   }
   const characterLockupWatchdog = createCharacterLockupWatchdog();
   let goalExit = null;
@@ -1713,11 +1772,18 @@ export async function start({ showStartPrompt = true } = {}) {
           ...(record.controller ?? record.actor).getNavigationSnapshot?.() })),
     );
 
-    requestAnimationFrame(update);
+    if (!disposed) animationFrameId = requestAnimationFrame(update);
   }
 
-  requestAnimationFrame(update);
-  window.addEventListener("pagehide", () => {
+  let animationFrameId = requestAnimationFrame(update);
+  await startEngine(engine);
+
+  return {
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      cancelAnimationFrame(animationFrameId);
+    runPresentation.dispose();
     levelReward.dispose();
     paidContinue.dispose();
     grassDecorations.dispose();
@@ -1729,10 +1795,6 @@ export async function start({ showStartPrompt = true } = {}) {
     unsubscribeEquipment();
     accountHost.dispose({preserveContracts});
     canvas.removeEventListener("pointerup", handleGridSelection);
-    viewportSafeArea.dispose();
-    viewportResizeObserver.disconnect();
-    promptBodyResizeObserver.disconnect();
-    window.removeEventListener("resize", refreshGameViewportDiagnostics);
     unsubscribeCoordinates();
     unsubscribeColliders();
     for (const spawner of spawners) {
@@ -1747,11 +1809,22 @@ export async function start({ showStartPrompt = true } = {}) {
     levelCompleteUi.dispose();
     levelLostUi.dispose();
     startGamePrompt?.close();
+    itemsWindow?.window?.close?.();
+    settingsUi?.developerWindow?.close?.();
+    settingsUi?.activeWindow?.close?.();
+    settingsUi?.gear.remove();
+    gameUi.replaceChildren();
     pickupSystem.dispose();
     projectiles.dispose();
     for (const effect of daggerComboEffects) effect.dispose();
-  }, { once: true });
-  await startEngine(engine);
+    debugContext.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    globalThis.characterPerceptionDebug = undefined;
+    globalThis.bushBurningDebug = undefined;
+    globalThis.levelCameraDebug = undefined;
+    disposeSpriteRenderer(renderer);
+    disposeEngine(engine);
+    },
+  };
 }
 
 function worldAabbToScreen(aabb) {

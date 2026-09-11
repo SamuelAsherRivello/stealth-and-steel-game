@@ -12,9 +12,14 @@ export function normalizeMapOrder(catalog, preference) {
   return [...new Set([...(Array.isArray(preference) ? preference : []).filter(number => numbers.includes(number)), ...numbers])];
 }
 
-export function createLevelProgress(catalog, storage, reload, getPreferredOrder = () => []) {
+export function createLevelProgress(catalog, storage, reload, getPreferredOrder = () => [], { initialRun, onRestart = () => {} } = {}) {
   let order = normalizeMapOrder(catalog, getPreferredOrder()), completed = 0;
-  try {
+  if (initialRun?.order && Number.isInteger(initialRun.completed)
+    && initialRun.completed >= 0 && initialRun.completed < initialRun.order.length
+    && JSON.stringify(normalizeMapOrder(catalog, initialRun.order)) === JSON.stringify(initialRun.order)) {
+    order = initialRun.order;
+    completed = initialRun.completed;
+  } else try {
     const saved = JSON.parse(storage.getItem(RUN_STORAGE_KEY) ?? 'null');
     if (saved?.pendingTransition === true && Array.isArray(saved.order) && saved.order.length === catalog.length
       && JSON.stringify(normalizeMapOrder(catalog, saved.order)) === JSON.stringify(saved.order)
@@ -37,6 +42,11 @@ export function createLevelProgress(catalog, storage, reload, getPreferredOrder 
     file: catalog.find(level => level.number === current).file,
     get hasNext() { return completed + 1 < order.length; },
     advance() { if (this.hasNext) save(order, completed + 1); },
-    restart() { save(normalizeMapOrder(catalog, getPreferredOrder()), 0); },
+    restart() {
+      const freshRun = { order: normalizeMapOrder(catalog, getPreferredOrder()), completed: 0 };
+      try { storage.setItem(RUN_STORAGE_KEY, 'null'); } catch { /* Restart remains available without session storage. */ }
+      onRestart(freshRun);
+      return freshRun;
+    },
   };
 }

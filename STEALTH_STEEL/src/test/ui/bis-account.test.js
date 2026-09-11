@@ -51,6 +51,12 @@ test('the standalone account reads its game recipient from the local BIS game wa
  try { await f.adapter.open(); assert.equal(options.continueRecipient,'tark1local-game-recipient'); }
  finally { f.adapter.dispose(); }
 });
+test('a disposed account adapter ignores its stale restart event while its replacement remains usable',async()=>{
+ const first=fixture();await first.adapter.open();first.adapter.dispose();first.emit({type:'restartRequested',logoutId:'old'});await flush();
+ assert.equal(first.counts().restarts,0);
+ const replacement=fixture();await replacement.adapter.open();replacement.emit({type:'restartRequested',logoutId:'fresh'});await flush();
+ assert.equal(replacement.counts().restarts,1);replacement.adapter.dispose();
+});
 
 test('game signer and LTO reuse one BIS session while the toast mount remains passive',async()=>{
  const f=fixture(),disposed=[],wallet={getState:()=>({profileId:'saved-game'}),dispose:()=>disposed.push('wallet')};
