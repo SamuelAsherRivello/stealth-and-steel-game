@@ -6,6 +6,7 @@ class Element extends EventTarget {
   _text = "";
   children = [];
   attributes = new Map();
+  dataset = {};
   parentNode = null;
   isConnected = false;
   className = "";
@@ -55,7 +56,9 @@ test("Items renders a non-scrolling square nine-card grid with the required inst
     onState: next => changes.push(next), documentRef });
   await Promise.resolve(); await Promise.resolve();
 
+  assert.match(ui.window.panel.className, /items-window/);
   assert.equal(ui.content.children[0].textContent, "Select 1 of each item type to activate it for gameplay");
+  assert.equal(ui.content.children[1].dataset.layout, "3x3");
   assert.equal(ui.content.children[1].children.length, 9);
   const initialShoes = find(ui.content, node => node.getAttribute?.("data-asset-id") === "shoes-1");
   assert.equal(initialShoes.type, "button");
@@ -76,4 +79,44 @@ test("Items renders a non-scrolling square nine-card grid with the required inst
   await Promise.resolve(); await Promise.resolve();
   assert.equal(find(ui.content, node => node.getAttribute?.("data-asset-id") === "shoes-2").getAttribute("aria-pressed"), "false");
   assert.equal(changes.length, 3);
+});
+
+test("Items enlarges a two-item inventory instead of reserving a tiny three-column grid", async () => {
+  const ownedItems = [
+    item("dagger-2", "Dagger", "Dagger II", 1100, 10),
+    item("shield-3", "Shield", "Shield III", 3200, 30),
+  ];
+  const state = { status: "ready", profileId: "player", ownedItems, effective: {} };
+  const equipment = { refresh: async () => state };
+  const documentRef = { createElement: () => new Element() };
+  const ui = createItemsUi({ host: new Element(), opener: new Element(), equipmentProvider: async () => equipment,
+    documentRef });
+  await Promise.resolve(); await Promise.resolve();
+
+  assert.equal(ui.content.children[1].dataset.layout, "2x1");
+  assert.equal(ui.content.children[1].children.length, 2);
+});
+
+test("Items plays the activation sound for every successful selection but remains silent when deactivating", async () => {
+  const ownedItems = [item("dagger-2", "Dagger", "Dagger II", 1100, 10)];
+  let state = { status: "ready", profileId: "player", ownedItems, effective: {} };
+  const plays = [];
+  const equipment = {
+    async refresh() { return state; },
+    async select(assetId) { state = { ...state, effective: { Dagger: ownedItems.find(item => item.assetId === assetId) } }; return state; },
+    async clear() { state = { ...state, effective: {} }; return state; },
+  };
+  const documentRef = { createElement: () => new Element() };
+  const ui = createItemsUi({ host: new Element(), opener: new Element(), equipmentProvider: async () => equipment,
+    play: name => plays.push(name), documentRef });
+  await Promise.resolve(); await Promise.resolve();
+
+  let dagger = find(ui.content, node => node.getAttribute?.("data-asset-id") === "dagger-2");
+  dagger.dispatchEvent(new Event("click"));
+  await Promise.resolve(); await Promise.resolve();
+  dagger = find(ui.content, node => node.getAttribute?.("data-asset-id") === "dagger-2");
+  dagger.dispatchEvent(new Event("click"));
+  await Promise.resolve(); await Promise.resolve();
+
+  assert.deepEqual(plays, ["activate"]);
 });

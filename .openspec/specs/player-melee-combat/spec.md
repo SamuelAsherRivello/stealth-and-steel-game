@@ -7,28 +7,36 @@ Provide a repeatable player knife attack whose visible swing, collider overlap, 
 ## Requirements
 
 ### Requirement: Attack always uses the existing knife animation
-Every accepted Attack activation SHALL play the existing four-frame knife animation as the only player attack animation, independently of equipped weapon or held item. C072 MAY play those frames forward or backward and at a configured speed for a classified combo move, including a visual-only jump on the Rapid Triple finisher. Attack SHALL emit no projectile. Completion SHALL restore the appropriate current idle or running presentation. Movement SHALL remain available during every dagger move, and visual combo motion SHALL not alter ground movement or collider placement.
+Every accepted unarmed Attack activation SHALL play the existing four-frame knife animation once at its existing 100 ms frame cadence, independently of equipped weapon or held item. An Attack activation armed by a current stealth rear-cell opportunity SHALL instead start that capability's dedicated execution presentation using the existing knife frames and SHALL emit no projectile. Completion SHALL restore the appropriate current idle or running presentation. Movement SHALL remain available during an unarmed knife swing; execution movement is governed by the stealth-attack execution capability.
 
 #### Scenario: Attack with empty or different equipment
-- **WHEN** the player activates Attack with no weapon, a knife, or another selected weapon, with or without an item
-- **THEN** the same knife frames play once in their ordinary or classified-combo presentation and no projectile is created
+- **WHEN** the player activates an unarmed Attack with no weapon, a knife, or another selected weapon, with or without an item
+- **THEN** the same knife swing plays once and no projectile is created
 - **AND** completion restores the player's current locomotion/loadout presentation
 
+#### Scenario: Armed stealth attack
+- **WHEN** the player activates Attack from a current armed stealth rear-cell opportunity
+- **THEN** the dedicated execution presentation replaces the ordinary knife swing
+- **AND** no projectile is created
+
 #### Scenario: Movement and temporary presentation expire during a swing
-- **WHEN** the player moves or a loadout preview expires during a dagger move
-- **THEN** movement continues and the complete move presentation finishes without replacement or restart
+- **WHEN** the player moves or a loadout preview expires during an unarmed swing
+- **THEN** movement continues and the full knife animation completes without replacement or restart
 
 ### Requirement: Each swing commits one timed impact
-Each accepted dagger move SHALL resolve exactly one impact at that move's configured active-gameplay impact time. A coarse update crossing the configured impact or completion SHALL not lose or duplicate that impact. An Attack press during an active dagger move SHALL not restart it; C072 MAY retain at most one deliberate next press as its next-move buffer and SHALL discard further presses until that buffer is consumed or cleared.
+Each accepted unarmed swing SHALL resolve exactly one impact at its midpoint, 200 ms into the 400 ms swing. A coarse update crossing the midpoint or completion SHALL not lose or duplicate that impact. Input during an active unarmed swing SHALL not restart it or queue another swing. A stealth execution SHALL not create this ordinary midpoint impact.
 
 #### Scenario: Turning while swinging
-- **WHEN** the player changes movement direction after starting a dagger move
-- **THEN** the move continues uninterrupted and damage depends only on live collider overlap at its configured impact
+- **WHEN** the player changes movement direction after starting an unarmed swing
+- **THEN** the swing continues uninterrupted and damage depends only on live collider overlap
 
 #### Scenario: Repeated activation or coarse update
-- **WHEN** a deliberate Attack press arrives during an active dagger move and an update crosses that move's configured impact and end
-- **THEN** the move produces at most one impact
-- **AND** at most one subsequent dagger move may begin from its retained next press
+- **WHEN** repeated Attack input arrives during an unarmed swing or an update crosses its midpoint and end
+- **THEN** that swing produces at most one impact and does not start another swing
+
+#### Scenario: Execution replaces midpoint
+- **WHEN** the player starts a stealth execution
+- **THEN** no ordinary knife midpoint impact or area damage is committed
 
 ### Requirement: Knife reach targets living enemies by collider overlap
 At its configured impact, a dagger move SHALL damage every living enemy whose current damage collider overlaps the player's current damage collider using the existing overlap test. An ordinary move SHALL deal exactly 25 base damage once per enemy; a confirmed C072 combo move SHALL apply its configured dagger multiplier once per enemy. Facing, grid adjacency, and terrain SHALL add no separate eligibility gate. Collider dimensions SHALL remain unchanged. Dead/dying enemies, the player, sheep, pickups, and environment objects SHALL not receive dagger damage. Existing projectile defense SHALL not reject dagger damage.

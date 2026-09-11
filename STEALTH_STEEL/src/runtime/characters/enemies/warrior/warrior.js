@@ -20,6 +20,7 @@ import { getCharacterGridCell, getCharacterLayerOrder } from "../../character-sp
 import {
   WARRIOR_ANIMATION_CATALOG,
   WARRIOR_ANIMATION_NAMES,
+  WARRIOR_BODY_ART_PIVOT,
 } from "./warrior-animation-catalog.js";
 import {
   WarriorState,
@@ -33,7 +34,12 @@ import {
 
 export const WARRIOR_FRAME = Object.freeze({ width: 192, height: 192 });
 export const WARRIOR_PIVOT = Object.freeze({ x: 0.5, y: 0.84 });
-export const WARRIOR_ART_OFFSET = Object.freeze({ x: 0, y: -55 });
+// Preserve the established world placement while the rendered pivot moves
+// from its legacy canvas-space location to the body-art bottom.
+export const WARRIOR_ART_OFFSET = Object.freeze({
+  x: 0,
+  y: -55 + WARRIOR_FRAME.height * (WARRIOR_PIVOT.y - WARRIOR_BODY_ART_PIVOT[1]),
+});
 export const WARRIOR_MOVEMENT_COLLIDER = Object.freeze({
   type: "circle",
   x: 96,
@@ -193,6 +199,7 @@ export function createWarrior({
     rotation,
     color,
     sizePx,
+    anchor,
   }) {
     const patch = {};
     if (scaleX !== undefined) patch.scaleX = scaleX;
@@ -203,10 +210,12 @@ export function createWarrior({
     if (sizePx !== undefined) {
       patch.sizePx = sizePx;
       const screenPosition = getArtScreenPosition(position);
-      patch.positionPx = [
-        screenPosition.x + (0.5 - WARRIOR_PIVOT.x) * (WARRIOR_FRAME.width - sizePx[0]),
-        screenPosition.y + artYOffset + (0.5 - WARRIOR_PIVOT.y) * (WARRIOR_FRAME.height - sizePx[1]),
-      ];
+      patch.positionPx = anchor === "body-bottom"
+        ? [screenPosition.x, screenPosition.y + artYOffset]
+        : [
+            screenPosition.x + (0.5 - WARRIOR_PIVOT.x) * (WARRIOR_FRAME.width - sizePx[0]),
+            screenPosition.y + artYOffset + (0.5 - WARRIOR_PIVOT.y) * (WARRIOR_FRAME.height - sizePx[1]),
+          ];
     }
     for (const sprite of Object.values(sprites)) {
       api.updateSprite2D(sprite, patch);

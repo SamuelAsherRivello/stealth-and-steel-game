@@ -6,6 +6,7 @@ The Settings SFX slider controls these sounds, including currently playing sound
 | Event | File |
 | --- | --- |
 | Interactive button activation (mouse, touch, keyboard) | Click01.mp3 |
+| Item menu item activated | Activate01.mp3 |
 | Gold collected by contact or clicking | Pickup01.mp3 |
 | Goal reached | LevelWin.wav |
 | Player death begins | LevelLose.wav |
@@ -40,4 +41,6 @@ behavior is introduced by this sound integration.
 Audio unlocks on the first pointer or keyboard interaction. Gameplay sounds
 before that interaction are skipped, rather than replayed later in a burst.
 Disabled/hidden/inert buttons and clicks on the game background do not play
-the UI click. Gold clicked on the canvas plays only the pickup sound.
+the UI click. Item-menu cards skip the generic click: a successful item
+activation plays Activate01.mp3 every time, while deactivation is silent. Gold
+clicked on the canvas plays only the pickup sound.

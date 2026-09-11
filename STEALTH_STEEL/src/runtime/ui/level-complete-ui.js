@@ -1,7 +1,7 @@
 import { createMenu } from "./menu.js";
 
-export function createLevelLostUi({ host, onPay, onRestart, documentRef = globalThis.document }) {
-  const menu = createMenu({titleText:'You Lost',bodyText:'Try again!',documentRef,
+export function createLevelLostUi({ host, onPay, onRestart, frameElement = null, documentRef = globalThis.document }) {
+  const menu = createMenu({titleText:'You Lost',bodyText:'Try again!',frameElement,documentRef,
     buttonClicksOnly: true,
     buttons:[{displayText:'Pay … Sats To Continue',icon:'⚡',className:'level-lost-pay'},{displayText:'Restart Game',className:'level-lost-restart'}]});
   const {backdrop,panel,body,actions,buttons:[payButton,restartButton]} = menu;
@@ -31,13 +31,13 @@ export function createLevelLostUi({ host, onPay, onRestart, documentRef = global
     },
     show() { backdrop.hidden=false; (payButton.disabled ? restartButton : payButton).focus(); },
     hide() { backdrop.hidden=true; },
-    dispose() { payButton.removeEventListener('click',pay); restartButton.removeEventListener('click',restart); backdrop.removeEventListener('keydown',containKey); backdrop.removeEventListener('keyup',containKey); backdrop.remove(); },
+    dispose() { payButton.removeEventListener('click',pay); restartButton.removeEventListener('click',restart); backdrop.removeEventListener('keydown',containKey); backdrop.removeEventListener('keyup',containKey); menu.disposeFrameBounds(); backdrop.remove(); },
   };
 }
 
-export function createLevelCompleteUi({host, onContinue, onRestart = onContinue, onCollect = () => {}, onCheck = () => {}, onAcknowledge = () => {}, outcome = 'win', documentRef = globalThis.document}) {
-  if(outcome === 'loss'){const ui=createLevelLostUi({host,onPay:()=>{},onRestart,documentRef});ui.payButton.hidden=true;return {...ui,button:ui.restartButton};}
-  const menu = createMenu({titleText:'Level Completed',bodyText:'',documentRef,
+export function createLevelCompleteUi({host, onContinue, onRestart = onContinue, onCollect = () => {}, onCheck = () => {}, onAcknowledge = () => {}, outcome = 'win', frameElement = null, documentRef = globalThis.document}) {
+  if(outcome === 'loss'){const ui=createLevelLostUi({host,onPay:()=>{},onRestart,frameElement,documentRef});ui.payButton.hidden=true;return {...ui,button:ui.restartButton};}
+  const menu = createMenu({titleText:'Level Completed',bodyText:'',frameElement,documentRef,
     buttonClicksOnly: true,
     buttons:[{displayText:'Collect Level 1 Trophy',className:'level-complete-collect'},
       {displayText:'Continue To Next Level',className:'level-complete-continue'},
@@ -85,6 +85,6 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
     setCompletion(value){completion={...completion,...value};render();},
     setState(value){state={...state,...value};render();if(state.needsAcknowledgment)acknowledgeButton.focus();},
     show(){render();backdrop.hidden=false;(menu.buttons.find(button=>!button.hidden&&!button.disabled)??panel).focus();},
-    dispose(){for(const [button,handler]of actionHandlers)button.removeEventListener('click',handler);backdrop.removeEventListener('keydown',keydown);backdrop.removeEventListener('keyup',keydown);backdrop.remove();},
+    dispose(){for(const [button,handler]of actionHandlers)button.removeEventListener('click',handler);backdrop.removeEventListener('keydown',keydown);backdrop.removeEventListener('keyup',keydown);menu.disposeFrameBounds();backdrop.remove();},
   };
 }

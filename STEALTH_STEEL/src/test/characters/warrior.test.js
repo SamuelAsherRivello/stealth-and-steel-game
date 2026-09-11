@@ -8,6 +8,7 @@ import {
 
 function createFakeApi() {
   const calls = {
+    added: [],
     loaded: [],
     layers: [],
     played: [],
@@ -27,7 +28,9 @@ function createFakeApi() {
       return layer;
     },
     addSprite2D(layer, options) {
-      return { layer, ...options };
+      const sprite = { layer, ...options };
+      calls.added.push(sprite);
+      return sprite;
     },
     playSprite2DAnimation(manager, sprite, from, to, loop, duration, options) {
       const animation = { manager, sprite, from, to, loop, duration, options };
@@ -102,6 +105,29 @@ test("warrior renders every action and disposes completely", () => {
   const updateCount = api.calls.updated.length;
   warrior.update(1);
   assert.equal(api.calls.updated.length, updateCount);
+});
+
+test("warrior death rotation is anchored at the bottom center of the body art", () => {
+  const api = createFakeApi();
+  const warrior = createWarrior({
+    atlases: {},
+    initialPosition: { x: 320, y: 320 },
+    bounds: { width: 1024, height: 1024 },
+    obstacles: [],
+    api,
+  });
+
+  // The opaque Warrior body reaches y=136 in every idle 192px frame.
+  assert.ok(api.calls.layers.every((layer) => layer.pivot[0] === 0.5));
+  assert.ok(api.calls.layers.every((layer) => layer.pivot[1] === 136 / 192));
+  const originalPositions = api.calls.added.map((sprite) => [...sprite.positionPx]);
+  warrior.setVisualTransform({ sizePx: [96, 96], anchor: "body-bottom" });
+  assert.deepEqual(
+    api.calls.added.map((sprite) => sprite.positionPx),
+    originalPositions,
+    "shrinking for death keeps the body-art bottom at the rotation point",
+  );
+  warrior.dispose();
 });
 
 test("warrior automatically guards an eligible arrow for 0.25 seconds", () => {

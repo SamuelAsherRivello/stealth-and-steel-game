@@ -1,8 +1,9 @@
 import {GameWindow} from './game-window.js';
 import {createMenuButton} from './menu.js';
 import {treasureMessage} from '../integration/treasure-session.js';
+import {playSfx} from '../audio/sfx.js';
 
-export function createTreasureUi({host,screenLayer,pauseController,session,documentRef=globalThis.document}) {
+export function createTreasureUi({host,screenLayer,frameElement=null,pauseController,session,documentRef=globalThis.document,playSound=playSfx}) {
   let window,disposed=false,busy=false;
   let message,countdown,claim,reject,back;
   const render=()=>{
@@ -34,8 +35,9 @@ export function createTreasureUi({host,screenLayer,pauseController,session,docum
       claim.addEventListener('click',()=>void act('claim'));reject.addEventListener('click',()=>void act('reject'));back.addEventListener('click',()=>window?.close());
       content.append(message,countdown);
       pauseController.pause('treasure');
-      window=new GameWindow({host,screenLayer,title:'Treasure Chest',content,
+      window=new GameWindow({host,screenLayer,frameElement,title:'Treasure Chest',content,
         buttons:[claim,reject,back],documentRef,onClose:()=>{window=null;pauseController.resume('treasure');}});
+      playSound('treasure');
       for(const eventName of ['keydown','keyup','pointerdown','pointerup','touchstart','touchend'])window.backdrop.addEventListener(eventName,event=>{
         event.stopPropagation();
         if(eventName==='keydown'&&event.key==='Escape'){event.preventDefault();window?.close();}

@@ -1,4 +1,5 @@
 import { GameWindow } from "./game-window.js";
+import { playSfx } from "../audio/sfx.js";
 
 const BODY_TEXT = "Select 1 of each item type to activate it for gameplay";
 const STAT_VALUES = (item) => [
@@ -7,8 +8,8 @@ const STAT_VALUES = (item) => [
   ["Defense", item.family === "Shield" ? `+${item.effectPercent}%` : "0"],
 ];
 
-export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
-  onClose = () => {}, onState = () => {}, documentRef = globalThis.document }) {
+export function createItemsUi({ host, screenLayer, frameElement = null, opener, equipmentProvider,
+  onClose = () => {}, onState = () => {}, play = playSfx, documentRef = globalThis.document }) {
   const content = documentRef.createElement("div");
   content.className = "items-menu";
   const status = documentRef.createElement("p");
@@ -24,10 +25,12 @@ export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
     host,
     title: "Items",
     content,
+    className: "items-window",
     documentRef,
     opener,
     closeLabel: "Close items",
     screenLayer,
+    frameElement,
     onClose() {
       disposed = true;
       onClose();
@@ -38,6 +41,9 @@ export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
     if (disposed) return;
     grid.textContent = "";
     status.textContent = BODY_TEXT;
+    const itemCount = state?.ownedItems?.length ?? 0;
+    const columns = Math.min(3, Math.max(1, itemCount));
+    grid.dataset.layout = `${columns}x${Math.ceil(itemCount / columns) || 1}`;
     if (state?.status !== "ready" || !state.profileId) return;
     for (const item of state.ownedItems) {
       const selected = state.effective?.[item.family]?.assetId === item.assetId;
@@ -75,6 +81,7 @@ export function createItemsUi({ host, screenLayer, opener, equipmentProvider,
       button.addEventListener("click", async () => {
         try {
           const next = selected ? await equipment.clear(item.family) : await equipment.select(item.assetId);
+          if (!selected) play("activate");
           onState(next);
           render(next);
         } catch {

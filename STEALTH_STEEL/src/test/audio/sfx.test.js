@@ -1,12 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
-import { createSfxPlayer, SFX_FILES, isInteractiveButton } from "../../runtime/audio/sfx.js";
+import { access, readFile } from "node:fs/promises";
+import { createPickupSfxStreak, createSfxPlayer, SFX_FILES, isInteractiveButton } from "../../runtime/audio/sfx.js";
 
-test("assigned sound files exist and Attack05 is excluded", async () => {
-  assert.equal(Object.keys(SFX_FILES).length, 11);
+test("assigned sound files include the activation and treasure cues and exclude Attack05", async () => {
+  assert.equal(Object.keys(SFX_FILES).length, 14);
+  assert.equal(SFX_FILES.activate, "Activate01.mp3");
+  assert.equal(SFX_FILES.treasure, "Treasure01.mp3");
   assert.ok(!Object.values(SFX_FILES).includes("Attack05.mp3"));
   await Promise.all(Object.values(SFX_FILES).map(file => access(new URL(`../../../public/assets/audio/sfx/${file}`, import.meta.url))));
+});
+
+test("a valid stealth execution uses the supplied stealth-hit sound", async () => {
+  assert.equal(SFX_FILES.stealthHit, "StealthHit01.mp3");
+  await access(new URL("../../../public/assets/audio/sfx/StealthHit01.mp3", import.meta.url));
+  const main = await readFile(new URL("../../runtime/main.js", import.meta.url), "utf8");
+  assert.match(main, /playSfx\("stealthHit"\)/);
 });
 
 test("playback unlocks, overlaps, respects mute and live volume", async () => {
@@ -59,4 +68,34 @@ test("button click eligibility excludes disabled and hidden controls", () => {
   assert.equal(isInteractiveButton(target(true, null)), false);
   assert.equal(isInteractiveButton(target(false, {})), false);
   assert.equal(isInteractiveButton({ closest: () => null }), false);
+});
+
+test("item menu cards skip the generic click sound so only item activation controls their audio", () => {
+  const button = { matches: () => false, closest: selector => selector === ".items-menu-grid" ? {} : null };
+  const target = { closest: () => button };
+  assert.equal(isInteractiveButton(target), false);
+});
+
+test("pickup sounds rise in pitch for a collection streak and cool down after half a second", () => {
+  let now = 1_000;
+  const plays = [];
+  const pickupSfx = createPickupSfxStreak({
+    now: () => now,
+    play: (name, options) => plays.push({ name, ...options }),
+  });
+
+  pickupSfx.play();
+  now += 499;
+  pickupSfx.play();
+  now += 499;
+  pickupSfx.play();
+  now += 500;
+  pickupSfx.play();
+
+  assert.deepEqual(plays, [
+    { name: "pickup", pitch: 1 },
+    { name: "pickup", pitch: 1.15 },
+    { name: "pickup", pitch: 1.3 },
+    { name: "pickup", pitch: 1 },
+  ]);
 });

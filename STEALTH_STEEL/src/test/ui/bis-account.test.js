@@ -13,12 +13,13 @@ function fixture({load,ready=Promise.resolve(),timeoutMs=100}={}) {
   const host=new Element(),other=new Element();host.append(other);let closes=0,restarts=0,creates=0,mounts=0,disposals=0;
   let state={view:'empty'};const listeners=new Set(),events=new Set();
   const publish=view=>{state={view};for(const listener of listeners)listener();};
+  const setProfile=profileId=>{state={...state,...(profileId?{profileId}:{})};if(!profileId)delete state.profileId;for(const listener of listeners)listener();};
   const context={getState:()=>state,ready:()=>ready,subscribe:l=>{listeners.add(l);return()=>listeners.delete(l);},onEvent:l=>{events.add(l);return()=>events.delete(l);},openAccountDialog:()=>publish('account'),dispose:()=>{disposals++;}};
   const api={createBisContext:()=>{creates++;return context;},createBisUi:()=>({mount:()=>mounts++,unmount:()=>mounts--})};
   const pause=createPauseController();pause.pause('settings');
   const adapter=createBisAccount({host,pauseController:pause,documentRef,load:load??(()=>Promise.resolve(api)),timeoutMs,onClose:()=>closes++,restartGame:()=>restarts++});
   const overlay=host.children[1],back=overlay.children[0].children[1];
-  return {adapter,api,publish,emit:e=>{for(const listener of events)listener(e);},back,overlay,pause,other,counts:()=>({closes,restarts,creates,mounts,disposals,listeners:listeners.size,events:events.size})};
+  return {adapter,api,publish,setProfile,emit:e=>{for(const listener of events)listener(e);},back,overlay,pause,other,counts:()=>({closes,restarts,creates,mounts,disposals,listeners:listeners.size,events:events.size})};
 }
 const flush=()=>new Promise(r=>setImmediate(r));
 test('initial hydration stays open; duplicate opens reuse one context; nested Back does not close',async()=>{
@@ -50,6 +51,15 @@ test('the standalone account reads its game recipient from the local BIS game wa
  f.api.createBisGameWallet = () => ({getState:()=>({addresses:{arkadeAddress:'tark1local-game-recipient'}}),dispose(){}});
  try { await f.adapter.open(); assert.equal(options.continueRecipient,'tark1local-game-recipient'); }
  finally { f.adapter.dispose(); }
+});
+test('exposes the active player profile independently of any game controller state', async () => {
+ const f=fixture();await f.adapter.ready();
+ assert.equal(f.adapter.getPlayerProfileId(),undefined);
+ f.setProfile('saved-player');
+ assert.equal(f.adapter.getPlayerProfileId(),'saved-player');
+ f.setProfile(undefined);
+ assert.equal(f.adapter.getPlayerProfileId(),undefined);
+ f.adapter.dispose();
 });
 test('a disposed account adapter ignores its stale restart event while its replacement remains usable',async()=>{
  const first=fixture();await first.adapter.open();first.adapter.dispose();first.emit({type:'restartRequested',logoutId:'old'});await flush();

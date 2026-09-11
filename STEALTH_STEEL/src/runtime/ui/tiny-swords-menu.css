@@ -5,6 +5,7 @@
   --menu-first-visible-top: calc(var(--menu-toast-bottom) + var(--menu-toast-offset));
   --menu-ribbon-overhang: 28px;
   --menu-action-gap: 3.6px;
+  --menu-action-visual-overlap: 10px;
   --menu-section-following-gap: 2.4px;
   --menu-form-item-gap: 3.6px;
   --menu-final-action-bottom: 8px;
@@ -52,6 +53,10 @@
 }
 .ui-layer .menu-actions:empty { display: none; }
 .ui-layer .menu-actions > .tiny-swords-button { width: 100%; }
+/* The button sheet has transparent top and bottom gutters; overlap those only. */
+.ui-layer .menu-actions > .tiny-swords-button + .tiny-swords-button {
+  margin-top: calc(var(--menu-action-visual-overlap) * -1);
+}
 .ui-layer .menu-content-stack {
   width: 100%; min-height: var(--menu-content-min-height); flex: 0 0 auto;
   display: flex; flex-direction: column; align-items: center;
@@ -182,6 +187,7 @@ menu-title-label { display: inline-block; max-width: 100%; white-space: nowrap; 
 }
 .tiny-swords-button-art i { background-image: url('/ui/tiny-swords/BigBlueButton_Regular.png'); }
 .developer-settings-button .tiny-swords-button-art i { filter: hue-rotate(175deg) saturate(2) brightness(.8); }
+.settings-reset .tiny-swords-button-art i { filter: hue-rotate(175deg) saturate(2) brightness(.8); }
 .map-order-buttons { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; justify-content: flex-start; padding: 4px 0; box-sizing: border-box; }
 .ui-layer .game-window .map-order-button { flex: 0 1 68px; min-width: 0; width: 68px; height: 34px; min-height: 34px; padding: 0 4px 3px; font-size: 13px; line-height: 1; }
 .ui-layer .map-order-button .tiny-swords-button-art { grid-template-columns: 10px 1fr 10px; grid-template-rows: 10px 1fr 10px; }
@@ -198,7 +204,7 @@ menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: 
 .ui-layer .tiny-swords-button:active .tiny-swords-button-art { filter: brightness(.78) saturate(.75); }
 .ui-layer .tiny-swords-button:focus-visible { outline: none; }
 .ui-layer .tiny-swords-menu-backdrop {
-  position: fixed; inset: 0; z-index: var(--z-settings-backdrop);
+  position: fixed; z-index: var(--z-settings-backdrop);
   display: grid; place-items: start center; padding: 28px 22px;
   background: #1429279e; overflow: clip; pointer-events: auto;
 }

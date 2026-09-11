@@ -26,3 +26,7 @@
 - [x] `C073-T012` Retain the selected source through stealth gravity so the player faces that enemy and emits no movement-audio perception during pull/hold; add player and perception integration coverage for activation and immediate cleanup.
 - [x] `C073-T013` Add a per-enemy, injectable randomized 2–3 second active-time idle gate that begins on successful owned entry, cancels voluntary action, and yields to death/disposal; add brain/game-loop coverage.
 - [x] `C073-T014` Extend the browser scenario and run focused, full, build, strict OpenSpec, and whitespace validation for the refined behavior.
+
+## 6. Execution sound
+
+- [x] `C073-T015` Copy the supplied `StealthHit01.mp3` into the existing SFX asset directory, register it as the execution-only SFX, replace the generic lancer cue at valid stealth-execution start, and verify the registry, path, and routing.

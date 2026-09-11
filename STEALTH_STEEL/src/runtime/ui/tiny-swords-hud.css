@@ -18,19 +18,27 @@
   font: 9.6px/16px system-ui, sans-serif; color: var(--hud-ink);
   -webkit-text-stroke: 0;
 }
-.ui-layer .gold-counter {
-  top: var(--hud-header-offset); left: 0;
+.ui-layer .gold-counter,
+.ui-layer .items-counter {
+  left: 0;
   display: block; width: auto; height: var(--hud-gold-height);
   padding: 0; text-align: left;
   font: bold var(--hud-gold-height)/1 Georgia, serif;
   color: var(--hud-ink); -webkit-text-stroke: 0;
 }
 .ui-layer .release-metadata,
-.ui-layer .gold-counter {
+.ui-layer .gold-counter,
+.ui-layer .items-counter {
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
 }
-.ui-layer .coordinates-ui {
+.ui-layer .gold-counter { top: var(--hud-header-offset); }
+.ui-layer .items-counter {
   top: calc(var(--hud-header-offset) + var(--hud-gold-height) + 4px);
+  display: flex;
+  align-items: center;
+}
+.ui-layer .coordinates-ui {
+  top: calc(var(--hud-header-offset) + var(--hud-gold-height) + 4px + var(--hud-gold-height) + 4px);
   left: 0; padding: 4px 8px; border-radius: 3px;
   background: #173a40db; color: var(--hud-ink);
   font: 12px/1.4 ui-monospace, monospace; -webkit-text-stroke: 0;

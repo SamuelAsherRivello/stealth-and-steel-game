@@ -15,7 +15,9 @@ import { getColliderCenter } from "./characters/character-spatial.js";
 import { GridSpot, getQuantizedGridCell } from "./systems/environment/grid-spot.js";
 import { GrassDecorationsEnabled, GRASS_SET, planDecorationSet, collectDecorationGroundCells } from "./systems/environment/decorations/decoration-object-sets.js";
 import { createDecorationObjects } from "./systems/environment/decorations/decoration-objects.js";
-import { playSfx, playPerceptionSfx } from "./audio/sfx.js";
+import { createPickupSfxStreak, playSfx, playPerceptionSfx } from "./audio/sfx.js";
+import { setGameplayMusicActive } from "./audio/menu-music.js";
+import { createStealthAttackShadowLayer } from "./ui/stealth-attack-shadow.js";
 import {
   addSpriteRendererLayer,
   addSprite2D,
@@ -121,6 +123,7 @@ import { revivePaidPlayer } from "./gameplay/paid-revival.js";
 import "./integration/bis-account.css";
 import { createSettingsUi } from "./ui/settings-ui.js";
 import { createRunPresentation } from "./ui/run-presentation.js";
+import { createFullscreenTransition } from "./ui/fullscreen-transition.js";
 import { createEquipmentSnapshot, EMPTY_EQUIPMENT_SNAPSHOT } from "./gameplay/equipment-effects.js";
 import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui.js";
 import {createTreasureRuntime} from './integration/treasure-runtime.js';
@@ -212,6 +215,12 @@ const coordinatesUi = createCoordinatesUi();
 const runPresentation = createRunPresentation({
   virtualController: document.querySelector(".virtual-controller"),
 });
+const fullscreenTransition = createFullscreenTransition({
+  overlay: document.querySelector("#fullscreen-transition"),
+  circle: document.querySelector("#fullscreen-transition-circle"),
+  blackout: document.querySelector("#fullscreen-transition-blackout"),
+  target: gameFrame,
+});
 
 let latestGameViewport = null;
 
@@ -227,8 +236,10 @@ function refreshGameViewportDiagnostics() {
 const viewportResizeObserver = new ResizeObserver(refreshGameViewportDiagnostics);
 viewportResizeObserver.observe(gameFrame);
 window.addEventListener("resize", refreshGameViewportDiagnostics);
+window.addEventListener("resize", fullscreenTransition.resize);
 
 let gameRunCoordinator = null;
+let restartTransition = null;
 
 window.addEventListener("pagehide", () => {
   gameRunCoordinator?.dispose();
@@ -236,7 +247,19 @@ window.addEventListener("pagehide", () => {
   viewportResizeObserver.disconnect();
   promptBodyResizeObserver.disconnect();
   window.removeEventListener("resize", refreshGameViewportDiagnostics);
+  window.removeEventListener("resize", fullscreenTransition.resize);
+  fullscreenTransition.dispose();
 }, { once: true });
+
+function restartWithFullscreenTransition(run, pauseController) {
+  if (restartTransition) return restartTransition;
+  pauseController.pause("restart-transition");
+  restartTransition = fullscreenTransition.cover()
+    .then(() => gameRunCoordinator?.restart(run))
+    .then(() => fullscreenTransition.reveal())
+    .finally(() => { restartTransition = null; });
+  return restartTransition;
+}
 
 
 function setCharacterSpawnProgress(actor, size, progress) {
@@ -278,7 +301,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)},
     () => window.location.reload(),
     () => runtimeSettingsStore.get(MAP_ORDER_SETTING_KEY),
-    { initialRun, onRestart: run => { if (!disposed) gameRunCoordinator?.restart(run); } },
+    { initialRun, onRestart: run => { if (!disposed) restartWithFullscreenTransition(run, pauseController); } },
   );
   if (!navigator.gpu) {
     throw new Error("This Babylon Lite demo requires a browser with WebGPU enabled.");
@@ -369,7 +392,8 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   const goldStoneAtlases = new Map(await Promise.all([...goldStoneImages].map(async (image) => [image, await loadSpriteAtlas(engine, image, { gridSize: [128, 128], sampling: "nearest" })])));
   const goldPickupAtlases = new Map(await Promise.all(goldPickupImages.map(async (image) => [image, await loadSpriteAtlas(engine, image, { gridSize: [64, 64], sampling: "nearest" })])));
   let goldCounter;
-  const pickupSystem = createPickupSystem({ onCollect: () => { goldCounter?.increment(); playSfx("pickup"); } });
+  const pickupSfx = createPickupSfxStreak();
+  const pickupSystem = createPickupSystem({ onCollect: () => { goldCounter?.increment(); pickupSfx.play(); } });
   const goldPickupDefinition = {
     create: ({ position, index }) => {
       const image = goldPickupImages[Math.floor(Math.random() * goldPickupImages.length)];
@@ -471,7 +495,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     order: TILE_MAP_SUB_Z.ground + 1,
     pivot: [0.5, 0.5],
   });
-  const stealthShadowLayer = createSprite2DLayer(visionShadowAtlas, {
+  const stealthShadowLayer = createStealthAttackShadowLayer(visionShadowAtlas, {
     capacity: 64,
     order: TILE_MAP_SUB_Z.ground + 1,
     pivot: [0.5, 0.5],
@@ -669,7 +693,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
         const attack = actor.consumeStealthAttack();
         if (!attack || attack.id !== armed.id || attack.token !== armed.token) return null;
         target.combat.applyStealthKill(makeDirection(actor.getPosition(), target.actor.getPosition()));
-        playSfx("lancer");
+        playSfx("stealthHit");
         return { direction: makeDirection(actor.getPosition(), target.actor.getPosition()) };
       },
       onStealthAttackEnter: (entry) => {
@@ -865,6 +889,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       ),
       onDeathProgress: (value) => actor.setVisualTransform({
         sizePx: [WARRIOR_FRAME.width * value, WARRIOR_FRAME.height * value],
+        anchor: "body-bottom",
       }),
       onHitFlashStart: () => actor.setVisualTransform({
         color: [1.6, 1.6, 1.6, 1],
@@ -884,7 +909,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
 
   function createLancerRecord(position) {
     const actor = createLancer({ onAttack: () => playSfx("lancer"), atlases: lancerAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders });
-    const combat = createCombatActorState({ label: `lancer-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, LANCER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [LANCER_FRAME.width * value, LANCER_FRAME.height * value] }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
+    const combat = createCombatActorState({ label: `lancer-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, LANCER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [LANCER_FRAME.width * value, LANCER_FRAME.height * value], anchor: "body-bottom" }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
     return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.LANCER, actor, combat, controller: null });
   }
 
@@ -1120,9 +1145,9 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     },
   );
   const treasure = createTreasureRuntime({accountHost,resumeRun:progress.completed>0});
-  const treasureUi = createTreasureUi({host:domBody,screenLayer:domScreen,pauseController,session:treasure});
+  const treasureUi = createTreasureUi({host:domBody,screenLayer:domScreen,frameElement:gameFrame,pauseController,session:treasure});
   settingsUi = createSettingsUi({
-    host: gameUi, modalHost: domBody, screenLayer: domScreen, pauseController,
+    host: gameUi, modalHost: domBody, screenLayer: domScreen, frameElement: gameFrame, pauseController,
     catalog: __GAME_LEVELS__, openAccount: () => accountHost.open(),
   });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
@@ -1134,7 +1159,9 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   const applyEquipmentState = state => {
     equipmentSnapshot = createEquipmentSnapshot(state);
     itemsHud?.render(equipmentSnapshot);
-    itemsEnabled = Boolean(state?.profileId);
+    // Equipment refreshes can briefly omit its profile while account assets settle.
+    // The BIS context is the authoritative login state for opening Items.
+    itemsEnabled = Boolean(accountHost.getPlayerProfileId());
     startGamePrompt?.setItemsEnabled(itemsEnabled);
   };
   const openItems = () => {
@@ -1142,6 +1169,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     itemsWindow = createItemsUi({
       host: domBody,
       screenLayer: domScreen,
+      frameElement: gameFrame,
       opener: startGamePrompt?.itemsButton,
       equipmentProvider: () => equipmentControllerPromise,
       onState: applyEquipmentState,
@@ -1194,10 +1222,10 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       state: gameStateMachine.state,
     }),
   });
-  const levelCompleteUi = createLevelCompleteUi({host:domBody,onContinue:()=>levelReward.next(),onRestart:()=>levelReward.restart(),onCollect:()=>levelReward.collect(),onCheck:()=>levelReward.check(),onAcknowledge:()=>levelReward.acknowledge()});
+  const levelCompleteUi = createLevelCompleteUi({host:domBody,frameElement:gameFrame,onContinue:()=>levelReward.next(),onRestart:()=>levelReward.restart(),onCollect:()=>levelReward.collect(),onCheck:()=>levelReward.check(),onAcknowledge:()=>levelReward.acknowledge()});
   const levelReward = createLevelReward({accountHost,ui:levelCompleteUi,progress,gold:goldCounter});
   const gameStateMachine = createGameStateMachine();
-  const levelLostUi = createLevelLostUi({host:domBody,onPay:()=>paidContinue.pay(),onRestart:()=>paidContinue.restart()});
+  const levelLostUi = createLevelLostUi({host:domBody,frameElement:gameFrame,onPay:()=>paidContinue.pay(),onRestart:()=>paidContinue.restart()});
   const paidContinue = createPayToContinue({accountHost,ui:levelLostUi,restart:()=>progress.restart(),
   });
   const bisGameSessionId = crypto.randomUUID();
@@ -1212,17 +1240,21 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
     ? createStartGamePrompt({
       host: domBody,
+      frameElement: gameFrame,
       onItems: openItems,
       itemsEnabled,
       onStart: () => {
         treasure.start();
         startGamePrompt.close();
         pauseController.resume();
+        setGameplayMusicActive(true);
       },
     })
     : null;
   if (startGamePrompt) {
     pauseController.pause();
+  } else {
+    setGameplayMusicActive(true);
   }
   runPresentation.show();
   const restartQaOutcome = import.meta.env.DEV
@@ -1236,6 +1268,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       startGamePrompt?.close();
       startGamePrompt = null;
       pauseController.resume();
+      setGameplayMusicActive(true);
       gameStateMachine.assetsLoaded();
       if (restartQaOutcome === "loss") {
         gameStateMachine.playerDefeated();
@@ -1782,6 +1815,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     dispose() {
       if (disposed) return;
       disposed = true;
+      setGameplayMusicActive(false);
       cancelAnimationFrame(animationFrameId);
     runPresentation.dispose();
     levelReward.dispose();
@@ -2067,3 +2101,7 @@ export const gameReady = start({ ...startupOptions, showStartPrompt: startupOpti
   errorOutput.textContent = formatStartupError(error);
   throw error;
 });
+
+export function revealFullscreenTransition() {
+  return fullscreenTransition.reveal();
+}

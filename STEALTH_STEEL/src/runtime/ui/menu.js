@@ -1,4 +1,5 @@
 import { addRibbonArt, createPanelArt } from "./tiny-swords-panel.js";
+import { bindToGameFrame } from "./game-frame-bounds.js";
 import "./menu-button-label.js";
 import "./menu-title-label.js";
 
@@ -28,6 +29,7 @@ const DEFAULT_LOGO_SRC = `${import.meta.env?.BASE_URL ?? "/"}ui/tiny-swords/`
  * @property {string} [logoAlt] Accessible logo text used when `showLogo` is true.
  * @property {boolean} [buttonClicksOnly] Blocks Enter/Space keyboard activation.
  * @property {string} [titleId] Stable accessible title id override.
+ * @property {Element | null} [frameElement] Game frame whose bounds constrain the backdrop.
  * @property {Document} [documentRef] DOM document used by tests and runtime.
  */
 
@@ -64,10 +66,12 @@ export function createMenu({
   logoAlt = "",
   buttonClicksOnly = false,
   titleId = `menu-title-${++nextMenuId}`,
+  frameElement = null,
   documentRef = globalThis.document,
 }) {
   const backdrop = documentRef.createElement("div");
   backdrop.className = `menu-backdrop tiny-swords-menu-backdrop${showLogo ? " has-logo" : ""}`;
+  const disposeFrameBounds = bindToGameFrame({ overlay: backdrop, frameElement });
   if (buttonClicksOnly) {
     // Focused native buttons otherwise activate on Enter or Space.
     const containKeyboard = event => {
@@ -151,5 +155,6 @@ export function createMenu({
     actions,
     buttons: actionButtons,
     logo: logoElement,
+    disposeFrameBounds,
   };
 }

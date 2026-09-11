@@ -17,12 +17,16 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 function setup(t){
  const timers=[];t.mock.method(globalThis,'setInterval',callback=>{timers.push(callback);return timers.length;});t.mock.method(globalThis,'clearInterval',()=>{});
  const doc={createElement:tag=>new Element(tag,doc)},host=doc.createElement('div'),screen=doc.createElement('div');host.isConnected=true;
- const pauses=new Set(['another-menu']),listeners=new Set();let state={status:'active',remainingSeconds:90};let action=async()=>({status:'pending'}),calls=0;
+ const pauses=new Set(['another-menu']),listeners=new Set(),sounds=[];let state={status:'active',remainingSeconds:90};let action=async()=>({status:'pending'}),calls=0;
  const session={getState:()=>state,subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn);},inspect:async()=>{},act:async kind=>{calls++;return action(kind);}};
- const ui=createTreasureUi({host,screenLayer:screen,pauseController:{pause:key=>pauses.add(key),resume:key=>pauses.delete(key)},session,documentRef:doc});
+ const ui=createTreasureUi({host,screenLayer:screen,pauseController:{pause:key=>pauses.add(key),resume:key=>pauses.delete(key)},session,documentRef:doc,playSound:name=>sounds.push(name)});
  const button=text=>descendants(host).find(node=>node.tagName==='button'&&node.textContent===text);
- return {ui,host,doc,pauses,timers,button,setState:value=>{state={...state,...value};listeners.forEach(fn=>fn());},setAction:fn=>{action=fn;},calls:()=>calls};
+ return {ui,host,doc,pauses,timers,button,sounds,setState:value=>{state={...state,...value};listeners.forEach(fn=>fn());},setAction:fn=>{action=fn;},calls:()=>calls};
 }
+test('treasure sound plays once each time the chest window opens',t=>{
+ const s=setup(t);s.ui.open();s.ui.open();assert.deepEqual(s.sounds,['treasure']);
+ click(s.button('Back'));s.ui.open();assert.deepEqual(s.sounds,['treasure','treasure']);s.ui.dispose();
+});
 test('all treasure messages and action eligibility update in one open game window',t=>{
  const s=setup(t);s.ui.open();assert.equal(s.doc.activeElement,s.button('Back'));
  for(const status of ['preparing','active','expired','missing-player','no-offer','unavailable','pending','claimed','rejected']){

@@ -360,6 +360,11 @@ test("settings chrome follows inspiration frame-relative measurements", async ()
   assert.match(styles, /\.menu-panel\s*\{[^}]*box-shadow:\s*5px 5px 5px rgb\(0 0 0 \/ 32\.5%\);[^}]*max-height:\s*100%;[^}]*overflow:\s*auto;/s);
 });
 
+test("Clear All Settings uses red button artwork", async () => {
+  const styles = await readFile(new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url), "utf8");
+  assert.match(styles, /\.settings-reset \.tiny-swords-button-art i\s*\{[^}]*filter:\s*hue-rotate\(175deg\) saturate\(2\) brightness\(\.8\);/s);
+});
+
 test("gear icon is transparent vector artwork", async () => {
   const icon = await readFile(new URL("../../../public/assets/images/ui/gear.svg", import.meta.url), "utf8");
   assert.match(icon, /viewBox="0 0 64 64"/);

@@ -82,3 +82,14 @@ A successful execution SHALL movement-lock and make the player invulnerable to a
 #### Scenario: Execution ends
 - **WHEN** 0.8 active seconds have elapsed after execution starts
 - **THEN** the player's movement and ordinary damage susceptibility return
+
+### Requirement: A stealth execution plays its dedicated hit sound
+A successful stealth execution SHALL play the supplied `StealthHit01.mp3` exactly once when it starts. Ordinary knife attacks and failed or invalidated execution attempts SHALL not play that sound.
+
+#### Scenario: Valid stealth execution begins
+- **WHEN** the player begins a valid stealth execution
+- **THEN** `StealthHit01.mp3` plays once instead of the generic lancer sound
+
+#### Scenario: Execution cannot begin
+- **WHEN** an execution opportunity is invalid or absent
+- **THEN** the dedicated stealth hit sound does not play

@@ -5,7 +5,9 @@ import {
 const FRAME_SIZE = 320;
 const FRAME_HEIGHT = 320;
 const FRAME_DURATION_MS = 100;
-const PIVOT = Object.freeze([0.5, 0.84]);
+// The opaque Lancer body ends at y=197 in every idle frame. Keep rotations
+// and death scaling anchored to that body-art base rather than canvas padding.
+export const LANCER_BODY_ART_PIVOT = Object.freeze([0.5, 197 / FRAME_HEIGHT]);
 const EXPECTED = Object.freeze({
   idle: Object.freeze({ frameCount: 12, loop: true }),
   walking: Object.freeze({ frameCount: 6, loop: true }),
@@ -24,7 +26,7 @@ function createDescriptor(name, filename, frameCount, loop) {
     frameDurationMs: FRAME_DURATION_MS,
     loop,
     displaySize: Object.freeze([FRAME_SIZE, FRAME_HEIGHT]),
-    pivot: PIVOT,
+    pivot: LANCER_BODY_ART_PIVOT,
     sampling: "nearest",
   };
   validateAsepriteSpriteDescriptor(descriptor);

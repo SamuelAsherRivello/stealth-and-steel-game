@@ -7,11 +7,13 @@ export class GameWindow {
     host,
     title,
     content,
+    className = "",
     buttons = [],
     onClose,
     opener = null,
     closeLabel = "Close window",
     screenLayer = null,
+    frameElement = null,
     documentRef = globalThis.document,
   }) {
     this.onClose = onClose;
@@ -36,14 +38,16 @@ export class GameWindow {
       content,
       buttons,
       closeButton: this.closeButton,
+      frameElement,
       documentRef,
     });
     this.panel = menu.panel;
-    this.panel.className += " game-window";
+    this.panel.className += ` game-window ${className}`;
     this.bodyArea = menu.bodyArea;
     this.actions = menu.actions;
     this.buttons = menu.buttons;
     this.backdrop = menu.backdrop;
+    this.disposeFrameBounds = menu.disposeFrameBounds;
     this.backdrop.className += " game-window-backdrop";
 
     this.handleBackdrop = (event) => {
@@ -61,6 +65,7 @@ export class GameWindow {
       return;
     }
     this.backdrop.removeEventListener("click", this.handleBackdrop);
+    this.disposeFrameBounds?.();
     this.closeButton.removeEventListener("click", this.handleClose);
     this.dimmer?.removeEventListener("click", this.handleDimmer);
     this.dimmer?.remove();

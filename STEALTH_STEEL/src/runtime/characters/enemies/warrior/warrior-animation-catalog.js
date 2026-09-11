@@ -4,7 +4,9 @@ import {
 
 const FRAME_SIZE = 192;
 const FRAME_DURATION_MS = 100;
-const PIVOT = Object.freeze([0.5, 0.84]);
+// The opaque Warrior body ends at y=136 in every idle frame. Keep rotations
+// and death scaling anchored to that body-art base rather than canvas padding.
+export const WARRIOR_BODY_ART_PIVOT = Object.freeze([0.5, 136 / FRAME_SIZE]);
 const EXPECTED = Object.freeze({
   idle: Object.freeze({ frameCount: 8, loop: true }),
   walking: Object.freeze({ frameCount: 6, loop: true }),
@@ -23,7 +25,7 @@ function createDescriptor(name, filename, frameCount, loop) {
     frameDurationMs: FRAME_DURATION_MS,
     loop,
     displaySize: Object.freeze([FRAME_SIZE, FRAME_SIZE]),
-    pivot: PIVOT,
+    pivot: WARRIOR_BODY_ART_PIVOT,
     sampling: "nearest",
   };
   validateAsepriteSpriteDescriptor(descriptor);

@@ -120,7 +120,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     } catch { if (!disposed && active && visit === currentVisit) { status.hidden = false; message.textContent = 'Account is unavailable. Return to Settings and try again.'; back.focus(); } }
     finally { clearTimeout(timer); }
   }
-  return {open, getSession:()=>session, ready: () => initialize(), async createEquipment() {
+  return {open, getSession:()=>session, getPlayerProfileId:()=>session?.context.getState().profileId, ready: () => initialize(), async createEquipment() {
     const current = await initialize();
     if (disposed || !current) throw Error('Game session ended.');
     current.equipment ??= current.services ? current.services.createEquipment() : current.api.createBisEquipment(current.context);

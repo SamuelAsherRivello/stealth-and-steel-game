@@ -28,6 +28,10 @@
       <noscript>This game requires JavaScript. Enable it and reload the page.</noscript>
     </div>
     <main class="stage" aria-label="Babylon Light Stealth Grid game">
+      <div class="letterbox-presentation" aria-hidden="true">
+        <span class="letterbox-presentation__rail letterbox-presentation__rail--left"></span>
+        <span class="letterbox-presentation__rail letterbox-presentation__rail--right"></span>
+      </div>
       <div class="game-frame">
         <canvas
           id="renderCanvas"
@@ -80,6 +84,11 @@
       </div>
     </div>
     </main>
+    <svg id="fullscreen-transition" class="fullscreen-transition" aria-hidden="true" focusable="false">
+      <path id="fullscreen-transition-blackout" fill="#000" fill-rule="evenodd"></path>
+      <circle id="fullscreen-transition-circle" cx="50%" cy="50%" r="0" fill="none"></circle>
+      <rect width="100%" height="100%" fill="transparent" pointer-events="all"></rect>
+    </svg>
     <script type="module" src="./src/runtime/bootstrap.js"></script>
   </body>
 </html>

@@ -2,16 +2,38 @@ import { runtimeSettingsStore, RUNTIME_AUDIO_SETTING_KEYS } from "../runtime-set
 import { normalizeVolume } from "../runtime-settings/runtime-audio-settings.js";
 
 export const SFX_FILES = Object.freeze({
-  click: "Click01.mp3", pickup: "Pickup01.mp3", win: "LevelWin.wav", lose: "LevelLose.wav",
+  click: "Click01.mp3", activate: "Activate01.mp3", pickup: "Pickup01.mp3", win: "LevelWin.wav", lose: "LevelLose.wav",
   archer: "Arrow01.mp3", goblin: "Attack01.mp3", warrior: "Attack02.mp3",
   lancer: "Attack03.wav", monk: "Attack04.mp3",
-  alert: "Alert01.mp3", bush: "Bush01.mp3",
+  alert: "Alert01.mp3", bush: "Bush01.mp3", treasure: "Treasure01.mp3", stealthHit: "StealthHit01.mp3",
 });
 
 export const PERCEPTION_PITCH = Object.freeze({ SUSPICIOUS: 0.65, INVESTIGATING: 0.82, ALERT: 1 });
+export const PICKUP_STREAK_COOLDOWN_MS = 500;
+export const PICKUP_STREAK_PITCH_INCREMENT = 0.15;
 
 export function playPerceptionSfx(state, play = playSfx) {
   if (Object.hasOwn(PERCEPTION_PITCH, state)) play("alert", { pitch: PERCEPTION_PITCH[state], volume: 0.2 });
+}
+
+export function createPickupSfxStreak({
+  play = playSfx,
+  now = () => performance.now(),
+  cooldownMs = PICKUP_STREAK_COOLDOWN_MS,
+  pitchIncrement = PICKUP_STREAK_PITCH_INCREMENT,
+} = {}) {
+  let lastPickupAt = null;
+  let streak = 0;
+  return {
+    play() {
+      const collectedAt = now();
+      if (lastPickupAt === null || collectedAt - lastPickupAt >= cooldownMs) streak = 0;
+      const pitch = 1 + streak * pitchIncrement;
+      streak += 1;
+      lastPickupAt = collectedAt;
+      return play("pickup", { pitch });
+    },
+  };
 }
 
 export function createSfxPlayer({ context, baseUrl, fetchAudio = fetch, volume = () => 100 }) {
@@ -53,6 +75,7 @@ export function createSfxPlayer({ context, baseUrl, fetchAudio = fetch, volume =
 export function isInteractiveButton(target) {
   const button = target?.closest?.('button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]');
   return Boolean(button && !button.matches(':disabled')
+    && !button.closest('.items-menu-grid')
     && !button.closest('.virtual-controller, [inert], [hidden], [aria-disabled="true"]'));
 }
 

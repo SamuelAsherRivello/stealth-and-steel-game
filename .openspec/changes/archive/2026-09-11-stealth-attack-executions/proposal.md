@@ -10,6 +10,7 @@ Enemies currently communicate only forward-looking perception and ordinary melee
 - On entry, place the selected source enemy in a randomized 2–3 second idle window before it may select another AI state.
 - Replace an armed ordinary knife swing with a target-only, choreographed execution using existing knife frames. The player stays logically in the rear cell, is movement-locked and invulnerable for 0.8 seconds, and the target immediately receives a stronger-knockback three-spin death.
 - Suppress the ordinary knife midpoint and its area damage for an execution; all unarmed attacks retain their current knife behavior.
+- Play the supplied `StealthHit01.mp3` once when a valid stealth execution begins, without changing ordinary attack sounds.
 
 ## Capabilities
 

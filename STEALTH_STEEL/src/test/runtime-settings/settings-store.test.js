@@ -46,9 +46,9 @@ test("all visualization preferences persist independently and obsolete previews 
   for (const key of keys) assert.equal(store.get(key), false);
 });
 
-test("settings default to music 100, SFX 100, and debug visualizations off", () => {
+test("settings default to music 20, SFX 100, and debug visualizations off", () => {
   const store = createSettingsStore(createStorage());
-  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 100);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 20);
   assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 100);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showCoordinates), false);
@@ -109,14 +109,14 @@ test("invalid, malformed, and wrong-version settings recover per key", () => {
   const malformed = createSettingsStore(createStorage({
     [SETTINGS_STORAGE_KEY]: "not json",
   }));
-  assert.equal(malformed.get(AUDIO_SETTING_KEYS.music), 100);
+  assert.equal(malformed.get(AUDIO_SETTING_KEYS.music), 20);
 
   const wrongVersion = createSettingsStore(createStorage({
     [SETTINGS_STORAGE_KEY]: JSON.stringify({ version: 99, values: {
       [AUDIO_SETTING_KEYS.music]: 10,
     } }),
   }));
-  assert.equal(wrongVersion.get(AUDIO_SETTING_KEYS.music), 100);
+  assert.equal(wrongVersion.get(AUDIO_SETTING_KEYS.music), 20);
 
   const invalidValues = createSettingsStore(createStorage({
     [SETTINGS_STORAGE_KEY]: JSON.stringify({ version: SETTINGS_VERSION, values: {
@@ -127,7 +127,7 @@ test("invalid, malformed, and wrong-version settings recover per key", () => {
       [DEBUG_SETTING_KEYS.showEnemyPerceptions]: 1,
     } }),
   }));
-  assert.equal(invalidValues.get(AUDIO_SETTING_KEYS.music), 100);
+  assert.equal(invalidValues.get(AUDIO_SETTING_KEYS.music), 20);
   assert.equal(invalidValues.get(AUDIO_SETTING_KEYS.sfx), 75);
   assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showColliders), false);
   assert.equal(invalidValues.get(DEBUG_SETTING_KEYS.showCoordinates), false);
@@ -166,13 +166,13 @@ test("reset removes only game settings, restores defaults, and notifies", () => 
 
   assert.equal(storage.has(SETTINGS_STORAGE_KEY), false);
   assert.equal(storage.read("unrelated"), "keep");
-  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 100);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 20);
   assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 100);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showColliders), false);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showCoordinates), false);
   assert.equal(store.get(DEBUG_SETTING_KEYS.showEnemyPerceptions), false);
   assert.deepEqual(observed, [
-    ["music", 100],
+    ["music", 20],
     ["sfx", 100],
     ["coordinates", false],
     ["perceptions", false],

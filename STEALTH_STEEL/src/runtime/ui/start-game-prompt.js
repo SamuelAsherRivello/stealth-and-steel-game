@@ -10,7 +10,7 @@ export function shouldSkipIntro({ isDevelopment = false, search = "" } = {}) {
   return isDevelopment && new URLSearchParams(search).get("skipIntro") === "true";
 }
 
-export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = false, documentRef = globalThis.document }) {
+export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = false, frameElement = null, documentRef = globalThis.document }) {
   const menu = createMenu({
     titleText: "Start Menu",
     bodyText: START_PROMPT_BODY,
@@ -22,6 +22,7 @@ export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = f
       { displayText: "Start", className: "start-game-prompt-start" },
       { displayText: "Items", icon: "⚡", className: "start-game-prompt-items" },
     ],
+    frameElement,
     documentRef,
   });
   const { backdrop, panel } = menu;
@@ -54,6 +55,7 @@ export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = f
     close() {
       startButton.removeEventListener("click", handleStart);
       itemsButton.removeEventListener("click", handleItems);
+      menu.disposeFrameBounds();
       backdrop.remove();
     },
   };

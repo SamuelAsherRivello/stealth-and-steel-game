@@ -29,7 +29,10 @@ function defaultFor(key) {
   if (DEBUG_BOOLEAN_KEYS.includes(key)) {
     return false;
   }
-  if (key === RUNTIME_AUDIO_SETTING_KEYS.music || key === RUNTIME_AUDIO_SETTING_KEYS.sfx) {
+  if (key === RUNTIME_AUDIO_SETTING_KEYS.music) {
+    return 20;
+  }
+  if (key === RUNTIME_AUDIO_SETTING_KEYS.sfx) {
     return 100;
   }
   return undefined;

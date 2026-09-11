@@ -9,6 +9,7 @@ export async function loadWithPreloader({ load, overlay, message, spinner, retry
     overlay.setAttribute("aria-busy", "false");
     game.inert = false;
     game.querySelector?.(".start-game-prompt-start")?.focus();
+    await module.revealFullscreenTransition?.();
     return true;
   } catch (error) {
     overlay.setAttribute("aria-busy", "false");

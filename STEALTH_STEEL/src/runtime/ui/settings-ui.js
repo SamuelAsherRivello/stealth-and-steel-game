@@ -54,6 +54,7 @@ export function createSettingsUi({
   host,
   modalHost = host,
   screenLayer = modalHost,
+  frameElement = null,
   pauseController,
   openAccount,
   catalog = [],
@@ -159,6 +160,7 @@ export function createSettingsUi({
         opener: developerButton,
         closeLabel: "Close developer settings",
         screenLayer,
+        frameElement,
         onClose: () => {
           developerWindow = null;
           activeWindow?.setVisible(true);
@@ -199,6 +201,7 @@ export function createSettingsUi({
       opener: gear,
       closeLabel: "Close settings",
       screenLayer,
+      frameElement,
       onClose: () => {
         developerWindow?.close();
         fullscreenControl.dispose();

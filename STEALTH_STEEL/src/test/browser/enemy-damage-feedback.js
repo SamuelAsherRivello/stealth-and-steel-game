@@ -22,7 +22,7 @@ const records = types.map((character, i) => {
     setVisualTransform: patch => { if (patch.color) record.color = patch.color; actor.setVisualTransform(patch); },
     onHitFlashStart: () => { record.color = [1.6, 1.6, 1.6, 1]; actor.setVisualTransform({ color: record.color }); },
     onKnockback: (direction, options) => actor.applyKnockback(direction, options),
-    onDeathProgress: value => { const size = character === 'lancer' ? LANCER_FRAME.width : 192; actor.setVisualTransform({ sizePx: [size * value, size * value] }); },
+    onDeathProgress: value => { const size = character === 'lancer' ? LANCER_FRAME.width : 192; actor.setVisualTransform({ sizePx: [size * value, size * value], anchor: ['lancer', 'warrior'].includes(character) ? 'body-bottom' : undefined }); },
   });
   return record;
 });
