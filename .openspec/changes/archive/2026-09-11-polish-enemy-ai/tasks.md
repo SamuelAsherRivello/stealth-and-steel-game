@@ -13,5 +13,5 @@
 
 ## 3. End-to-end verification
 
-- [ ] 3.1 C072-T008 Run `npm.cmd test` and `npm.cmd run build`; verify both commands complete successfully with the new focused tests included.
-- [ ] 3.2 C072-T009 Run the game in a browser and verify observable play: adjacent Warrior knife hits show each response without an invalid short flee, a Monk never attacks and flees within two cells while sometimes walking to gold without collecting it, and Goblins more often choose post-combat bush burning; record the verified local URL and any manual-test limitations.
+- [x] 3.1 C072-T008 Run `npm.cmd test` and `npm.cmd run build`; verify both commands complete successfully with the new focused tests included.
+- [x] 3.2 C072-T009 Run the game in a browser and verify observable play: adjacent Warrior knife hits show each response without an invalid short flee, a Monk never attacks and flees within two cells while sometimes walking to gold without collecting it, and Goblins more often choose post-combat bush burning; verified the live game at http://127.0.0.1:5178/. Manual smoke coverage confirmed startup, map rendering, enemies, gold, and attack input; deterministic tests cover the random Warrior/Goblin branches and Monk routing because the live map has no safe control for forcing each branch.

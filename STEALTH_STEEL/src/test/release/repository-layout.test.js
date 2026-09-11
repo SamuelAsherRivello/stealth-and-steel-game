@@ -90,7 +90,8 @@ test("image sources sit beside their exports and public images use the game or t
     if (/\.(png|svg|aseprite|jpe?g|webp)$/i.test(file)) {
       const inGameImages = file.startsWith(join(assets, "images") + "/") || file.startsWith(join(assets, "images") + "\\");
       const inThemedUi = dirname(file) === join(app, "public/ui/tiny-swords") && file.endsWith(".png");
-      assert.ok(inGameImages || inThemedUi, file);
+      const isBrowserFavicon = file === join(app, "public/favicon.svg");
+      assert.ok(inGameImages || inThemedUi || isBrowserFavicon, file);
     }
     if (file.endsWith(".aseprite")) {
       const bytes = readFileSync(file);
