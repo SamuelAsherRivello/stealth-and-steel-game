@@ -42,9 +42,3 @@ const host = createBisHostGame({
 ```
 
 The adapter calls the existing paid-revival function, preserving the current player replacement, local enemy cleanup, and pause resume behavior. It does not make the game depend on a BIS account: regular play proceeds when the package, account, or connection is unavailable.
-
-### Composition boundary
-
-[`bis-account.js`](../src/runtime/integration/bis-account.js) dynamically loads the public package and passes the adapter to `BisGameServices`. The library composes its context, UI, and game wallet; the game retains account overlay placement, focus trapping, pause/resume, restart, fullscreen, and teardown. The only approved direction is game integration code → published `@bis/integration`; neither gameplay systems nor BIS source internals cross that boundary.
-
-For the architectural assessment and template plan, see [Project Refactor Thoughts](PROJECT_REFACTOR_THOUGHTS.md). For the library’s public-facade explanation, return to the [BIS Deep Dive](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/documentation/deep-dive.md).
