@@ -5,7 +5,7 @@ This document reviews the inner workings of the project.
 This project has 2 repos:
 
 1. [BIS Library](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/documentation/deep-dive.md): Reusable Signet wallet and workflow integration.
-2. [Stealth & Steel Game](https://github.com/SamuelAsherRivello/stealth-and-steel-game): Babylon.js Lite stealth-action game consumer.
+2. Stealth & Steel Game: Babylon.js Lite stealth-action game consumer.
 
 ---
 
