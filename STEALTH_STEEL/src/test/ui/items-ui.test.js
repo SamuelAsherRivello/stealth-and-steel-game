@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { createItemsUi } from "../../runtime/ui/items-ui.js";
 
 class Element extends EventTarget {
@@ -56,7 +57,9 @@ test("Items renders a non-scrolling square nine-card grid with the required inst
     onState: next => changes.push(next), documentRef });
   await Promise.resolve(); await Promise.resolve();
 
-  assert.match(ui.window.panel.className, /items-window/);
+  assert.match(ui.window.panel.className, /tiny-swords-panel/);
+  assert.match(ui.window.panel.className, /game-window/);
+  assert.doesNotMatch(ui.window.panel.className, /items-window/);
   assert.equal(ui.content.children[0].textContent, "Select 1 of each item type to activate it for gameplay");
   assert.equal(ui.content.children[1].dataset.layout, "3x3");
   assert.equal(ui.content.children[1].children.length, 9);
@@ -81,7 +84,7 @@ test("Items renders a non-scrolling square nine-card grid with the required inst
   assert.equal(changes.length, 3);
 });
 
-test("Items enlarges a two-item inventory instead of reserving a tiny three-column grid", async () => {
+test("Items gives a two-item inventory two large portrait cards instead of reserving empty columns", async () => {
   const ownedItems = [
     item("dagger-2", "Dagger", "Dagger II", 1100, 10),
     item("shield-3", "Shield", "Shield III", 3200, 30),
@@ -93,8 +96,15 @@ test("Items enlarges a two-item inventory instead of reserving a tiny three-colu
     documentRef });
   await Promise.resolve(); await Promise.resolve();
 
-  assert.equal(ui.content.children[1].dataset.layout, "2x1");
+  assert.equal(ui.content.children[1].dataset.layout, "1x2");
   assert.equal(ui.content.children[1].children.length, 2);
+});
+
+test("Items does not override the shared menu with desktop viewport dimensions", async () => {
+  const styles = await readFile(new URL("../../runtime/ui/style.css", import.meta.url), "utf8");
+  const itemsWindowRules = styles.match(/\.ui-layer \.menu-panel\.items-window\s*\{([^}]*)\}/s)?.[1] ?? "";
+
+  assert.doesNotMatch(itemsWindowRules, /(?:100vw|100dvh|70rem|dvh|vw)/);
 });
 
 test("Items plays the activation sound for every successful selection but remains silent when deactivating", async () => {

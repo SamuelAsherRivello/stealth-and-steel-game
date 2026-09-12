@@ -20,7 +20,7 @@ import { getCharacterGridCell, getCharacterLayerOrder } from "../../character-sp
 import {
   LANCER_ANIMATION_CATALOG,
   LANCER_ANIMATION_NAMES,
-  LANCER_BODY_ART_PIVOT,
+  LANCER_ARTWORK_PIVOT,
 } from "./lancer-animation-catalog.js";
 import {
   LancerState,
@@ -34,12 +34,9 @@ import {
 
 export const LANCER_FRAME = Object.freeze({ width: 320, height: 320 });
 export const LANCER_PIVOT = Object.freeze({ x: 0.5, y: 0.84 });
-// Preserve the established world placement while the rendered pivot moves
-// from its legacy canvas-space location to the body-art bottom.
-export const LANCER_ART_OFFSET = Object.freeze({
-  x: 0,
-  y: -100 + LANCER_FRAME.height * (LANCER_PIVOT.y - LANCER_BODY_ART_PIVOT[1]),
-});
+// Artwork and gameplay share one origin: the painted bottom-center is the
+// movement collider center used by physics and perception.
+export const LANCER_ART_OFFSET = Object.freeze({ x: 0, y: 0 });
 export const LANCER_MOVEMENT_COLLIDER = Object.freeze({
   type: "circle",
   x: 160,
@@ -210,7 +207,7 @@ export function createLancer({
     if (sizePx !== undefined) {
       patch.sizePx = sizePx;
       const screenPosition = getArtScreenPosition(position);
-      patch.positionPx = anchor === "body-bottom"
+      patch.positionPx = anchor === "artwork-bottom"
         ? [screenPosition.x, screenPosition.y + artYOffset]
         : [
             screenPosition.x + (0.5 - LANCER_PIVOT.x) * (LANCER_FRAME.width - sizePx[0]),

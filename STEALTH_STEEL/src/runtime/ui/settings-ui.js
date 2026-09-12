@@ -59,6 +59,7 @@ export function createSettingsUi({
   openAccount,
   catalog = [],
   store = runtimeSettingsStore,
+  isStartMenuVisible = () => false,
   documentRef = globalThis.document,
   applyFullscreen = applyFullscreenPreference,
   openExternal = (url, target, features) => globalThis.open?.(url, target, features),
@@ -72,12 +73,15 @@ export function createSettingsUi({
   icon.alt = "";
   icon.setAttribute("aria-hidden", "true");
   gear.append(icon);
-  host.append(gear);
+  screenLayer.append(gear);
 
   let activeWindow = null;
   let developerWindow = null;
   let accountButton = null;
   let accountActive = false;
+  const syncGearStacking = () => {
+    gear.classList.toggle("settings-gear-over-start-menu", !activeWindow && isStartMenuVisible());
+  };
   const close = () => { if (!accountActive) activeWindow?.close(); };
   const open = () => {
     if (accountActive) return;
@@ -85,6 +89,7 @@ export function createSettingsUi({
       close();
       return;
     }
+    gear.classList.toggle("settings-gear-over-start-menu", false);
     const content = documentRef.createElement("div");
     content.className = "settings-controls";
     const musicControl = createVolumeControl(
@@ -207,6 +212,7 @@ export function createSettingsUi({
         fullscreenControl.dispose();
         activeWindow = null;
         gear.setAttribute("aria-label", "Open settings");
+        syncGearStacking();
         pauseController.resume('settings');
       },
     });
@@ -227,6 +233,7 @@ export function createSettingsUi({
     },
     open,
     close,
+    syncGearStacking,
     get activeWindow() { return activeWindow; },
     get developerWindow() { return developerWindow; },
   };

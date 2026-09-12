@@ -29,4 +29,6 @@ Projectile-versus-gameplay-effect ordering is deliberately TBD. Both categories
 retain space in `300-499` until a visual requirement decides their relationship.
 
 Persistent UI is above Babylon content. The settings backdrop, window, and
-controls are above persistent UI when open.
+controls are above persistent UI when open. The only exception is the Settings
+gear while the Start Menu is visible: it moves to `2030`, above that menu, and
+returns to the persistent-UI layer as soon as Settings opens or Start closes.

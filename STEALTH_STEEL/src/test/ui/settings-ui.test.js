@@ -13,6 +13,12 @@ import {
 class FakeClassList {
   values = new Set();
   add(value) { this.values.add(value); }
+  toggle(value, force) {
+    if (force === undefined) force = !this.values.has(value);
+    if (force) this.values.add(value);
+    else this.values.delete(value);
+    return force;
+  }
 }
 
 class FakeElement extends EventTarget {
@@ -125,6 +131,28 @@ test("Space does not activate the settings gear", () => {
 
   assert.equal(event.defaultPrevented, true);
   assert.equal(settingsUi.activeWindow, null);
+});
+
+test("settings gear is above only an open Start Menu", () => {
+  const documentRef = createDocument();
+  let startMenuVisible = true;
+  const settingsUi = createSettingsUi({
+    host: new FakeElement(),
+    pauseController: { pause() {}, resume() {} },
+    store: { get: () => 100 },
+    documentRef,
+    isStartMenuVisible: () => startMenuVisible,
+  });
+
+  settingsUi.syncGearStacking();
+  assert.equal(settingsUi.gear.classList.values.has("settings-gear-over-start-menu"), true);
+  settingsUi.open();
+  assert.equal(settingsUi.gear.classList.values.has("settings-gear-over-start-menu"), false);
+  settingsUi.close();
+  assert.equal(settingsUi.gear.classList.values.has("settings-gear-over-start-menu"), true);
+  startMenuVisible = false;
+  settingsUi.syncGearStacking();
+  assert.equal(settingsUi.gear.classList.values.has("settings-gear-over-start-menu"), false);
 });
 
 test("visualization controls use exact labels and write independent keys", () => {

@@ -909,7 +909,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
 
   function createLancerRecord(position) {
     const actor = createLancer({ onAttack: () => playSfx("lancer"), atlases: lancerAtlases, initialPosition: position, bounds: worldBounds, obstacles: obstacleColliders });
-    const combat = createCombatActorState({ label: `lancer-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, LANCER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [LANCER_FRAME.width * value, LANCER_FRAME.height * value], anchor: "body-bottom" }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
+    const combat = createCombatActorState({ label: `lancer-${nextActorId++}`, getCombatCollider: () => actor.getCombatCollider(), setVisualTransform: (transform) => actor.setVisualTransform(transform), onSpawnProgress: (progress) => setCharacterSpawnProgress(actor, LANCER_FRAME.width, progress), onDeathProgress: (value) => actor.setVisualTransform({ sizePx: [LANCER_FRAME.width * value, LANCER_FRAME.height * value], anchor: "artwork-bottom" }), onHitFlashStart: () => actor.setVisualTransform({ color: [1.6, 1.6, 1.6, 1] }), onKnockback: (direction, options) => actor.applyKnockback(direction, options) });
     return attachActor({ type: SpawnerType.ENEMY, character: SpawnerCharacter.LANCER, actor, combat, controller: null });
   }
 
@@ -1146,14 +1146,15 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   );
   const treasure = createTreasureRuntime({accountHost,resumeRun:progress.completed>0});
   const treasureUi = createTreasureUi({host:domBody,screenLayer:domScreen,frameElement:gameFrame,pauseController,session:treasure});
+  let startGamePrompt = null;
   settingsUi = createSettingsUi({
     host: gameUi, modalHost: domBody, screenLayer: domScreen, frameElement: gameFrame, pauseController,
     catalog: __GAME_LEVELS__, openAccount: () => accountHost.open(),
+    isStartMenuVisible: () => startGamePrompt !== null,
   });
   createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
   const itemsHud = createItemsHudUi({ host: gameUi, snapshot: equipmentSnapshot });
-  let startGamePrompt = null;
   let itemsWindow = null;
   let itemsEnabled = false;
   const applyEquipmentState = state => {
@@ -1246,12 +1247,15 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       onStart: () => {
         treasure.start();
         startGamePrompt.close();
+        startGamePrompt = null;
+        settingsUi.syncGearStacking();
         pauseController.resume();
         setGameplayMusicActive(true);
       },
     })
     : null;
   if (startGamePrompt) {
+    settingsUi.syncGearStacking();
     pauseController.pause();
   } else {
     setGameplayMusicActive(true);
@@ -1267,6 +1271,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       if (disposed) return;
       startGamePrompt?.close();
       startGamePrompt = null;
+      settingsUi.syncGearStacking();
       pauseController.resume();
       setGameplayMusicActive(true);
       gameStateMachine.assetsLoaded();

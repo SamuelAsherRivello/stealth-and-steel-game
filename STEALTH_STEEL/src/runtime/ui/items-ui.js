@@ -8,6 +8,13 @@ const STAT_VALUES = (item) => [
   ["Defense", item.family === "Shield" ? `+${item.effectPercent}%` : "0"],
 ];
 
+function getInventoryLayout(itemCount) {
+  if (itemCount <= 1) return "1x1";
+  if (itemCount <= 3) return `1x${itemCount}`;
+  const columns = itemCount <= 6 ? 2 : 3;
+  return `${columns}x${Math.ceil(itemCount / columns)}`;
+}
+
 export function createItemsUi({ host, screenLayer, frameElement = null, opener, equipmentProvider,
   onClose = () => {}, onState = () => {}, play = playSfx, documentRef = globalThis.document }) {
   const content = documentRef.createElement("div");
@@ -25,7 +32,6 @@ export function createItemsUi({ host, screenLayer, frameElement = null, opener, 
     host,
     title: "Items",
     content,
-    className: "items-window",
     documentRef,
     opener,
     closeLabel: "Close items",
@@ -42,8 +48,7 @@ export function createItemsUi({ host, screenLayer, frameElement = null, opener, 
     grid.textContent = "";
     status.textContent = BODY_TEXT;
     const itemCount = state?.ownedItems?.length ?? 0;
-    const columns = Math.min(3, Math.max(1, itemCount));
-    grid.dataset.layout = `${columns}x${Math.ceil(itemCount / columns) || 1}`;
+    grid.dataset.layout = getInventoryLayout(itemCount);
     if (state?.status !== "ready" || !state.profileId) return;
     for (const item of state.ownedItems) {
       const selected = state.effective?.[item.family]?.assetId === item.assetId;

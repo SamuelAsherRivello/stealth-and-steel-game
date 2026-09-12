@@ -14,7 +14,8 @@ export const GAME_DEPTH = Object.freeze({
 export const DOM_Z = Object.freeze({
   coordinateGuide: 1000, coordinates: 1010, releaseMetadata: 1020,
   settingsGear: 1030, virtualController: 1040, settingsBackdrop: 2000,
-  settingsWindow: 2010, settingsClose: 2020, error: 3000,
+  settingsWindow: 2010, settingsClose: 2020, startMenuSettingsGear: 2030,
+  error: 3000,
 });
 
 export function getYSortedLayerOrder(worldY, screenHeight) {

@@ -30,7 +30,7 @@ test("Lancer keeps a looping idle animation and participates in enemy patrol", a
   assert.match(main, /character: SpawnerCharacter\.LANCER, actor, combat, controller: null/);
 });
 
-test("Lancer death rotation is anchored at the bottom center of the body art", () => {
+test("Lancer artwork and death rotation share the movement-collider center", () => {
   const layers = [];
   const sprites = [];
   const actor = createLancer({
@@ -56,15 +56,22 @@ test("Lancer death rotation is anchored at the bottom center of the body art", (
     },
   });
 
-  // The opaque Lancer body reaches y=197 in each idle 320px frame.
+  // The painted Lancer artwork ends at y=197 in the 320px PNG frame. Its
+  // bottom center must coincide with the logical physics/perception center.
   assert.ok(layers.every((layer) => layer.pivot[0] === 0.5));
   assert.ok(layers.every((layer) => layer.pivot[1] === 197 / 320));
   const originalPositions = sprites.map((sprite) => [...sprite.positionPx]);
-  actor.setVisualTransform({ sizePx: [160, 160], anchor: "body-bottom" });
+  const collider = actor.getMovementCollider();
+  assert.deepEqual(
+    originalPositions,
+    sprites.map(() => [collider.x, 1024 - collider.y]),
+    "the painted artwork bottom is at the physics/perception center",
+  );
+  actor.setVisualTransform({ sizePx: [160, 160], anchor: "artwork-bottom" });
   assert.deepEqual(
     sprites.map((sprite) => sprite.positionPx),
     originalPositions,
-    "shrinking for death keeps the body-art bottom at the rotation point",
+    "shrinking for death keeps the artwork bottom at the physics center",
   );
   actor.dispose();
 });
