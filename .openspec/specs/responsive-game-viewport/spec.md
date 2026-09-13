@@ -83,8 +83,8 @@ preserved inside every applicable edge of that visible game-window rectangle.
 ### Requirement: Complete UI remains inside the safe area
 
 The system SHALL keep the release version, settings gear, coordinate readout,
-diagnostics, settings backdrop and dialog, virtual joystick, action controls,
-and their labels completely inside the UI safe-area rectangle.
+diagnostics, settings backdrop and dialog, Items dialog, virtual joystick,
+action controls, and their labels completely inside the UI safe-area rectangle.
 
 #### Scenario: UI initializes before viewport coordination
 
@@ -109,6 +109,12 @@ and their labels completely inside the UI safe-area rectangle.
 - **WHEN** the settings menu opens in a viewport smaller than the world layer
 - **THEN** the complete dialog border, close control, and settings content fit
   inside the UI safe area without horizontal or vertical clipping
+
+#### Scenario: Items dialog is open on desktop
+
+- **WHEN** a logged-in player opens the Items dialog while desktop gutters are visible
+- **THEN** the dialog’s complete rendered bounds remain inside the portrait game frame and UI safe area
+- **AND** no card, parchment edge, ribbon, or close control enters a desktop gutter
 
 ### Requirement: Viewport changes update world crop and UI safe area
 

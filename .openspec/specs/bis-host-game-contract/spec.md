@@ -1,9 +1,11 @@
+# bis-host-game-contract Specification
+
 ## Purpose
 
 Define the game-owned contract BIS uses after a verified operation, preserving
 gameplay independence while making continuation and reward delivery reliable.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Game fulfills one published host contract
 The game SHALL fulfill the published `BisHostGame` contract from the BIS package and SHALL use no BIS internal source path or Arkade type. The contract SHALL contain active-session reference, continuation-target capture, confirmed-continuation application, and confirmed-player-reward presentation capabilities. The game SHALL remain playable when the BIS package, account, or connectivity is unavailable.
