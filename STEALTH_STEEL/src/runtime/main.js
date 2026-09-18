@@ -1196,7 +1196,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       const layer=createSprite2DLayer(treasureAtlas,{capacity:1,order:getYSortedLayerOrder(position.y,worldBounds),pivot:[0.5,0.5]});
       addSprite2D(layer,{positionPx:[position.x,SCREEN_HEIGHT-position.y],sizePx:[64,64],frame:0});
       addSpriteRendererLayer(renderer,camera.attachLayer(layer));treasureLayers.push(layer);
-      return createTreasureChest({position,sensor:authored.sensor,onEnter:()=>treasureUi.open()});
+      return createTreasureChest({position,sensor:authored.sensor,canEnter:()=>accountHost.isTreasureReady(),onEnter:()=>void treasureUi.open()});
     }});spawner.initialize();return spawner;
   });
   const goalLayer = createSprite2DLayer(goalAtlas, {

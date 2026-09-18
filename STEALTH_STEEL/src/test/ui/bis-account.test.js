@@ -11,7 +11,7 @@ class Element extends EventTarget {
 function fixture({load,ready=Promise.resolve(),timeoutMs=100}={}) {
   const documentRef=new EventTarget();documentRef.createElement=()=>new Element();
   const host=new Element(),other=new Element();host.append(other);let closes=0,restarts=0,creates=0,mounts=0,disposals=0;
-  let state={view:'empty'};const listeners=new Set(),events=new Set();
+  let state={view:'empty',phase:'active'};const listeners=new Set(),events=new Set();
   const publish=view=>{state={view};for(const listener of listeners)listener();};
   const setProfile=profileId=>{state={...state,...(profileId?{profileId}:{})};if(!profileId)delete state.profileId;for(const listener of listeners)listener();};
   const context={getState:()=>state,ready:()=>ready,subscribe:l=>{listeners.add(l);return()=>listeners.delete(l);},onEvent:l=>{events.add(l);return()=>events.delete(l);},openAccountDialog:()=>publish('account'),dispose:()=>{disposals++;}};
@@ -59,6 +59,17 @@ test('exposes the active player profile independently of any game controller sta
  assert.equal(f.adapter.getPlayerProfileId(),'saved-player');
  f.setProfile(undefined);
  assert.equal(f.adapter.getPlayerProfileId(),undefined);
+  f.adapter.dispose();
+});
+
+test('reports treasure readiness only when player and game wallet setup are usable', async () => {
+ const f = fixture();
+ const wallet = {getState:()=>({profileId:'saved-game',status:'ready'}),dispose(){}};
+ f.api.createBisGameWallet = () => wallet;
+ await f.adapter.ready();
+ assert.equal(f.adapter.isTreasureReady(), false);
+ f.setProfile('saved-player');
+ assert.equal(f.adapter.isTreasureReady(), true);
  f.adapter.dispose();
 });
 test('a disposed account adapter ignores its stale restart event while its replacement remains usable',async()=>{

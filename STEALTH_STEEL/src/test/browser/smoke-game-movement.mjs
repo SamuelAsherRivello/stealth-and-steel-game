@@ -8,6 +8,7 @@ const {chromium}=await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import assert from 'node:assert/strict';
 const b=await chromium.launch({headless:true,executablePath:process.env.SMOKE_CHROMIUM_EXECUTABLE,args:process.platform === 'linux' ? ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-unsafe-webgpu','--enable-features=Vulkan','--use-vulkan=swiftshader','--disable-vulkan-surface'] : ['--enable-unsafe-webgpu']});
 try{const p=await b.newPage({viewport:{width:1000,height:900}});const warnings=[];p.on('console',m=>{if(m.type()==='error')warnings.push(m.text().slice(0,400));});await p.goto(process.argv[2] ?? 'http://127.0.0.1:5175/');await p.getByRole('button',{name:'Start',exact:true}).click({timeout:60000});
+await p.screenshot({path:capturePath('treasure-guest-level.png')});assert.equal(await p.getByRole('dialog',{name:'Treasure Chest',exact:true}).count(),0,'Guest level opened treasure interaction without BIS setup');
 const pos=()=>p.locator('#coordinates-ui-pixel').textContent();
 console.log('initial',await pos());
 let movement;
