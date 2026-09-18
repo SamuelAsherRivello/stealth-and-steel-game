@@ -1,8 +1,8 @@
-# Current BIS local package snapshot (2026-09-10)
+# Current BIS release package snapshot (2026-09-18)
 
-Current artifact: bis-integration-0.14.5-30bfc5c267414b55c21d7c6ced64a3b7b97b5e695e2ca5ef55e5d824e63e5b21.tgz. SHA-256: 30bfc5c267414b55c21d7c6ced64a3b7b97b5e695e2ca5ef55e5d824e63e5b21. The 105-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This serverless local package supersedes every historical package below.
+Current artifact: bis-integration-0.0.1.tgz. SHA-256: 6b00ef0e4910539c98da415b5f0d75f8d3efdb3fc9caf8f53bbb2df6ef1ff799. Source commit: 374799b298963cf74329747a42cda1da88b23be3. The 113-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This is the verified local BIS 0.0.1 package snapshot used by the game.
 
-This is a locally built vendor snapshot, not a published release. It exposes the public equipment API consumed by Settings → Items and preserves the Marketplace atomic-exchange gate; it does not add a hosted service or an alternate trade path. The game configures its wallet through the BIS Account UI. See [play and setup instructions](../documentation/treasure-lto.md).
+This archive is packed from the adjacent BIS checkout for deterministic game builds. It is not a published GitHub package or release, and it does not authorize wallet operations. The game consumes the public BIS host-game API and remains playable without an account. See [play and setup instructions](../documentation/treasure-lto.md).
 
 ## Historical package records
 
