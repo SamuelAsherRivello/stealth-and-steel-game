@@ -6,6 +6,7 @@ import { getPickupAnimation } from "./pickup-animation.js";
 
 const DEFAULT_API = { addSprite2D, createSprite2DLayer, removeSprite2D, updateSprite2D };
 const SPAWN_SECONDS = 0.35;
+export const GOLD_PICKUP_DEPTH_OFFSET = -0.01;
 function getSpritePosition(position, screenHeight) {
   return [position.x, screenHeight - position.y];
 }
@@ -23,7 +24,7 @@ export function chooseNineGridDestinations(origin, count, isValid = () => true, 
 export function createPickup({ type = "pickup", id = "pickup", object = { id }, atlas = null, startPosition, destination, screenHeight = 1024, depthBounds = screenHeight, api = DEFAULT_API }) {
   const layer = api.createSprite2DLayer(atlas, {
     capacity: 1,
-    order: getYSortedLayerOrder(startPosition.y, depthBounds),
+    order: getYSortedLayerOrder(startPosition.y, depthBounds) + GOLD_PICKUP_DEPTH_OFFSET,
     pivot: [0.5, 0.5],
   });
   const sprite = api.addSprite2D(layer, { positionPx: getSpritePosition(startPosition, screenHeight), sizePx: [64, 64], frame: 0, alpha: 0, scaleX: 0.1, scaleY: 0.1 });

@@ -25,8 +25,17 @@ test("root commands target the contained application and preserve Pages output",
   const { default: config } = await import("../../../../vite.config.js");
   assert.equal(resolve(root, config.root), app);
   assert.equal(resolve(app, config.build.outDir), join(root, "dist"));
-  assert.equal(config.base, "./");
+  assert.equal(config.base, "/STEALTH_STEEL/");
+  assert.ok(config.server.watch.ignored.some(pattern => (
+    pattern instanceof RegExp && pattern.test("Level01.tmj.XuvJSi")
+  )));
+  assert.ok(config.server.watch.ignored.every(pattern => (
+    !(pattern instanceof RegExp) || !pattern.test("Level01.tmj")
+  )));
   const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  const index = readFileSync(join(app, "index.html"), "utf8");
+  assert.match(index, /href="\.\/favicon\.svg\?v=2"/);
+  assert.match(index, /href="\.\/favicon\.ico\?v=2"/);
   const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"));
   assert.equal(pkg.scripts.test, "node STEALTH_STEEL/src/test/run-tests.mjs");
   for (const [name, dependency] of Object.entries(pkg.dependencies)) {

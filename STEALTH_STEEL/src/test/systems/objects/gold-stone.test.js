@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createGoldStone } from "../../../runtime/systems/objects/gold-stone.js";
-import { chooseNineGridDestinations, createGoldPickup } from "../../../runtime/systems/objects/gold-pickup.js";
+import { chooseNineGridDestinations, createGoldPickup, GOLD_PICKUP_DEPTH_OFFSET } from "../../../runtime/systems/objects/gold-pickup.js";
+import { getYSortedLayerOrder } from "../../../runtime/systems/environment/render-depth.js";
 
 test("gold stone has one health and enters object death after one hit", () => {
   const updates = [];
@@ -37,4 +38,22 @@ test("pickups choose distinct surrounding 9-grid cells and collect during spawn"
   pickup.update(0.09);
   assert.ok(updates.some(({ positionPx, alpha }) => positionPx?.[1] === 942 && alpha === 0));
   assert.equal(pickup.isDead, true);
+});
+
+test("gold pickup renders just behind an enemy at the same grid depth", () => {
+  let layerOptions;
+  createGoldPickup({
+    object: { id: 2 },
+    startPosition: { x: 32, y: 32 },
+    destination: { x: 32, y: 32 },
+    depthBounds: 1024,
+    api: {
+      createSprite2DLayer: (_atlas, options) => { layerOptions = options; return {}; },
+      addSprite2D: () => ({}),
+      updateSprite2D: () => {},
+      removeSprite2D: () => {},
+    },
+  });
+
+  assert.equal(layerOptions.order, getYSortedLayerOrder(32, 1024) + GOLD_PICKUP_DEPTH_OFFSET);
 });

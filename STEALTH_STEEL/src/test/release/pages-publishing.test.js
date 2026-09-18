@@ -15,9 +15,9 @@ test("README screenshot opens the image and demo links to the renamed live game"
     { width: 576, height: 1024 }, "match the current portrait screenshot dimensions");
 });
 
-test("Pages assets remain relative so repository renames do not break the build", async () => {
+test("the app uses its project name as the development URL base", async () => {
   const { default: config } = await import("../../../../vite.config.js");
-  assert.equal(config.base, "./");
+  assert.equal(config.base, "/STEALTH_STEEL/");
 });
 
 test("Pages publishing checks deployment contracts before building", async () => {
