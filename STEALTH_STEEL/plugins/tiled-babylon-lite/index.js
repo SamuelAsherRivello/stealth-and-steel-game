@@ -1,3 +1,4 @@
+const HORIZONTAL_FLIP_FLAG = 0x80000000;
 const FLIP_FLAGS = 0xe0000000;
 
 export { createLevelTerrainTiles } from "./terrain-runtime.js";
@@ -69,6 +70,7 @@ export function normalizeTiledMap(map, externalTilesets) {
       properties: propertiesToObject(layer.properties),
       tiles: layer.data.flatMap((rawGid, index) => {
         const gid = rawGid & ~FLIP_FLAGS;
+        const flipX = (rawGid & HORIZONTAL_FLIP_FLAG) !== 0;
         if (gid === 0) return [];
         const source = resolveTileset(tilesets, gid);
         if (!source) throw new Error(`No tileset resolves global tile id ${gid}.`);
@@ -90,10 +92,12 @@ export function normalizeTiledMap(map, externalTilesets) {
           animation: tileProperties.frameCount
             ? Array.from({ length: tileProperties.frameCount }, (_, tileid) => ({ tileid, duration: tileProperties.frameDurationMs }))
             : tileDefinition?.animation ?? [],
+          flipX,
           collisionShapes: normalizeTileCollisionShapes(
             tileDefinition,
             source.tileset.tilewidth,
             source.tileset.tileheight,
+            flipX,
           ),
           tiledCell: { x: column, y: row },
           gameCell: { x: column - originColumn, y: originRow - row },
@@ -327,7 +331,7 @@ function normalizeTileObject(tile, className, position, frameWidth, frameHeight)
   };
 }
 
-function normalizeTileCollisionShapes(tile, tileWidth, tileHeight) {
+function normalizeTileCollisionShapes(tile, tileWidth, tileHeight, flipX = false) {
   if (!Number.isFinite(tileWidth) || tileWidth <= 0
     || !Number.isFinite(tileHeight) || tileHeight <= 0) {
     return [];
@@ -339,7 +343,7 @@ function normalizeTileCollisionShapes(tile, tileWidth, tileHeight) {
         return [{
           type: "polygon",
           points: object.polygon.map((point) => ({
-            x: (object.x + point.x) / tileWidth,
+            x: (flipX ? tileWidth - object.x - point.x : object.x + point.x) / tileWidth,
             y: 1 - (object.y + point.y) / tileHeight,
           })),
         }];
@@ -350,7 +354,7 @@ function normalizeTileCollisionShapes(tile, tileWidth, tileHeight) {
       }
       return [{
         type: "rectangle",
-        x: object.x / tileWidth,
+        x: (flipX ? tileWidth - object.x - object.width : object.x) / tileWidth,
         y: 1 - (object.y + object.height) / tileHeight,
         width: object.width / tileWidth,
         height: object.height / tileHeight,

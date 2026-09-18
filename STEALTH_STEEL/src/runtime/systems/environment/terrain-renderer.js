@@ -29,6 +29,7 @@ export function createTerrainRendering(tiles, atlases, api = { addSprite2D, crea
         positionPx: [tile.spritePosition.x, tile.spritePosition.y],
         sizePx: tile.displaySize ?? tile.frameSize,
         frame: tile.frame,
+        flipX: tile.flipX === true,
       });
       if (tile.animation.length) animatedTerrain.push({ sprite, frames: tile.animation, elapsed: 0, tile });
     }
