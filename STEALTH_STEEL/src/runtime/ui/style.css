@@ -286,6 +286,7 @@ body {
 }
 
 .gold-counter,
+.level-counter,
 .items-counter,
 .coordinates-ui {
   position: absolute;

@@ -1,9 +1,5 @@
-function pad(value) {
-  return String(Math.max(0, value)).padStart(2, "0");
-}
-
 export function formatGoldCounterText(collected, total) {
-  return `Gold: ${pad(collected)}/${pad(total)}`;
+  return `Gold: ${Math.max(0, collected)}/${Math.max(0, total)}`;
 }
 
 export function createGoldCounterUi({ host, total = 0, documentRef = globalThis.document }) {

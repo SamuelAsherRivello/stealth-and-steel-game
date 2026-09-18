@@ -120,7 +120,12 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     } catch { if (!disposed && active && visit === currentVisit) { status.hidden = false; message.textContent = 'Account is unavailable. Return to Settings and try again.'; back.focus(); } }
     finally { clearTimeout(timer); }
   }
-  return {open, getSession:()=>session, getPlayerProfileId:()=>session?.context.getState().profileId, isTreasureReady:()=>{
+  return {open, getSession:()=>session, getBisServices:()=>session?.services, getPlayerProfileId:()=>session?.context.getState().profileId, hasItemSupport:()=>{
+    const supported=session?.services?.hasItemSupport?.();
+    if (typeof supported === 'boolean') return supported;
+    const player=session?.context?.getState?.()??{};
+    return Boolean(player.profileId && player.phase === 'active');
+  }, isTreasureReady:()=>{
     const player=session?.context?.getState?.()??{}, game=session?.gameWallet?.getState?.()??{};
     return Boolean(player.profileId && player.phase === 'active' && game.status === 'ready' && game.profileId && game.profileId !== player.profileId);
   }, ready: () => initialize(), async createEquipment() {

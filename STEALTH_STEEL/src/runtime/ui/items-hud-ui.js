@@ -17,6 +17,8 @@ export function createItemsHudUi({ host, snapshot, documentRef = globalThis.docu
 
   function render(next = snapshot) {
     snapshot = next;
+    const activeItems = FAMILIES.filter((family) => snapshot?.slots?.[family]).length;
+    element.hidden = activeItems === 0;
     FAMILIES.forEach((family, index) => {
       const slot = slots[index];
       slot.textContent = "";

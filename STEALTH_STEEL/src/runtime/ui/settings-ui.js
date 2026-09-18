@@ -57,7 +57,9 @@ export function createSettingsUi({
   frameElement = null,
   pauseController,
   openAccount,
+  getBisServices = () => undefined,
   catalog = [],
+  showMapLevelSelectorInSettings = true,
   store = runtimeSettingsStore,
   isStartMenuVisible = () => false,
   documentRef = globalThis.document,
@@ -144,13 +146,15 @@ export function createSettingsUi({
     };
     renderMapOrder();
     developerContent.append(debugHeading, ...debugControls.map(control => control.row));
-    if (catalog.length) developerContent.append(mapHeading, mapButtons);
-    resetButton.addEventListener("click", () => {
+    if (showMapLevelSelectorInSettings && catalog.length) developerContent.append(mapHeading, mapButtons);
+    resetButton.addEventListener("click", async () => {
       store.reset();
       renderMapOrder();
       musicSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.music));
       sfxSlider.value = String(store.get(RUNTIME_AUDIO_SETTING_KEYS.sfx));
       for (const control of debugControls) control.checkbox.checked = store.get(control.key);
+      const bisServices = getBisServices();
+      if (bisServices) await bisServices.resetForGame();
     });
 
     const openDeveloperSettings = () => {

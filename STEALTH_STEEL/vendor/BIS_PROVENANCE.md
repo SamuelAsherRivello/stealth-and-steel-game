@@ -1,6 +1,11 @@
 # Current BIS release package snapshot (2026-09-18)
 
-Current artifact: bis-integration-0.0.1.tgz. SHA-256: 6b00ef0e4910539c98da415b5f0d75f8d3efdb3fc9caf8f53bbb2df6ef1ff799. Source commit: 374799b298963cf74329747a42cda1da88b23be3. The 113-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). This is the verified local BIS 0.0.1 package snapshot used by the game.
+Current artifact: bis-integration-0.0.3.tgz. SHA-256: 70ddcf667f4ef16f2b659df42f64ed4e33ef54fd5880eb4bcf2166246a9cecd1. Source commit: f5b52652cfc1f52f7454c1248aa17e6047539a89. The 114-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, and type verification were completed for this snapshot. This is the verified local BIS 0.0.3 package snapshot used by the game.
+
+### Game-consumable public API changes
+
+- `BisGameServices.hasItemSupport(): boolean` reports item-path availability when the Player Wallet is active in a supported browser environment; it does not require a Game Wallet or initiate wallet operations.
+- Game items remain admin-minted and consumed by the game. Trophy rewards remain a separate one-at-a-time mint-and-immediate-transfer flow to the Player Wallet.
 
 This archive is packed from the adjacent BIS checkout for deterministic game builds. It is not a published GitHub package or release, and it does not authorize wallet operations. The game consumes the public BIS host-game API and remains playable without an account. See [play and setup instructions](../documentation/treasure-lto.md).
 

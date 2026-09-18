@@ -109,6 +109,7 @@ import { loadEditorConfig } from "./editor-config/editor-config.js";
 import { createCoordinatesUi } from "./ui/coordinates-ui.js";
 import { createReleaseMetadataUi } from "./ui/release-metadata-ui.js";
 import { createGoldCounterUi } from "./ui/gold-counter-ui.js";
+import { createLevelCounterUi } from "./ui/level-counter-ui.js";
 import { createItemsHudUi } from "./ui/items-hud-ui.js";
 import { createItemsUi } from "./ui/items-ui.js";
 import { loadStatusBadgeArt } from "./ui/status-badge.js";
@@ -173,6 +174,8 @@ import {
 const SCREEN_WIDTH = GAME_VIEWPORT.referenceResolution.width;
 const SCREEN_HEIGHT = GAME_VIEWPORT.referenceResolution.height;
 const TILE_SIZE = GAME_VIEWPORT.referenceGridSize.width;
+const showFilesizeInHud = false;
+const showMapLevelSelectorInSettings = false;
 // Temporary work-mode guard while character separation is being completed.
 const TEMPORARILY_FREEZE_ENEMY_AI = false;
 // Diagnostic switch: when true, green movement colliders do not block each other.
@@ -301,7 +304,9 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     {getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value)},
     () => window.location.reload(),
     () => runtimeSettingsStore.get(MAP_ORDER_SETTING_KEY),
-    { initialRun, onRestart: run => { if (!disposed) restartWithFullscreenTransition(run, pauseController); } },
+    { initialRun,
+      onAdvance: run => { if (!disposed) restartWithFullscreenTransition(run, pauseController); },
+      onRestart: run => { if (!disposed) restartWithFullscreenTransition(run, pauseController); } },
   );
   if (!navigator.gpu) {
     throw new Error("This Babylon Lite demo requires a browser with WebGPU enabled.");
@@ -1150,10 +1155,13 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   settingsUi = createSettingsUi({
     host: gameUi, modalHost: domBody, screenLayer: domScreen, frameElement: gameFrame, pauseController,
     catalog: __GAME_LEVELS__, openAccount: () => accountHost.open(),
+    getBisServices: () => accountHost.getBisServices?.(),
+    showMapLevelSelectorInSettings,
     isStartMenuVisible: () => startGamePrompt !== null,
   });
-  createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata });
+  createReleaseMetadataUi({ host: gameUi, metadata: releaseMetadata, showFilesizeInHud });
   goldCounter = createGoldCounterUi({ host: gameUi, total: level.goldPickupSpawners?.length ?? 0 });
+  createLevelCounterUi({ host: gameUi, level: progress.completed + 1, total: progress.total });
   const itemsHud = createItemsHudUi({ host: gameUi, snapshot: equipmentSnapshot });
   let itemsWindow = null;
   let itemsEnabled = false;
@@ -1162,7 +1170,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     itemsHud?.render(equipmentSnapshot);
     // Equipment refreshes can briefly omit its profile while account assets settle.
     // The BIS context is the authoritative login state for opening Items.
-    itemsEnabled = Boolean(accountHost.getPlayerProfileId());
+    itemsEnabled = accountHost.hasItemSupport();
     startGamePrompt?.setItemsEnabled(itemsEnabled);
   };
   const openItems = () => {
@@ -1238,7 +1246,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       enemyType:SpawnerType.ENEMY,tileSize:TILE_SIZE,spawnPlayer,resume:()=>pauseController.resume('player-loss')}),
     presentPlayerReward: () => gameStateMachine.state === GameState.LEVEL_COMPLETE,
   });
-  startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt })
+  startGamePrompt = shouldShowStartGamePrompt({ showStartPrompt: showStartPrompt && !initialRun })
     ? createStartGamePrompt({
       host: domBody,
       frameElement: gameFrame,

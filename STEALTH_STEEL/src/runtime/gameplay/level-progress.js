@@ -12,13 +12,14 @@ export function normalizeMapOrder(catalog, preference) {
   return [...new Set([...(Array.isArray(preference) ? preference : []).filter(number => numbers.includes(number)), ...numbers])];
 }
 
-export function createLevelProgress(catalog, storage, reload, getPreferredOrder = () => [], { initialRun, onRestart = () => {} } = {}) {
+export function createLevelProgress(catalog, storage, reload, getPreferredOrder = () => [], { initialRun, onAdvance = null, onRestart = () => {} } = {}) {
   let order = normalizeMapOrder(catalog, getPreferredOrder()), completed = 0;
   if (initialRun?.order && Number.isInteger(initialRun.completed)
     && initialRun.completed >= 0 && initialRun.completed < initialRun.order.length
     && JSON.stringify(normalizeMapOrder(catalog, initialRun.order)) === JSON.stringify(initialRun.order)) {
     order = initialRun.order;
     completed = initialRun.completed;
+    try { storage.setItem(RUN_STORAGE_KEY, 'null'); } catch { /* An in-memory run does not require session storage. */ }
   } else try {
     const saved = JSON.parse(storage.getItem(RUN_STORAGE_KEY) ?? 'null');
     if (saved?.pendingTransition === true && Array.isArray(saved.order) && saved.order.length === catalog.length
@@ -35,7 +36,8 @@ export function createLevelProgress(catalog, storage, reload, getPreferredOrder 
     const value = JSON.stringify({order: nextOrder, completed: count, pendingTransition: true});
     storage.setItem(RUN_STORAGE_KEY, value);
     if (storage.getItem(RUN_STORAGE_KEY) !== value) throw Error('Game progress could not be saved. Enable browser storage and try again.');
-    reload();
+    if (onAdvance) onAdvance({order: nextOrder, completed: count});
+    else reload();
   };
   return {
     current, completed, total: catalog.length,

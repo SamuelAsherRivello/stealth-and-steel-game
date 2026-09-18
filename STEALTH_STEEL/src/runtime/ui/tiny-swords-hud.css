@@ -19,6 +19,7 @@
   -webkit-text-stroke: 0;
 }
 .ui-layer .gold-counter,
+.ui-layer .level-counter,
 .ui-layer .items-counter {
   left: 0;
   display: block; width: auto; height: var(--hud-gold-height);
@@ -28,17 +29,22 @@
 }
 .ui-layer .release-metadata,
 .ui-layer .gold-counter,
+.ui-layer .level-counter,
 .ui-layer .items-counter {
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
 .ui-layer .gold-counter { top: var(--hud-header-offset); }
-.ui-layer .items-counter {
+.ui-layer .level-counter {
   top: calc(var(--hud-header-offset) + var(--hud-gold-height) + 4px);
+}
+.ui-layer .items-counter {
+  top: calc(var(--hud-header-offset) + (var(--hud-gold-height) + 4px) * 2);
   display: flex;
   align-items: center;
 }
+.ui-layer .items-counter[hidden] { display: none; }
 .ui-layer .coordinates-ui {
-  top: calc(var(--hud-header-offset) + var(--hud-gold-height) + 4px + var(--hud-gold-height) + 4px);
+  top: calc(var(--hud-header-offset) + (var(--hud-gold-height) + 4px) * 3);
   left: 0; padding: 4px 8px; border-radius: 3px;
   background: #173a40db; color: var(--hud-ink);
   font: 12px/1.4 ui-monospace, monospace; -webkit-text-stroke: 0;
@@ -96,7 +102,7 @@
 .ui-layer .control-label {
   font: bold clamp(12px, 3.125cqw, 18px)/22px Georgia, serif;
   letter-spacing: 0; color: var(--hud-ink);
-  text-shadow: 0 2px 2px #172b27; filter: none;
+  text-shadow: 1px 1px 0 #172b27; filter: none;
   user-select: none; -webkit-user-select: none;
   transform: translateY(calc(-100% + 20px));
 }

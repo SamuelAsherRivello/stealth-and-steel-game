@@ -112,6 +112,18 @@ test("Developer lists five independent visualizations and clears all their setti
   rows.forEach(row => assert.equal(row.children[1].checked, false));
 });
 
+test('map level selector can be hidden from Developer settings', () => {
+  const store = createSettingsStore(null);
+  const ui = createSettingsUi({ host: new FakeElement(), documentRef: createDocument(), store,
+    catalog: [1, 2, 3].map(number => ({number, file: `Level0${number}.tmj`})),
+    showMapLevelSelectorInSettings: false,
+    pauseController: { pause() {}, resume() {} } });
+  ui.open();
+  click(elementByClass(ui.activeWindow.panel, 'developer-settings-button'));
+  assert.equal(ui.developerWindow.panel.children.some(child => child.className === 'map-order-heading menu-label-text'), false);
+  assert.equal(ui.developerWindow.panel.children.some(child => child.className === 'map-order-buttons'), false);
+});
+
 test("Space does not activate the settings gear", () => {
   const documentRef = createDocument();
   const host = new FakeElement();

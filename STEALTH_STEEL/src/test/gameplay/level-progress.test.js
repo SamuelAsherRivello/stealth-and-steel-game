@@ -18,6 +18,18 @@ test('storage failure never claims navigation and does not prevent an in-memory 
   progress.restart();assert.deepEqual(restarts,[{order:[1],completed:0}]);assert.equal(reloads,0);
 });
 
+test('continue can hand the next level to the in-process run coordinator',()=>{
+  const values=new Map(); let reloads=0; const advances=[];
+  const storage={getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)};
+  const progress=createLevelProgress(catalogFromFiles(['Level01.tmj','Level02.tmj']),storage,()=>reloads++,()=>[],{onAdvance:run=>advances.push(run)});
+  progress.advance();
+  assert.deepEqual(advances,[{order:[1,2],completed:1}]);
+  assert.equal(reloads,0);
+  const next=createLevelProgress(catalogFromFiles(['Level01.tmj','Level02.tmj']),storage,()=>{},()=>[],{initialRun:advances[0]});
+  assert.equal(next.current,2);
+  assert.equal(values.get(RUN_STORAGE_KEY),'null');
+});
+
 test('restart hands the current preferred first map to an in-place fresh run without reloading',()=>{
   const values=new Map([['wallet','untouched'],[RUN_STORAGE_KEY,JSON.stringify({order:[1,2,3],completed:2,pendingTransition:true})]]);
   const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};

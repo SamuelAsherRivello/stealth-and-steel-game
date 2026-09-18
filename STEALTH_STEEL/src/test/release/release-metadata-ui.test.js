@@ -48,6 +48,19 @@ test("release metadata creates one line in the existing game UI overlay", () => 
   assert.equal(element.textContent, "v0.1.7 12.3Mb");
 });
 
+test("release metadata can hide the filesize while retaining the version", () => {
+  assert.equal(formatReleaseMetadataText({ releaseVersion: "v0.1.7", downloadSize: "12.3Mb" }, { showFilesizeInHud: false }), "v0.1.7");
+  const children = [];
+  const element = createReleaseMetadataUi({
+    host: { append: (...elements) => children.push(...elements) },
+    metadata: { releaseVersion: "v0.1.7", downloadSize: "12.3Mb" },
+    showFilesizeInHud: false,
+    documentRef: createDocumentStub(),
+  });
+  assert.equal(children[0], element);
+  assert.equal(element.textContent, "v0.1.7");
+});
+
 test("release metadata styling matches the proportional upper-left contract", async () => {
   const styles = await readFile(new URL("../../runtime/ui/style.css", import.meta.url), "utf8");
   const rule = styles.match(/\.release-metadata\s*\{([^}]*)\}/s)?.[1] ?? "";

@@ -62,6 +62,21 @@ test('exposes the active player profile independently of any game controller sta
   f.adapter.dispose();
 });
 
+test('reports item support from an active Player Wallet without requiring a Game Wallet', async () => {
+ const f=fixture();await f.adapter.ready();
+ assert.equal(f.adapter.hasItemSupport(), false);
+ f.setProfile('saved-player');
+ assert.equal(f.adapter.hasItemSupport(), true);
+ f.adapter.dispose();
+});
+
+test('item support becomes unavailable when the Player Wallet is no longer active', async () => {
+ const f=fixture();await f.adapter.ready();f.setProfile('saved-player');
+ f.publish('empty');
+ assert.equal(f.adapter.hasItemSupport(), false);
+ f.adapter.dispose();
+});
+
 test('reports treasure readiness only when player and game wallet setup are usable', async () => {
  const f = fixture();
  const wallet = {getState:()=>({profileId:'saved-game',status:'ready'}),dispose(){}};
