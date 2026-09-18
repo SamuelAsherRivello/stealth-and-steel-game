@@ -8,7 +8,7 @@
     "moduleResolution": "Bundler",
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": { "@bis/integration": ["STEALTH_STEEL/src/runtime/integration/bis-contract.d.ts"] }
+    "paths": { "@bis/integration": ["stealth-steel/src/runtime/integration/bis-contract.d.ts"] }
   },
-  "files": ["STEALTH_STEEL/src/runtime/integration/bis-host-game.js"]
+  "files": ["stealth-steel/src/runtime/integration/bis-host-game.js"]
 }

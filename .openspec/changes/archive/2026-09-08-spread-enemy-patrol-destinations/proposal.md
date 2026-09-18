@@ -22,7 +22,7 @@ None.
 
 ## Impact
 
-- Runtime changes are expected in `STEALTH_STEEL/src/runtime/ai/actions/patrol.js`, `enemy-brain.js`, a pure patrol selection helper, and enemy snapshot wiring in `STEALTH_STEEL/src/runtime/main.js`.
+- Runtime changes are expected in `stealth-steel/src/runtime/ai/actions/patrol.js`, `enemy-brain.js`, a pure patrol selection helper, and enemy snapshot wiring in `stealth-steel/src/runtime/main.js`.
 - Add focused selection, action lifecycle, and multi-enemy integration tests plus browser verification. No dependencies, spawn placement changes, or authored map changes are required.
 - C069 is the permanent change identity; implementation tasks use permanent C069-T### identifiers.
 - Interpretation: “next spawn location” means the next destination of an already spawned, patrolling enemy. Wider coverage means improved group spread within existing legal patrol areas; removing Goblin's home radius and maintaining historical visited-area coverage are outside this change.

@@ -4,7 +4,7 @@ See proposal.md for motivation. C063 is a JavaScript ES-module architecture chan
 
 Current decision ownership is split between `enemy-awareness-controller.js`, `enemy-patrol-controller.js`, `goblin-behavior-controller.js`, and the Archer's own `update()`. `main.js` constructs controllers and supplies snapshots. Actors own movement, animation, projectile release, impact queues, attack preparation clocks, and some defense decisions. Perception reactions carry independent awareness timers and remembered cells but also invoke movement/facing callbacks. Existing tests cover these boundaries independently.
 
-The current checkout includes unsynced and overlapping specifications. C060 refines C056's earlier hidden-adjacency wording: an unaware enemy cannot attack the concealed player. C057 requires centering before player attacks. C055 requires an awareness-entry locomotion stop. C038 and the active `universal-grid-spot-occupancy` and `quantized-enemy-movement-on-one-axis` changes are ongoing spatial work, not work to complete through C063. C061 UI work and C062 folder restructuring are separate; current code lives under `STEALTH_STEEL/src/runtime`.
+The current checkout includes unsynced and overlapping specifications. C060 refines C056's earlier hidden-adjacency wording: an unaware enemy cannot attack the concealed player. C057 requires centering before player attacks. C055 requires an awareness-entry locomotion stop. C038 and the active `universal-grid-spot-occupancy` and `quantized-enemy-movement-on-one-axis` changes are ongoing spatial work, not work to complete through C063. C061 UI work and C062 folder restructuring are separate; current code lives under `stealth-steel/src/runtime`.
 
 Two defense discrepancies require an explicit baseline: the current Warrior selector and tests reject vertical arrows despite older `warrior-character` text mentioning upward probability, and `main.js` currently supplies projectile snapshots only to Warriors despite a Lancer defense implementation. C063 preserves current integrated defense behavior; it neither enables Lancer auto-defense nor adds vertical Warrior defense. Document these as pre-existing discrepancies during verification, not as GOAP improvements. Other pre-existing spec/runtime disagreements must likewise be distinguished from changes introduced here.
 
@@ -102,7 +102,7 @@ On a failed segment, reuse the existing safe alternative and one-cell escape pol
 
 ### 7. Folder and integration layout
 
-Paths below are relative to `STEALTH_STEEL/src/`:
+Paths below are relative to `stealth-steel/src/`:
 
 ```text
 runtime/
@@ -184,4 +184,4 @@ Recovery during implementation uses additive corrective edits or a temporary sin
 Archer stands and shoots at close range; profiles remain code-only; travel and search share the existing investigation timer; defense stays an immediate reflex. Add Enemy AI Labels to Developer Settings using debug.showEnemyAiLabels, false by default, persisted/reset through the existing store. Draw Goal and Action (including waiting/recovery/defense) above living enemies independently of colliders. Labels are passive, follow the displayed actor, disappear on disable/death/disposal, and never reveal hidden coordinates. Existing snapshots remain available. No new Tiled format or tactical retreat is included.
 ## Implemented detail
 
-See `STEALTH_STEEL/src/runtime/ai/README.md` for the compatibility matrix, action contract, code-profile units and exact frame ownership. Navigation uses 256-cell resumable slices with a 4096-cell frame cap. Ordinary planning has a 1024-expansion frame cap; immediate one-action plans are counted separately. The old Archer automatic selector and all legacy production controller wiring are removed. Existing controller modules remain only for historical fixtures/tests. Optional labels are rendered before the collider early return and use the existing camera transform. Browser acceptance includes toggle independence, persistence/reset, resize, all five types and dead/disposed cleanup.
+See `stealth-steel/src/runtime/ai/README.md` for the compatibility matrix, action contract, code-profile units and exact frame ownership. Navigation uses 256-cell resumable slices with a 4096-cell frame cap. Ordinary planning has a 1024-expansion frame cap; immediate one-action plans are counted separately. The old Archer automatic selector and all legacy production controller wiring are removed. Existing controller modules remain only for historical fixtures/tests. Optional labels are rendered before the collider early return and use the existing camera transform. Browser acceptance includes toggle independence, persistence/reset, resize, all five types and dead/disposed cleanup.

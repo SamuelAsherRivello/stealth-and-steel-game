@@ -21,7 +21,7 @@ New players currently enter the level without a concise explanation of the win c
 
 ## Impact
 
-- Affected UI integration in `STEALTH_STEEL/src/runtime/main.js` and new or existing DOM prompt UI code.
+- Affected UI integration in `stealth-steel/src/runtime/main.js` and new or existing DOM prompt UI code.
 - Affected game-start lifecycle and player input/pause coordination.
 - Adds no dependencies and requires no migration or persistence changes.
 - The startup option becomes part of the game initialization/configuration interface.

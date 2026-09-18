@@ -1,10 +1,10 @@
 # C057 verification
 
-- Initial regression run: `node --test STEALTH_STEEL/src/test/characters/attack-preparation.test.js` reproduced premature attacks (64 failures, 2 passes before implementation).
-- Final focused run: all 454 tests under `STEALTH_STEEL/src/test/characters` and `STEALTH_STEEL/src/test/systems/perception` passed. This includes the expanded 79-case preparation suite, existing adjacency/animation/recovery coverage, and actual production actor adapters.
+- Initial regression run: `node --test stealth-steel/src/test/characters/attack-preparation.test.js` reproduced premature attacks (64 failures, 2 passes before implementation).
+- Final focused run: all 454 tests under `stealth-steel/src/test/characters` and `stealth-steel/src/test/systems/perception` passed. This includes the expanded 79-case preparation suite, existing adjacency/animation/recovery coverage, and actual production actor adapters.
 - The final-movement Archer range regression was independently observed failing, then passing after eligibility was rechecked from the arrived position.
 - `npm run build` passed. Strict OpenSpec validation passed for C057 and the reconciled C056 delta.
-- A broad `.test.js` sweep recorded 736 passes and 6 failures in separate damage/spawn work: four tests in `STEALTH_STEEL/src/test/gameplay/player-damage.test.js` and two in `STEALTH_STEEL/src/test/gameplay/spawn-animation.test.js`. The damage tests appeared during this session; the initial broad run already failed the spawn attachment source assertion. These are not a claim of a clean repository-wide gate. Bare `node --test` also discovers the existing browser-only harness and fails on its use of `location`; the harness is verified in a browser instead.
+- A broad `.test.js` sweep recorded 736 passes and 6 failures in separate damage/spawn work: four tests in `stealth-steel/src/test/gameplay/player-damage.test.js` and two in `stealth-steel/src/test/gameplay/spawn-animation.test.js`. The damage tests appeared during this session; the initial broad run already failed the spawn attachment source assertion. These are not a claim of a clean repository-wide gate. Bare `node --test` also discovers the existing browser-only harness and fails on its use of `location`; the harness is verified in a browser instead.
 
 ## Browser observations
 

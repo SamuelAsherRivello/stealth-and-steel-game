@@ -27,7 +27,7 @@ Other existing behavior requirements are compatibility constraints, not a reason
 
 ## Impact
 
-- Runtime: `STEALTH_STEEL/src/runtime/ai/` (new), all five folders under `characters/enemies/`, shared navigation/recovery and attack preparation, perception integration, and enemy creation/update/cleanup in `main.js`.
+- Runtime: `stealth-steel/src/runtime/ai/` (new), all five folders under `characters/enemies/`, shared navigation/recovery and attack preparation, perception integration, and enemy creation/update/cleanup in `main.js`.
 - Tests: pure planner/executor/action tests, profile and roster integration tests, existing enemy/perception/combat regressions, and real-browser scenarios showing all five enemies and actual Archer arrow release.
 - Dependencies: no new runtime package, worker infrastructure, authoring tool, or backend service. Existing JavaScript ES modules and Node test tooling remain in use.
 - Internal controller interfaces may change; authored maps, public character identities, game controls, and presentation remain compatible.

@@ -34,31 +34,31 @@ checkout separate and do not modify, commit, push, publish, or symlink it.
 ## Import workflow
 
 1. From the game root, inspect `package.json`, `package-lock.json`, the current
-   `STEALTH_STEEL/vendor/BIS_PROVENANCE.md`, inventory, and the two repository
+   `stealth-steel/vendor/BIS_PROVENANCE.md`, inventory, and the two repository
    statuses. Confirm the adjacent package metadata and requested version.
 2. Pack only the integration workspace into the game's vendor directory, using
    a cache inside the game repository so npm does not need the user cache:
 
    ```powershell
    Set-Location -LiteralPath 'D:\Documents\Projects\VC\Bitcoin\blockchain-integration-service'
-   npm.cmd --cache 'D:\Documents\Projects\VC\BabylonJS\babylon-lite-stealth-grid\.cache\npm-bis-pack' pack --workspace @bis/integration --pack-destination 'D:\Documents\Projects\VC\BabylonJS\babylon-lite-stealth-grid\STEALTH_STEEL\vendor'
+   npm.cmd --cache 'D:\Documents\Projects\VC\BabylonJS\babylon-lite-stealth-grid\.cache\npm-bis-pack' pack --workspace @bis/integration --pack-destination 'D:\Documents\Projects\VC\BabylonJS\babylon-lite-stealth-grid\stealth-steel\vendor'
    ```
 
 3. Inspect the archive before installation. Confirm `package/package.json`,
    the exact `@bis/integration` version, the public `dist`/`src` contents, file
    count, SHA-256, and adjacent BIS `HEAD`. Store the archive as
-   `STEALTH_STEEL/vendor/bis-integration-<version>.tgz`.
-4. Regenerate `STEALTH_STEEL/vendor/bis-package-inventory.json` from the
+   `stealth-steel/vendor/bis-integration-<version>.tgz`.
+4. Regenerate `stealth-steel/vendor/bis-package-inventory.json` from the
    unpacked archive. It must contain the artifact filename, lowercase SHA-256,
    and SHA-256 values for every packed file. Write JSON as UTF-8 without a BOM
-   because `STEALTH_STEEL/tools/verify-bis-package.mjs` parses it directly.
+   because `stealth-steel/tools/verify-bis-package.mjs` parses it directly.
 5. Update the root dependency to the exact vendored tarball and refresh the
    lockfile. Resolve peer conflicts from the package metadata explicitly; do
    not use `--force` or `--legacy-peer-deps` to hide a mismatch. If React or
    React DOM must advance, make the smallest exact compatible update and run
    the contract typecheck.
 6. Update the current section of
-   `STEALTH_STEEL/vendor/BIS_PROVENANCE.md` with the date, package/version,
+   `stealth-steel/vendor/BIS_PROVENANCE.md` with the date, package/version,
    artifact filename, SHA-256, source commit, file count, and verification
    status. Include a concise `Game-consumable public API changes` release-notes
    subsection listing any public BIS API changes from this package that are fit
@@ -71,16 +71,16 @@ checkout separate and do not modify, commit, push, publish, or symlink it.
 8. Verify with:
 
    ```powershell
-   node STEALTH_STEEL/tools/verify-bis-package.mjs
+   node stealth-steel/tools/verify-bis-package.mjs
    npm.cmd run typecheck:bis-contract
-   node --test STEALTH_STEEL/src/test/integration/bis-host-game.test.js STEALTH_STEEL/src/test/ui/bis-account.test.js
+   node --test stealth-steel/src/test/integration/bis-host-game.test.js stealth-steel/src/test/ui/bis-account.test.js
    npm.cmd run build
    ```
 
    Run the full `npm.cmd test` when practical, but distinguish failures from
    unrelated pre-existing dirty work rather than changing it silently.
 9. After the new tarball is installed and `verify-bis-package.mjs` passes,
-   remove older `STEALTH_STEEL/vendor/bis-integration-*.tgz` files, preserving
+   remove older `stealth-steel/vendor/bis-integration-*.tgz` files, preserving
    only the currently referenced package. Confirm the lockfile and verifier
    still resolve the retained tarball after cleanup. Do not delete archives
    from the adjacent BIS checkout.

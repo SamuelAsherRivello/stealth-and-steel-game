@@ -1,6 +1,6 @@
 <!-- AI: Customize this README from the repository's actual files, configuration, and user instructions. Preserve the section order, heading styles, and concise format unless asked to change them. Replace placeholders only with verified information; do not invent features, commands, URLs, contributors, or deployment behavior. Keep these instructions hidden as HTML comments. -->
 <!-- AI: Preserve the creator banner unless a replacement is requested. Update its relative path if assets move and verify the file exists with matching filename capitalization. -->
-![Samuel Asher Rivello](STEALTH_STEEL/documentation/images/samuel-asher-rivello-banner.png)
+![Samuel Asher Rivello](stealth-steel/documentation/images/samuel-asher-rivello-banner.png)
 
 # Stealth and Steel
 
@@ -10,7 +10,7 @@ Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype f
 ## Images
 
 <!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
-<a href="STEALTH_STEEL/documentation/images/stealth-and-steel-gameplay.png"><img src="STEALTH_STEEL/documentation/images/stealth-and-steel-gameplay.png" width="400" alt="Stealth and Steel gameplay with the updated HUD and virtual controller" /></a>
+<a href="stealth-steel/documentation/images/stealth-and-steel-gameplay.png"><img src="stealth-steel/documentation/images/stealth-and-steel-gameplay.png" width="400" alt="Stealth and Steel gameplay with the updated HUD and virtual controller" /></a>
 
 ## Demo
 
@@ -86,9 +86,9 @@ Babylon Lite does not ship the full engine's default loading UI.
 
 <!-- AI: Link to documentation that exists in this repository using relative Markdown links and a short purpose for each. -->
 - [README.md](README.md): Primary documentation for this repo.
-- [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md): Tiled map editing workflow.
-- [Grid and UI Contract](STEALTH_STEEL/documentation/grid-and-ui-contract.md): Logical grid and UI placement contract.
-- [Render Depth Order](STEALTH_STEEL/documentation/render-depth-order.md): Babylon Lite sprite and DOM overlay depth bands.
+- [Tile Map Editing](stealth-steel/documentation/tile-map.md): Tiled map editing workflow.
+- [Grid and UI Contract](stealth-steel/documentation/grid-and-ui-contract.md): Logical grid and UI placement contract.
+- [Render Depth Order](stealth-steel/documentation/render-depth-order.md): Babylon Lite sprite and DOM overlay depth bands.
 
 ### 📝 Structure
 
@@ -109,7 +109,7 @@ Babylon Lite does not ship the full engine's default loading UI.
 |-- package.json
 |-- package-lock.json
 |-- vite.config.js
-`-- STEALTH_STEEL/
+`-- stealth-steel/
     |-- documentation/
     |-- plugins/
     |-- public/
@@ -170,7 +170,7 @@ Levels are authored with Tiled. The AI prepares the Tiled project, map,
 tilesets, grid, origin marker, layers, properties, and runtime integration; the
 human edits content only on the existing layers.
 
-See [Tile Map Editing](STEALTH_STEEL/documentation/tile-map.md) for the open, edit, save,
+See [Tile Map Editing](stealth-steel/documentation/tile-map.md) for the open, edit, save,
 close, and play workflow.
 
 <!-- AI: Keep this tile-map section brief; do not add lengthy completion, progress,
@@ -202,7 +202,7 @@ Third-party references:
 
 ## Deep Dive
 
-Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. Start with the [Stealth and Steel Deep Dive](STEALTH_STEEL/documentation/deep-dive.md).
+Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. Start with the [Stealth and Steel Deep Dive](stealth-steel/documentation/deep-dive.md).
 
 ## Resources
 

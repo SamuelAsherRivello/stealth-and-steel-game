@@ -6,7 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
-const app = join(root, "STEALTH_STEEL");
+const app = join(root, "stealth-steel");
 const assets = join(app, "public/assets");
 const runOpenSpecContext = () => spawnSync(process.execPath, [join(root, ".openspec/cli.mjs"), "context", "--json"], {
   cwd: root,
@@ -25,7 +25,7 @@ test("root commands target the contained application and preserve Pages output",
   const { default: config } = await import("../../../../vite.config.js");
   assert.equal(resolve(root, config.root), app);
   assert.equal(resolve(app, config.build.outDir), join(root, "dist"));
-  assert.equal(config.base, "/STEALTH_STEEL/");
+  assert.equal(config.base, "/stealth-steel/");
   assert.ok(config.server.watch.ignored.some(pattern => (
     pattern instanceof RegExp && pattern.test("Level01.tmj.XuvJSi")
   )));
@@ -37,7 +37,7 @@ test("root commands target the contained application and preserve Pages output",
   assert.match(index, /href="\.\/favicon\.svg\?v=2"/);
   assert.match(index, /href="\.\/favicon\.ico\?v=2"/);
   const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"));
-  assert.equal(pkg.scripts.test, "node STEALTH_STEEL/src/test/run-tests.mjs");
+  assert.equal(pkg.scripts.test, "node stealth-steel/src/test/run-tests.mjs");
   for (const [name, dependency] of Object.entries(pkg.dependencies)) {
     assert.equal(lock.packages[""].dependencies[name], dependency);
     if (dependency.startsWith("file:")) assert.ok(existsSync(join(root, dependency.slice(5))), dependency);
@@ -112,5 +112,5 @@ test("image sources sit beside their exports and public images use the game or t
   assert.ok(existsSync(join(assets, "images/enemies/archer/Arrow.png")));
   assert.ok(existsSync(join(app, "public/environment.json")));
   const ignore = readFileSync(join(root, ".gitignore"), "utf8");
-  assert.ok(ignore.includes("STEALTH_STEEL/public/assets/images/enemies/goblin/Torch_Red.aseprite"));
+  assert.ok(ignore.includes("stealth-steel/public/assets/images/enemies/goblin/Torch_Red.aseprite"));
 });

@@ -36,8 +36,8 @@ test("spawn animation begins even when actors attach before renderer creation", 
 
 test("all character renderers keep spawn scaling centered on the sprite", async () => {
   const files = [
-    ["STEALTH_STEEL/src/runtime/characters/enemies/archer/archer.js", "ARCHER"],
-    ["STEALTH_STEEL/src/runtime/characters/enemies/warrior/warrior.js", "WARRIOR"],
+    ["stealth-steel/src/runtime/characters/enemies/archer/archer.js", "ARCHER"],
+    ["stealth-steel/src/runtime/characters/enemies/warrior/warrior.js", "WARRIOR"],
   ];
 
   for (const [file, prefix] of files) {

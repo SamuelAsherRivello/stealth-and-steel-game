@@ -31,4 +31,4 @@ The player starts with 100 health, but enemy attacks can appear to land without 
 
 ## Impact
 
-Combat routing in `STEALTH_STEEL/src/runtime/main.js`, enemy attack event adapters, projectile ownership routing, the game state machine, end-of-level UI, and regression/browser tests. Coordinate with C056 (adjacent attacks) and C057 (centering before attacks), without changing their navigation scope. No new assets or dependencies. Canonical change identity uses C### and permanent task identities use C###-T###; the readable change name is `fix-player-damage-and-loss-prompt`.
+Combat routing in `stealth-steel/src/runtime/main.js`, enemy attack event adapters, projectile ownership routing, the game state machine, end-of-level UI, and regression/browser tests. Coordinate with C056 (adjacent attacks) and C057 (centering before attacks), without changing their navigation scope. No new assets or dependencies. Canonical change identity uses C### and permanent task identities use C###-T###; the readable change name is `fix-player-damage-and-loss-prompt`.

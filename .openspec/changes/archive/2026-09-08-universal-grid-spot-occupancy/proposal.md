@@ -29,8 +29,8 @@ Gameplay entities currently mix continuous world positions, collider-derived cel
 
 ## Impact
 
-- Adds shared spatial and diagnostic code under `STEALTH_STEEL/src/runtime/systems/environment/` and `STEALTH_STEEL/src/runtime/ui/`.
-- Updates entity factories and runtime integration in `STEALTH_STEEL/src/runtime/characters/`, `STEALTH_STEEL/src/runtime/systems/objects/`, decorations, and `STEALTH_STEEL/src/runtime/main.js`.
+- Adds shared spatial and diagnostic code under `stealth-steel/src/runtime/systems/environment/` and `stealth-steel/src/runtime/ui/`.
+- Updates entity factories and runtime integration in `stealth-steel/src/runtime/characters/`, `stealth-steel/src/runtime/systems/objects/`, decorations, and `stealth-steel/src/runtime/main.js`.
 - Updates AI, perception, collision/interaction, and targeting cell reads to use one occupancy source.
 - Adds unit, integration, and browser verification for spawn centering, 33-pixel-equivalent threshold behavior on a configured grid, smooth sub-grid movement, marker uniqueness, lifecycle visibility, and all entity categories.
 - Requires no new dependencies and does not rename art assets.

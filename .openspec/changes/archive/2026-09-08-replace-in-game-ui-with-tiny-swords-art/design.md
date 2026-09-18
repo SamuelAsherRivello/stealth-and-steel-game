@@ -58,7 +58,7 @@ instead of 64px. The accepted HUD uses a shared 14px safe inset at 576x1024,
 centered metadata over gold, gear/gold center alignment, and common
 controller artwork centers and text baselines. See preview-review.md.
 
-Current implementation root is STEALTH_STEEL/; planning is .openspec/.
+Current implementation root is stealth-steel/; planning is .openspec/.
 The new Account integration remains outside this presentation milestone.
 
 ### 1. Four sequential milestones with recorded gates

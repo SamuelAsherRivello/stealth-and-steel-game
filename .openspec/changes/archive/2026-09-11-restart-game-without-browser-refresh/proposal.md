@@ -23,7 +23,7 @@ None.
 
 ## Impact
 
-- `STEALTH_STEEL/src/runtime/main.js` lifecycle ownership, animation-frame scheduling, world disposal, and fresh-run composition.
+- `stealth-steel/src/runtime/main.js` lifecycle ownership, animation-frame scheduling, world disposal, and fresh-run composition.
 - `runtime/gameplay/level-progress.js` restart intent and run selection, while retaining existing Map Order behavior.
 - Loss/reward integration, BIS account/session handling, and their focused tests.
 - Browser QA proving both Restart Game routes reset the game without a page navigation.

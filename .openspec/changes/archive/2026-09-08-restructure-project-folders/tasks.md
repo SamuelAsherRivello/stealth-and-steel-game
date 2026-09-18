@@ -4,7 +4,7 @@
 
 ## 2. Application and assets
 
-- [x] 2.1 `C062-T002` Move application code, tests, test tools, plugins, documentation, vendor packages, and HTML into the agreed STEALTH_STEEL tree; verify no source-to-destination collision or lost file.
+- [x] 2.1 `C062-T002` Move application code, tests, test tools, plugins, documentation, vendor packages, and HTML into the agreed stealth-steel tree; verify no source-to-destination collision or lost file.
 - [x] 2.2 `C062-T003` Consolidate public audio/images/levels, colocate Aseprite sources, move archer under enemies and Tiled icons under images/ui/spawners; verify binary hashes and all Tiled references.
 - [x] 2.3 `C062-T004` Update imports, dynamic asset URLs, root npm/Vite configuration, vendor dependency paths, and browser test tools; verify module resolution, dependency installation, and root dist output.
 

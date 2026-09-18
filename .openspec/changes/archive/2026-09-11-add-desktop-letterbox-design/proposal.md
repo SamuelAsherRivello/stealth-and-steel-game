@@ -33,7 +33,7 @@ without changing the playable 9:16 world or the established mobile view.
 ## Impact
 
 The change affects the outer stage structure and presentation CSS in
-`STEALTH_STEEL/index.html` and `STEALTH_STEEL/src/runtime/ui/style.css`, plus
+`stealth-steel/index.html` and `stealth-steel/src/runtime/ui/style.css`, plus
 purpose-built decorative image assets and responsive-layout tests. It adds no
 dependencies and does not modify Babylon world rendering, viewport
 measurement, input conversion, UI-safe-area computation, or mobile controls.

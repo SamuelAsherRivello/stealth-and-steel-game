@@ -1,6 +1,6 @@
 ## Context
 
-The centralized perception service already identifies living enemies, cardinal visual cells, visual strength, and perception snapshots. The current canvas diagnostics render perception geometry only as Collider-mode overlays; the new asset is a 64x64 tile-sized PNG at `STEALTH_STEEL/public/assets/images/terrain/tile-shadow.png`.
+The centralized perception service already identifies living enemies, cardinal visual cells, visual strength, and perception snapshots. The current canvas diagnostics render perception geometry only as Collider-mode overlays; the new asset is a 64x64 tile-sized PNG at `stealth-steel/public/assets/images/terrain/tile-shadow.png`.
 
 ## Goals / Non-Goals
 

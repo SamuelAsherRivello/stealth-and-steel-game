@@ -5,7 +5,7 @@ Give contributors one predictable application folder, organized public assets, a
 ## ADDED Requirements
 
 ### Requirement: Root commands operate on the contained application
-The repository SHALL keep its npm manifests and Vite configuration at the root. Application code SHALL live under `STEALTH_STEEL/src/runtime/`, tests and their execution tools under `STEALTH_STEEL/src/test/`, and the HTML entry point at `STEALTH_STEEL/index.html`. Documentation, plugins, and vendor packages SHALL live inside `STEALTH_STEEL/`. No separate application scripts directory SHALL remain.
+The repository SHALL keep its npm manifests and Vite configuration at the root. Application code SHALL live under `stealth-steel/src/runtime/`, tests and their execution tools under `stealth-steel/src/test/`, and the HTML entry point at `stealth-steel/index.html`. Documentation, plugins, and vendor packages SHALL live inside `stealth-steel/`. No separate application scripts directory SHALL remain.
 
 #### Scenario: Contributor runs the project from the repository root
 - **WHEN** a contributor installs the locked dependencies and runs the documented npm test and build commands

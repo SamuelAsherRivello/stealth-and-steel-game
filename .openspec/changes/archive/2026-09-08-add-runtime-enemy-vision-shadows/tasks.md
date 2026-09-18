@@ -1,6 +1,6 @@
 ## 1. Asset and perception geometry
 
-- [x] 1.1 `C055-T001` Verify `STEALTH_STEEL/public/assets/images/terrain/tile-shadow.png` is the supplied 64x64 PNG and load it through the existing asset-loading path without adding dependencies; verify the asset exists and its dimensions are correct
+- [x] 1.1 `C055-T001` Verify `stealth-steel/public/assets/images/terrain/tile-shadow.png` is the supplied 64x64 PNG and load it through the existing asset-loading path without adding dependencies; verify the asset exists and its dimensions are correct
 - [x] 1.2 `C055-T002` Add a pure visible-visual-path helper that stops before the first terrain or living-character blocker and excludes dead or invalid enemies; verify clear paths, terrain blockers, living blockers, dead blockers, and all four headings in focused tests
 
 ## 2. Runtime rendering

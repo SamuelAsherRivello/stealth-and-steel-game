@@ -22,6 +22,6 @@ Level01 needs to show the authored treasure chest as part of the level presentat
 
 ## Impact
 
-- Affects the Tiled level normalization/rendering path and the treasure object creation path in `STEALTH_STEEL/src/runtime/main.js`.
+- Affects the Tiled level normalization/rendering path and the treasure object creation path in `stealth-steel/src/runtime/main.js`.
 - Reuses the existing treasure chest object, treasure UI/session controller, decodable PNG atlas, and BIS account host rather than introducing a new wallet or contract API.
 - Adds regression coverage for guest, loading, unavailable, and ready BIS states; no new dependency is expected.

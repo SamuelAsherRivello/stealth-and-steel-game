@@ -17,10 +17,10 @@ The human edits level content on the existing layers. Do not create a blank map,
 
 For `Level01`, use these repository files:
 
-- Tiled project: `STEALTH_STEEL/public/assets/levels/tiled/stealth-grid.tiled-project`
-- Level map: `STEALTH_STEEL/public/assets/levels/tiled/maps/Level01.tmj`
-- Terrain tileset: `STEALTH_STEEL/public/assets/levels/tiled/tilesets/Tilemap_color3.tsj`
-- Spawner palette: `STEALTH_STEEL/public/assets/levels/tiled/tilesets/SpawnerTypes.tsj`
+- Tiled project: `stealth-steel/public/assets/levels/tiled/stealth-grid.tiled-project`
+- Level map: `stealth-steel/public/assets/levels/tiled/maps/Level01.tmj`
+- Terrain tileset: `stealth-steel/public/assets/levels/tiled/tilesets/Tilemap_color3.tsj`
+- Spawner palette: `stealth-steel/public/assets/levels/tiled/tilesets/SpawnerTypes.tsj`
 
 1. Ask the AI which level to edit. The AI will give you the exact `.tiled-project` and `.tmj` paths.
 2. Open Tiled.
@@ -109,11 +109,11 @@ have to be the runtime spritesheet.
 The verified bush example uses:
 
 - one `64 x 64` editor preview:
-  `STEALTH_STEEL/public/assets/images/terrain/decorations/bushes/Bushe1-frame0.png`;
+  `stealth-steel/public/assets/images/terrain/decorations/bushes/Bushe1-frame0.png`;
 - one untouched eight-frame `1024 x 128` runtime sheet:
-  `STEALTH_STEEL/public/assets/images/terrain/decorations/bushes/Bushe1.png`;
+  `stealth-steel/public/assets/images/terrain/decorations/bushes/Bushe1.png`;
 - one placeable image-collection tile:
-  `STEALTH_STEEL/public/assets/levels/tiled/tilesets/TinySwordsBushDecorations.tsj`;
+  `stealth-steel/public/assets/levels/tiled/tilesets/TinySwordsBushDecorations.tsj`;
 - one `ReactiveDecoration` tile object on `Y-Sorted Props` in `Level01.tmj`;
 - runtime frame metadata of eight `128 x 128` frames, independent of the
   `64 x 64` editor selection footprint.
@@ -135,7 +135,7 @@ object contract. After implementation, verify:
 
 ## Inspect Terrain Collision
 
-Terrain collision is authored in `STEALTH_STEEL/public/assets/levels/tiled/tilesets/Tilemap_color3.tsj`, not in Babylon runtime configuration.
+Terrain collision is authored in `stealth-steel/public/assets/levels/tiled/tilesets/Tilemap_color3.tsj`, not in Babylon runtime configuration.
 
 1. Open `Tilemap_color3.tsj` in Tiled.
 2. Select a tile and switch the tileset view to **Tile Collision Editor**.
@@ -185,12 +185,12 @@ For another pass:
 ## Related Folder Structure
 
 ```text
-STEALTH_STEEL/plugins/
+stealth-steel/plugins/
 +-- tiled-babylon-lite/
     +-- index.js                 Reusable TMJ/TSJ validation and loading
     +-- README.md                Supported-format and library-audit notes
 
-STEALTH_STEEL/public/
+stealth-steel/public/
 +-- assets/
 |   +-- terrain/
 |       +-- tilesets/
@@ -211,7 +211,7 @@ STEALTH_STEEL/public/
         +-- icons/
             +-- *-spawner.svg                    Editor-only placement icons
 
-STEALTH_STEEL/src/test/
+stealth-steel/src/test/
 +-- tiled-level.test.js          Level data, origin, and collision import
 +-- tiled-terrain.test.js        Runtime collision conversion
 +-- reactive-decoration-tiled.test.js  Object authoring and asset contract

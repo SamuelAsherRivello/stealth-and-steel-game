@@ -10,8 +10,8 @@ See proposal.md for motivation. The root package currently launches Vite, and it
 
 ## Decisions
 
-1. Set Vite's root to `STEALTH_STEEL` from the existing root configuration, retaining relative deployment base and BIS JSX configuration. Keep root `dist/` through an explicit output path. Keeping the root HTML would divide the application; placing it in public would bypass HTML transformation.
-2. Move `src` to `STEALTH_STEEL/src/runtime`, `test` to `STEALTH_STEEL/src/test`, and test runner/smoke scripts into that test tree. Preserve runtime organization below runtime. Resolve test filesystem paths relative to each file and repository configuration paths separately.
+1. Set Vite's root to `stealth-steel` from the existing root configuration, retaining relative deployment base and BIS JSX configuration. Keep root `dist/` through an explicit output path. Keeping the root HTML would divide the application; placing it in public would bypass HTML transformation.
+2. Move `src` to `stealth-steel/src/runtime`, `test` to `stealth-steel/src/test`, and test runner/smoke scripts into that test tree. Preserve runtime organization below runtime. Resolve test filesystem paths relative to each file and repository configuration paths separately.
 3. Move `public` into the application; map old image categories into `assets/images`, archer into `images/enemies`, audio and levels into assets, UI artwork into images/ui, and Tiled palette icons into images/ui/spawners. Documentation screenshots stay with documentation. Rewrite Tiled relative references from their old absolute target to its mapped new location without changing level data.
 4. Retain Aseprite files beside images, updating the ignored goblin filename. These authoring files now sit in public as explicitly requested and Vite can copy them into production output; Git-ignore alone does not exclude public files from a local build.
 5. Move all vendor archives together and update only the local dependency paths in package and lockfile. Existing versions and package integrity values remain stable.

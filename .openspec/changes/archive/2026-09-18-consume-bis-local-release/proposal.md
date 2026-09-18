@@ -39,7 +39,7 @@ None.
 ## Impact
 
 - Affects the game's root `package.json` and `package-lock.json`, the vendored
-  `STEALTH_STEEL/vendor` BIS tarball, provenance/inventory metadata, and
+  `stealth-steel/vendor` BIS tarball, provenance/inventory metadata, and
   compatibility or release tests as needed.
 - Reads the adjacent BIS repository and its package output, but does not modify
   or publish that repository.

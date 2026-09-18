@@ -22,8 +22,8 @@ None.
 
 ## Impact
 
-- Player movement integration in `STEALTH_STEEL/src/runtime/characters/player/player.js` and hiding orchestration in `STEALTH_STEEL/src/runtime/main.js`.
-- Reuses `STEALTH_STEEL/src/runtime/systems/perception/player-hidden.js` overlap semantics and reactive decoration interaction centers.
+- Player movement integration in `stealth-steel/src/runtime/characters/player/player.js` and hiding orchestration in `stealth-steel/src/runtime/main.js`.
+- Reuses `stealth-steel/src/runtime/systems/perception/player-hidden.js` overlap semantics and reactive decoration interaction centers.
 - Adds focused transition tests and browser verification for keyboard and virtual joystick behavior.
 - No new dependencies, artwork changes, or changes to other actors' movement.
 

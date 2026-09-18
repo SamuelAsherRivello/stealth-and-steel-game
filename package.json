@@ -8,8 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node STEALTH_STEEL/src/test/run-tests.mjs",
-    "test:publish": "node --test STEALTH_STEEL/src/test/release/pages-publishing.test.js STEALTH_STEEL/src/test/release/release-metadata.test.js",
+    "test": "node stealth-steel/src/test/run-tests.mjs",
+    "test:publish": "node --test stealth-steel/src/test/release/pages-publishing.test.js stealth-steel/src/test/release/release-metadata.test.js",
     "typecheck:bis-contract": "tsc --project tsconfig.bis-contract.json"
   },
   "devDependencies": {
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@babylonjs/lite": "^1.25.0",
-    "@bis/integration": "file:STEALTH_STEEL/vendor/bis-integration-0.0.7.tgz",
+    "@bis/integration": "file:stealth-steel/vendor/bis-integration-0.0.7.tgz",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   }

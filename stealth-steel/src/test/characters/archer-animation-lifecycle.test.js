@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const ROOT = new URL("../../../../", import.meta.url);
 
 test("archer removes the previous animation before replaying another state", async () => {
-  const source = await readFile(new URL("STEALTH_STEEL/src/runtime/characters/enemies/archer/archer.js", ROOT), "utf8");
+  const source = await readFile(new URL("stealth-steel/src/runtime/characters/enemies/archer/archer.js", ROOT), "utf8");
 
   assert.match(source, /removeSpriteAnimation\(manager, active\)/);
 });

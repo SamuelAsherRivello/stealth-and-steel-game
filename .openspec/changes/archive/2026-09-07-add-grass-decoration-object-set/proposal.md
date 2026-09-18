@@ -22,4 +22,4 @@ None.
 
 ## Impact
 
-Implementation will affect `STEALTH_STEEL/src/runtime/main.js`, environment decoration modules, level occupancy extraction, sprite loading/rendering, and focused environment tests. Assets will be copied from `C:/Users/srive/Downloads/Tiny Swords (Organized)/Decorations/Misc/10.png` and `11.png` into project assets during implementation. Existing Tiled reactive bushes retain their behavior. No new dependency or editor UI is required.
+Implementation will affect `stealth-steel/src/runtime/main.js`, environment decoration modules, level occupancy extraction, sprite loading/rendering, and focused environment tests. Assets will be copied from `C:/Users/srive/Downloads/Tiny Swords (Organized)/Decorations/Misc/10.png` and `11.png` into project assets during implementation. Existing Tiled reactive bushes retain their behavior. No new dependency or editor UI is required.

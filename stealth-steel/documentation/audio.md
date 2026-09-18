@@ -1,6 +1,6 @@
 # Sound effects
 
-All files live in `STEALTH_STEEL/public/assets/audio/sfx`. Change assignments in `STEALTH_STEEL/src/runtime/audio/sfx.js`.
+All files live in `stealth-steel/public/assets/audio/sfx`. Change assignments in `stealth-steel/src/runtime/audio/sfx.js`.
 The Settings SFX slider controls these sounds, including currently playing sounds.
 
 | Event | File |

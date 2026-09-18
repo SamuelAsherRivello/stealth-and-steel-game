@@ -74,7 +74,7 @@ presentation and contain no logo.
 
 ## Asset mapping
 
-All files are deployed under STEALTH_STEEL/public/ui/tiny-swords/.
+All files are deployed under stealth-steel/public/ui/tiny-swords/.
 RegularPaper.png and BigBlueButton_Regular.png are 320x320 source sheets.
 Their nine 64x64 tiles begin at x/y 0, 128, and 256; the intervening 64px
 gutters are excluded. CSS grid renders the corners and edges at 32px,

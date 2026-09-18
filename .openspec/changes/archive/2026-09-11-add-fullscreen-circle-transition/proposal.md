@@ -21,6 +21,6 @@ The game previously appeared all at once when loading or resetting a run. A shor
 
 ## Impact
 
-- `STEALTH_STEEL/index.html` and `src/runtime/ui/style.css` provide the SVG blackout layer and its visual stacking.
+- `stealth-steel/index.html` and `src/runtime/ui/style.css` provide the SVG blackout layer and its visual stacking.
 - `src/runtime/ui/fullscreen-transition.js`, startup preloader, and game-run orchestration own timing, target cropping, and restart sequencing.
 - Focused UI tests and real-browser QA cover the circle endpoints, 250 ms timing, target-div crop, startup menu, and restart flow.

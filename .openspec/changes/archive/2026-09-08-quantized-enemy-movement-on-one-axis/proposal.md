@@ -22,6 +22,6 @@ None.
 
 ## Impact
 
-- Affects enemy actor movement implementations under `STEALTH_STEEL/src/runtime/characters/enemies/` and shared movement utilities under `STEALTH_STEEL/src/runtime/gameplay/game-logic.js`.
+- Affects enemy actor movement implementations under `stealth-steel/src/runtime/characters/enemies/` and shared movement utilities under `stealth-steel/src/runtime/gameplay/game-logic.js`.
 - Adds or updates enemy movement tests and may update browser smoke coverage.
 - Requires no new dependencies, asset changes, or level-format changes.

@@ -30,7 +30,7 @@ Each animation descriptor contains:
    direction, frame duration, and native canvas or export-cell size.
 2. Export one uniform, single-row PNG sheet per animation tag.
 3. Keep the `.aseprite` file in a non-public source-assets directory.
-4. Put runtime PNGs under `STEALTH_STEEL/public/assets/images/` and describe them in a frozen catalog.
+4. Put runtime PNGs under `stealth-steel/public/assets/images/` and describe them in a frozen catalog.
 5. Create a concrete `AnimatedParticleEffect` subclass whose static
    `descriptor` selects one catalog entry.
 

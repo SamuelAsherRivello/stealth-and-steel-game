@@ -18,7 +18,7 @@
 
 - 33 focused Node tests passed covering gravity, player movement/state, knockback, damage, and hiding. Gravity tests were first run red before implementation.
 - Production build passed (`npm run build`).
-- Browser harness: `http://localhost:5173/test/browser/bush-gravity.html`, checked with `STEALTH_STEEL/src/test/browser/check-bush-gravity.cjs`; keyboard and pointer-driven joystick checks passed for both-axis pull, exact arrival, held/released input, strict minimum-distance boundary, full exit/re-entry, blocking geometry, knockback, unavailable bush, and disabled input. Fresh actor construction verified reset behavior.
+- Browser harness: `http://localhost:5173/test/browser/bush-gravity.html`, checked with `stealth-steel/src/test/browser/check-bush-gravity.cjs`; keyboard and pointer-driven joystick checks passed for both-axis pull, exact arrival, held/released input, strict minimum-distance boundary, full exit/re-entry, blocking geometry, knockback, unavailable bush, and disabled input. Fresh actor construction verified reset behavior.
 - Live game: `http://localhost:5173/`; entered bush at cell (3,7), verified hidden perception state and visible H/opacity feedback. Screenshots: `output/playwright/c059-center.png` and `output/playwright/c059-game.png`.
 - User correction implemented: **minimum distance** is 0.75 of the grid width; gravity requires distance strictly less than it. Approaching within an unconsumed overlap remains eligible.
 

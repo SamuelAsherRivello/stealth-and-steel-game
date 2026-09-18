@@ -56,7 +56,7 @@ HUD approval remains pending; no later milestone was implemented.
 
 Implemented on local `main`, tracking `origin/main`, after the requested
 fast-forward-only pull reported Already up to date. Base: `8de8920`.
-The repository now uses `STEALTH_STEEL/` and the `.openspec/` CLI adapter.
+The repository now uses `stealth-steel/` and the `.openspec/` CLI adapter.
 
 ## Accepted direction
 
@@ -74,7 +74,7 @@ Tiny Swords goal artwork with improved contrast.
 
 ## Implementation and source mapping
 
-All production paths below are relative to `STEALTH_STEEL/`.
+All production paths below are relative to `stealth-steel/`.
 Source UI root: `C:\Users\srive\Downloads\Tiny Swords (Organized)\UI`.
 Only six selected PNGs are installed in `public/ui/tiny-swords/`.
 

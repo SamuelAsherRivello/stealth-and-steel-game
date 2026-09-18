@@ -4,13 +4,13 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../../', import.meta.url);
-const vendor = new URL('STEALTH_STEEL/vendor/', root);
+const vendor = new URL('stealth-steel/vendor/', root);
 const installed = new URL('node_modules/@bis/integration/', root);
 const json = async url => JSON.parse(await readFile(url, 'utf8'));
 const hash = async url => createHash('sha256').update(await readFile(url)).digest('hex');
 const inventory = await json(new URL('bis-package-inventory.json', vendor));
 const manifest = await json(new URL('package.json', root));
-assert.equal(manifest.dependencies['@bis/integration'], `file:STEALTH_STEEL/vendor/${inventory.artifact}`);
+assert.equal(manifest.dependencies['@bis/integration'], `file:stealth-steel/vendor/${inventory.artifact}`);
 assert.equal(await hash(new URL(inventory.artifact, vendor)), inventory.sha256, 'Archive differs from the recorded snapshot');
 for (const [path, expected] of Object.entries(inventory.files)) {
   assert.equal(await hash(new URL(path, installed)), expected, `Installed package differs: ${path}`);

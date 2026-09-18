@@ -35,7 +35,7 @@ and update only the BIS-consumption scope.
 2. Run `npm pack` for `@bis/integration` in the BIS workspace, capture the
    generated tarball, inspect its `package/package.json` and archive file list,
    and compute SHA-256.
-3. Copy the tarball into `STEALTH_STEEL/vendor` using a versioned filename,
+3. Copy the tarball into `stealth-steel/vendor` using a versioned filename,
    regenerate the vendor inventory, and update `BIS_PROVENANCE.md` with the
    source checkout, version, artifact path, hash, and verification date.
 4. Point the game's dependency at the vendored tarball and refresh the game's

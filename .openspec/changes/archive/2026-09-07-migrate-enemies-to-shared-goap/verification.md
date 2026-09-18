@@ -54,7 +54,7 @@ Chrome throttled these background automation tabs: observed frame intervals were
 
 ## Scope and handoff
 
-The reusable action contract, profile units, compatibility matrix, folder structure and two-profile melee example are in `STEALTH_STEEL/src/runtime/ai/README.md`. Deliberate changes are Archer approach-to-range, stable valid bush binding, and bounded invalid-plan recovery. Legacy controller modules remain available to historical fixtures/tests but are absent from production factory wiring. Player, Sheep, defense probabilities, damage/stat tuning, Tiled authoring, and unrelated UI/camera changes were not migrated by C063.
+The reusable action contract, profile units, compatibility matrix, folder structure and two-profile melee example are in `stealth-steel/src/runtime/ai/README.md`. Deliberate changes are Archer approach-to-range, stable valid bush binding, and bounded invalid-plan recovery. Legacy controller modules remain available to historical fixtures/tests but are absent from production factory wiring. Player, Sheep, defense probabilities, damage/stat tuning, Tiled authoring, and unrelated UI/camera changes were not migrated by C063.
 
 Implementation acceptance preceded release work. On 2026-09-07, the user approved the result and requested synchronization, archive, commit, push, and a new release. C063's three delta capabilities were verified against the synchronized main specifications before archiving; all 48 main specifications validated and all 28 task IDs were preserved.
 

@@ -27,7 +27,7 @@ None.
 
 ## Impact
 
-- Affects character actor modules under `STEALTH_STEEL/src/runtime/characters/` and shared coordinate/collider logic under `STEALTH_STEEL/src/runtime/gameplay/`.
-- Affects spawner setup, diagnostics, perception position reads, render-depth ordering, and visual spawn/death transforms in `STEALTH_STEEL/src/runtime/main.js` and related systems.
+- Affects character actor modules under `stealth-steel/src/runtime/characters/` and shared coordinate/collider logic under `stealth-steel/src/runtime/gameplay/`.
+- Affects spawner setup, diagnostics, perception position reads, render-depth ordering, and visual spawn/death transforms in `stealth-steel/src/runtime/main.js` and related systems.
 - Requires migration and regression coverage for all seven runtime characters.
 - Does not require new dependencies, art-file renames, or a combat-collider scale override.

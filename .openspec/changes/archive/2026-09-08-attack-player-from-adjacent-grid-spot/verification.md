@@ -10,9 +10,9 @@
 
 ## Automated evidence
 
-- Before implementation: `node --test STEALTH_STEEL/src/test/characters/adjacent-player-attack.test.js` produced **74 failures / 53 passes**, with the new attack assertions failing against the original behavior. Evidence: `.c056-regression-before.log`.
+- Before implementation: `node --test stealth-steel/src/test/characters/adjacent-player-attack.test.js` produced **74 failures / 53 passes**, with the new attack assertions failing against the original behavior. Evidence: `.c056-regression-before.log`.
 - Final focused coverage includes 152 tests: four combat types and Monk across four offsets and all four awareness states; negative offsets; death/disposal/pause; action locks; repeated attacks; captured Archer target and release; configurable grid size; non-centered positions; alert entry; navigation and blocked-wait interruption; Goblin priority and exact recovery timing; Lancer directional rendering and heading locks.
-- `node --test STEALTH_STEEL/src/test/characters/*.test.js STEALTH_STEEL/src/test/systems/perception/*.test.js`: **375 passed, 0 failed**. Evidence: `.c056-related-tests.log`.
+- `node --test stealth-steel/src/test/characters/*.test.js stealth-steel/src/test/systems/perception/*.test.js`: **375 passed, 0 failed**. Evidence: `.c056-related-tests.log`.
 - `npm run build`: passed.
 - `openspec validate attack-player-from-adjacent-grid-spot --strict`: passed.
 - Scoped `git diff --check`: passed (Git reports normal LF/CRLF conversion warnings).
@@ -27,7 +27,7 @@ Run with a Playwright CLI session:
 
 ```powershell
 npx --yes --package @playwright/cli playwright-cli -s=c056 open http://localhost:5173/test/browser/adjacent-player-attack.html
-npx --yes --package @playwright/cli playwright-cli -s=c056 run-code --filename=STEALTH_STEEL/src/test/browser/check-adjacent-player-attack.cjs
+npx --yes --package @playwright/cli playwright-cli -s=c056 run-code --filename=stealth-steel/src/test/browser/check-adjacent-player-attack.cjs
 ```
 
 All **80 browser scenarios passed** (5 types x 4 states x 4 directions). Each combat enemy started on its first active update, performed at least three attacks during the four-second scenario, and never moved during an attack. Archer arrows released without duplicate shots. Monk recorded zero attacks and zero heals. Real sprite and arrow rendering was inspected in screenshots, including the Lancer's upward thrust. Evidence: `.c056-browser-results.log` and `.c056-browser-1-0.png`, `.c056-browser--1-0.png`, `.c056-browser-0-1.png`, `.c056-browser-0--1.png`.

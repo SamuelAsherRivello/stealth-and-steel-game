@@ -4,7 +4,7 @@ Enemy visual perception is currently represented by internal geometry and debug 
 
 ## What Changes
 
-- Add the supplied 64x64 shadow asset as `STEALTH_STEEL/public/assets/images/terrain/tile-shadow.png`.
+- Add the supplied 64x64 shadow asset as `stealth-steel/public/assets/images/terrain/tile-shadow.png`.
 - Render a centered shadow in every unobstructed grid cell in each living enemy's visual perception range during normal gameplay.
 - Stop rendering shadows at terrain or living-character blockers; do not render cells beyond the first blocker.
 - Apply the existing visual perception falloff: 40%, 30%, 20%, and 10% by distance.

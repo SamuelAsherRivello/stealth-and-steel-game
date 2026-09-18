@@ -26,7 +26,7 @@ This archive is packed from the adjacent BIS checkout for deterministic game bui
 
 This release adds the paid-continuation, trophy-collection, and queued toast APIs used by the game. BIS mounts at native 100%; the game owns restart after confirmed logout.
 
-Run `node STEALTH_STEEL/tools/verify-bis-package.mjs` from the game root after installation.
+Run `node stealth-steel/tools/verify-bis-package.mjs` from the game root after installation.
 See the [coordinating runbook](https://github.com/SamuelAsherRivello/blockchain-integration-service/blob/main/BIS/documentation/SMOKE_TEST_BIS_TO_GAME.md)
 for setup and remaining live/device acceptance.
 

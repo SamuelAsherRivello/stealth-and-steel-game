@@ -22,5 +22,5 @@ None.
 
 ## Impact
 
-Affected areas are `STEALTH_STEEL/src/runtime/main.js`, shared terrain/perception cell classification, and perception/shadow regression tests. Existing terrain records already expose `gameCell` and `blocked`; tile sight metadata may be added without changing movement physics or dependencies.
+Affected areas are `stealth-steel/src/runtime/main.js`, shared terrain/perception cell classification, and perception/shadow regression tests. Existing terrain records already expose `gameCell` and `blocked`; tile sight metadata may be added without changing movement physics or dependencies.
 

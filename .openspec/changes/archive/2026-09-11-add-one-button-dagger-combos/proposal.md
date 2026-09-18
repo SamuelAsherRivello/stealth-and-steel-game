@@ -27,6 +27,6 @@ The player's one-button dagger attack is currently a flat repeated swing: it nei
 
 ## Impact
 
-- Affected runtime areas: `STEALTH_STEEL/src/runtime/characters/player/player.js`, `gameplay/player-melee.js`, `main.js`, audio hooks, and particle-effect lifecycle integration.
+- Affected runtime areas: `stealth-steel/src/runtime/characters/player/player.js`, `gameplay/player-melee.js`, `main.js`, audio hooks, and particle-effect lifecycle integration.
 - Affected test areas: player knife/input, player melee/combat health, virtual controller, particle effects, audio, and browser-visible knife-combo fixtures.
 - No new dependency, player-facing settings UI, weapon, button, projectile, collider shape, player-controlled jump, or enemy status system is introduced.

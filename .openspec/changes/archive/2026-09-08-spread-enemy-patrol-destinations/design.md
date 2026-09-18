@@ -1,6 +1,6 @@
 ## Context
 
-See proposal.md for motivation and scope. The live game creates shared brains in `STEALTH_STEEL/src/runtime/main.js`. The shared action in `ai/actions/patrol.js` randomly chooses reachable candidates for Goblin's bounded route patrol; other profiles use timed one-cell steps and always continue straight when possible. Changing the older `enemy-patrol-controller.js` alone would miss production behavior.
+See proposal.md for motivation and scope. The live game creates shared brains in `stealth-steel/src/runtime/main.js`. The shared action in `ai/actions/patrol.js` randomly chooses reachable candidates for Goblin's bounded route patrol; other profiles use timed one-cell steps and always continue straight when possible. Changing the older `enemy-patrol-controller.js` alone would miss production behavior.
 
 The brain currently exposes an injected random chooser and navigation snapshots, but no patrol destination. Its world callback contains sheep and bushes, so teammate data needs a separate input to avoid making enemies eligible combat targets accidentally. Navigation already provides bounded, scheduler-budgeted reachability and live step validation.
 

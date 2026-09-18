@@ -17,7 +17,7 @@ The system SHALL represent every supported particle effect with explicit runtime
 - **THEN** it requests exported image assets and does not request or parse the `.aseprite` source file
 
 ### Requirement: Every effect has an independently usable class
-The system SHALL provide one concrete particle-effect class for each supported animation, organized under an effect-specific `STEALTH_STEEL/src/runtime/particle-fx/` folder and usable independently of the preview screen.
+The system SHALL provide one concrete particle-effect class for each supported animation, organized under an effect-specific `stealth-steel/src/runtime/particle-fx/` folder and usable independently of the preview screen.
 
 #### Scenario: Consumer constructs one effect
 - **WHEN** a consumer supplies the rendering and animation dependencies required by one concrete effect class

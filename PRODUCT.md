@@ -36,8 +36,8 @@ Preserve the Stealth and Steel name, supplied Tiny Swords visual assets, and the
 ## Evidence on Hand
 
 - [README.md](README.md) documents the game purpose, tooling, local run commands, and public demo.
-- [Tiny Swords UI assets](STEALTH_STEEL/public/ui/tiny-swords) and the [Stealth & Steel logo](STEALTH_STEEL/public/ui/tiny-swords/stealth-and-steel-logo-transparent.png) are supplied project assets.
-- Runtime source, automated tests, and Tiled-authored maps are present under `STEALTH_STEEL/`.
+- [Tiny Swords UI assets](stealth-steel/public/ui/tiny-swords) and the [Stealth & Steel logo](stealth-steel/public/ui/tiny-swords/stealth-and-steel-logo-transparent.png) are supplied project assets.
+- Runtime source, automated tests, and Tiled-authored maps are present under `stealth-steel/`.
 
 ## Product Principles
 
