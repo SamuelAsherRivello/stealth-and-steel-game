@@ -79,11 +79,16 @@ checkout separate and do not modify, commit, push, publish, or symlink it.
 
    Run the full `npm.cmd test` when practical, but distinguish failures from
    unrelated pre-existing dirty work rather than changing it silently.
-9. Run the game in the existing Vite server and reload the real browser page.
+9. After the new tarball is installed and `verify-bis-package.mjs` passes,
+   remove older `STEALTH_STEEL/vendor/bis-integration-*.tgz` files, preserving
+   only the currently referenced package. Confirm the lockfile and verifier
+   still resolve the retained tarball after cleanup. Do not delete archives
+   from the adjacent BIS checkout.
+10. Run the game in the existing Vite server and reload the real browser page.
    Confirm normal start without an account, open Settings → Account, verify the
    visible BIS version matches the packed package, and check that no wallet
    action is initiated. Record the live URL and any console/network errors.
-10. Finish with a scoped status/diff review. `git diff --check` must pass for
+11. Finish with a scoped status/diff review. `git diff --check` must pass for
     the files changed by this skill; report unrelated existing whitespace or
     dirty files separately. Report artifact path, version, SHA-256, source
     commit, inventory count, tests, typecheck, build, and browser result.

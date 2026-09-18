@@ -1,10 +1,12 @@
 # Current BIS release package snapshot (2026-09-18)
 
-Current artifact: bis-integration-0.0.3.tgz. SHA-256: 70ddcf667f4ef16f2b659df42f64ed4e33ef54fd5880eb4bcf2166246a9cecd1. Source commit: f5b52652cfc1f52f7454c1248aa17e6047539a89. The 114-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, and type verification were completed for this snapshot. This is the verified local BIS 0.0.3 package snapshot used by the game.
+Current artifact: bis-integration-0.0.7.tgz. SHA-256: 83935671943c518bec883dbb8f58e56f0252ef605887fae03a2e9c78f37f2c65. Source commit: ff3febf7df7fb2f30eaf606c2a66a0fdb03785b6. The 115-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, type verification, and live browser verification were completed for this snapshot. This is the verified local BIS 0.0.7 package snapshot used by the game.
 
 ### Game-consumable public API changes
 
-- `BisGameServices.hasItemSupport(): boolean` reports item-path availability when the Player Wallet is active in a supported browser environment; it does not require a Game Wallet or initiate wallet operations.
+- `BisGameServices.hasItemSupport(): boolean` reports item-path availability when the Player Wallet is active in a supported browser environment; it does not require a Game Wallet or initiate wallet operations. The game world Items HUD consumes this capability.
+- `BisGameServices.hasAssetMintingSupport(): boolean` reports whether the Player Wallet, a distinct ready Game Wallet, matching network, and minimum minting funds are available. The BIS Account UI consumes this read-only capability; the game does not initiate minting from it.
+- `BisGameServices.hasContractSupport(): boolean` reports whether both distinct wallets are ready on the selected network. The BIS Account UI consumes this read-only capability; individual contract operations retain their own authoritative checks.
 - Game items remain admin-minted and consumed by the game. Trophy rewards remain a separate one-at-a-time mint-and-immediate-transfer flow to the Player Wallet.
 
 This archive is packed from the adjacent BIS checkout for deterministic game builds. It is not a published GitHub package or release, and it does not authorize wallet operations. The game consumes the public BIS host-game API and remains playable without an account. See [play and setup instructions](../documentation/treasure-lto.md).
