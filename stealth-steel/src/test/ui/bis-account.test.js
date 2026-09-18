@@ -77,6 +77,12 @@ test('item support becomes unavailable when the Player Wallet is no longer activ
  f.adapter.dispose();
 });
 
+test('new wallet-backed capabilities default to false when the adapter has no BIS service methods', async () => {
+ const f=fixture();await f.adapter.ready();
+ assert.equal(f.adapter.hasAssetMintingSupport(), false);
+ assert.equal(f.adapter.hasContractSupport(), false);
+ f.adapter.dispose();
+});
 test('reports treasure readiness only when player and game wallet setup are usable', async () => {
  const f = fixture();
  const wallet = {getState:()=>({profileId:'saved-game',status:'ready'}),dispose(){}};

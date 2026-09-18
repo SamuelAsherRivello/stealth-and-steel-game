@@ -1,9 +1,4 @@
-# treasure-rendering Specification
-
-## Purpose
-This capability makes authored treasure visible in the level for every player while ensuring that treasure interaction is available only when the required BIS account and game-wallet setup is ready.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Authored treasure is rendered in the level
 The game SHALL render one visible treasure chest for each valid treasure spawner in the loaded level only when the BIS account reports `hasContractSupport()` as true. The chest SHALL use the spawner's authored position and the level's established world-depth ordering. When contract support is false or unavailable, the treasure chest and its sensor SHALL not be rendered.
@@ -50,14 +45,3 @@ The game SHALL expose treasure's enter interaction and treasure window only when
 #### Scenario: BIS setup is ready
 - **WHEN** contract support is true and the player enters the treasure sensor with a usable BIS account and game wallet
 - **THEN** the treasure window opens through the existing treasure flow and the treasure pause is applied
-
-### Requirement: Rendering and interaction remain independently recoverable
-The game SHALL keep treasure rendering alive when BIS readiness changes, and SHALL permit interaction to become available after setup becomes ready without requiring the level to be rebuilt. A failed or unavailable treasure action SHALL not remove the visible chest or block unrelated gameplay.
-
-#### Scenario: Account becomes ready after level load
-- **WHEN** a level has already rendered a non-interactive treasure chest and the required BIS setup later becomes ready
-- **THEN** the existing chest can become interactive without duplicating its visual instance or sensor
-
-#### Scenario: Treasure operation is unavailable
-- **WHEN** a ready-account treasure interaction reports an unavailable or unsuccessful operation
-- **THEN** the chest remains rendered, unrelated movement and gameplay remain usable, and the treasure flow reports its existing unavailable state

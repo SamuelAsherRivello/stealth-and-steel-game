@@ -10,7 +10,7 @@ export function shouldSkipIntro({ isDevelopment = false, search = "" } = {}) {
   return isDevelopment && new URLSearchParams(search).get("skipIntro") === "true";
 }
 
-export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = false, frameElement = null, documentRef = globalThis.document }) {
+export function createStartGamePrompt({ host, onStart, onItems, itemsVisible = false, itemsEnabled = false, frameElement = null, documentRef = globalThis.document }) {
   const menu = createMenu({
     titleText: "Start Menu",
     bodyText: START_PROMPT_BODY,
@@ -27,6 +27,7 @@ export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = f
   });
   const { backdrop, panel } = menu;
   const [startButton, itemsButton] = menu.buttons;
+  itemsButton.hidden = !itemsVisible;
   itemsButton.disabled = !itemsEnabled;
   backdrop.className += " start-game-prompt-backdrop";
   backdrop.setAttribute("data-start-game-prompt", "true");
@@ -52,6 +53,7 @@ export function createStartGamePrompt({ host, onStart, onItems, itemsEnabled = f
     startButton,
     itemsButton,
     setItemsEnabled(enabled) { itemsButton.disabled = !enabled; },
+    setItemsSupported(supported) { itemsButton.hidden = !supported; },
     close() {
       startButton.removeEventListener("click", handleStart);
       itemsButton.removeEventListener("click", handleItems);

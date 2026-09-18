@@ -1171,6 +1171,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     // Equipment refreshes can briefly omit its profile while account assets settle.
     // The BIS context is the authoritative login state for opening Items.
     itemsEnabled = accountHost.hasItemSupport();
+    startGamePrompt?.setItemsSupported(itemsEnabled);
     startGamePrompt?.setItemsEnabled(itemsEnabled);
   };
   const openItems = () => {
@@ -1194,11 +1195,12 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown.png`, {
     gridSize: [64, 64], sampling: "nearest",
   });
-  void accountHost.ready().catch(() => {}); // Wallet availability never blocks ordinary game startup.
-  const treasureAtlas = await loadSpriteAtlas(engine,
-    `${import.meta.env.BASE_URL}assets/images/ui/spawners/treasure-chest.png`, {gridSize:[64,64],sampling:'nearest'});
+  await accountHost.ready().catch(() => {}); // Capability reads require the BIS session boundary; wallet operations remain read-only here.
+  const contractSupported = accountHost.hasContractSupport();
+  const treasureAtlas = contractSupported ? await loadSpriteAtlas(engine,
+    `${import.meta.env.BASE_URL}assets/images/ui/spawners/treasure-chest.png`, {gridSize:[64,64],sampling:'nearest'}) : null;
   const treasureLayers=[];
-  const treasureSpawners=(level.treasureSpawners??[]).map(authored=>{
+  const treasureSpawners=contractSupported ? (level.treasureSpawners??[]).map(authored=>{
     const position=gridCellToWorldCenter(authored.gameCell,TILE_SIZE);
     const spawner=createObjectSpawner({type:'treasure',position,createObject:position=>{
       const layer=createSprite2DLayer(treasureAtlas,{capacity:1,order:getYSortedLayerOrder(position.y,worldBounds),pivot:[0.5,0.5]});
@@ -1206,7 +1208,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       addSpriteRendererLayer(renderer,camera.attachLayer(layer));treasureLayers.push(layer);
       return createTreasureChest({position,sensor:authored.sensor,canEnter:()=>accountHost.isTreasureReady(),onEnter:()=>void treasureUi.open()});
     }});spawner.initialize();return spawner;
-  });
+  }) : [];
   const goalLayer = createSprite2DLayer(goalAtlas, {
     capacity: 1, order: TILE_MAP_SUB_Z.groundDecorations, pivot: [0.5, 0.5],
   });
@@ -1231,8 +1233,9 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       state: gameStateMachine.state,
     }),
   });
-  const levelCompleteUi = createLevelCompleteUi({host:domBody,frameElement:gameFrame,onContinue:()=>levelReward.next(),onRestart:()=>levelReward.restart(),onCollect:()=>levelReward.collect(),onCheck:()=>levelReward.check(),onAcknowledge:()=>levelReward.acknowledge()});
-  const levelReward = createLevelReward({accountHost,ui:levelCompleteUi,progress,gold:goldCounter});
+  const showTrophyActions = () => accountHost.hasAssetMintingSupport();
+  const levelCompleteUi = createLevelCompleteUi({host:domBody,frameElement:gameFrame,showTrophyActions,onContinue:()=>levelReward.next(),onRestart:()=>levelReward.restart(),onCollect:()=>levelReward.collect(),onCheck:()=>levelReward.check(),onAcknowledge:()=>levelReward.acknowledge()});
+  const levelReward = createLevelReward({accountHost,ui:levelCompleteUi,progress,gold:goldCounter,showTrophyActions});
   const gameStateMachine = createGameStateMachine();
   const levelLostUi = createLevelLostUi({host:domBody,frameElement:gameFrame,onPay:()=>paidContinue.pay(),onRestart:()=>paidContinue.restart()});
   const paidContinue = createPayToContinue({accountHost,ui:levelLostUi,restart:()=>progress.restart(),
@@ -1251,6 +1254,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       host: domBody,
       frameElement: gameFrame,
       onItems: openItems,
+      itemsVisible: itemsEnabled,
       itemsEnabled,
       onStart: () => {
         treasure.start();

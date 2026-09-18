@@ -125,6 +125,12 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     if (typeof supported === 'boolean') return supported;
     const player=session?.context?.getState?.()??{};
     return Boolean(player.profileId && player.phase === 'active');
+  }, hasAssetMintingSupport:()=>{
+    const supported=session?.services?.hasAssetMintingSupport?.();
+    return typeof supported === 'boolean' ? supported : false;
+  }, hasContractSupport:()=>{
+    const supported=session?.services?.hasContractSupport?.();
+    return typeof supported === 'boolean' ? supported : false;
   }, isTreasureReady:()=>{
     const player=session?.context?.getState?.()??{}, game=session?.gameWallet?.getState?.()??{};
     return Boolean(player.profileId && player.phase === 'active' && game.status === 'ready' && game.profileId && game.profileId !== player.profileId);

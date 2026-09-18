@@ -60,6 +60,17 @@ test("level complete requires Continue and ignores background clicks", () => {
   ui.dispose();
 });
 
+test("level complete hides trophy controls and copy without asset minting support", () => {
+  const host = new FakeElement();
+  const ui = createLevelCompleteUi({ host, documentRef, showTrophyActions: () => false });
+  ui.setState({ status: "error", canCollect: true, canCheck: true, message: "Trophies are unavailable." });
+  ui.show();
+  assert.equal(ui.collectButton.hidden, true);
+  assert.equal(ui.checkButton.hidden, true);
+  assert.doesNotMatch(ui.panel.children[1].children[0].textContent, /Trophies are unavailable/);
+  ui.dispose();
+});
+
 for (const outcome of ["level complete", "game complete", "paid loss"]) {
   test(`${outcome} menu blocks keyboard activation and background dismissal`, () => {
     const host = new FakeElement();

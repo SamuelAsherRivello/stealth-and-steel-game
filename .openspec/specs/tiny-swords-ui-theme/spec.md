@@ -55,7 +55,17 @@ C061 SHALL present the implemented HUD for explicit user approval before main-me
 
 ### Requirement: Existing actions remain recognizable and functional
 
-The themed UI SHALL retain existing outcome messages, available action labels, settings values, and gameplay effects. Instructions and keyboard hints SHALL describe Attack/V and movement, omitting Item/C activation while temporarily disabled. Attack SHALL use the fixed knife melee action. Other keyboard bindings SHALL remain available. The approved Start Menu SHALL show the Stealth & Steel logo above its blue Start Menu ribbon. Other menus SHALL NOT show the logo. Prompt bodies SHALL contain no decorative icons. Attack SHALL be the sole visible action button while Item is temporarily unavailable. Decorative artwork SHALL NOT intercept gameplay or control input outside intended interactive regions. Main menu SHALL refer to the existing Stealth Grid start screen. Status badges SHALL retain the meanings of suspicious, investigating, alert, and hidden indicators and their existing timing.
+The themed UI SHALL retain existing outcome messages, available action labels, settings values, and gameplay effects. Instructions and keyboard hints SHALL describe Attack/V and movement, omitting Item/C activation while temporarily disabled. Attack SHALL use the fixed knife melee action. Other keyboard bindings SHALL remain available. The approved Start Menu SHALL show the Stealth & Steel logo above its blue Start Menu ribbon. Other menus SHALL NOT show the logo. Prompt bodies SHALL contain no decorative icons. Attack SHALL be the sole visible action button while Item is temporarily unavailable. Decorative artwork SHALL NOT intercept gameplay or control input outside intended interactive regions. Main menu SHALL refer to the existing Stealth Grid start screen. Status badges SHALL retain the meanings of suspicious, investigating, alert, and hidden indicators and their existing timing. Trophy buttons and trophy-related completion text SHALL be rendered only when BIS reports `hasAssetMintingSupport()` as true; when rendered, the existing trophy operation readiness, disabled-state, uncertainty, and recovery behavior SHALL remain authoritative.
+
+#### Scenario: Trophy asset minting support is unavailable
+- **WHEN** level completion is shown and `hasAssetMintingSupport()` is false or unavailable
+- **THEN** trophy buttons and trophy-related text are not rendered
+- **AND** the player can still use the non-trophy completion actions that remain applicable
+
+#### Scenario: Trophy asset minting support is available
+- **WHEN** level completion is shown and `hasAssetMintingSupport()` is true
+- **THEN** the existing trophy buttons and trophy-related text are rendered
+- **AND** the existing trophy flow determines whether those controls are enabled
 
 #### Scenario: Simultaneous movement and attack
 - **WHEN** one pointer moves the joystick and another activates Attack
@@ -68,11 +78,11 @@ The themed UI SHALL retain existing outcome messages, available action labels, s
 
 #### Scenario: Completion reward and progression (BIS C6)
 - **WHEN** the player reaches the level exit
-- **THEN** the themed prompt shows Level Completed with HUD gold counts and Collect Level N Trophy, Continue To Next Level and Restart Game
+- **THEN** the themed prompt shows Level Completed with HUD gold counts, and shows trophy collection controls and copy only when asset minting support is available
 - **AND** the final level in the active run order shows Game Completed with completed/total levels and omits Continue
 - **AND** collection uses the public BIS asset-collection controller, retains the menu and disables its actions during the bounded attempt
 - **AND** confirmed collection shows the awarded image toast and disables collection; uncertainty preserves the request for Check Trophy Status
-- **AND** guests, owned trophies and missing configuration cannot collect but can navigate
+- **AND** unsupported trophy capability does not prevent non-trophy navigation
 - **AND** Continue loads the next map in the active run order, while Restart Game starts the first map in the saved Map Order preference (Level1 by default) without clearing wallet state
 - **AND** the death menu uses Restart Game while retaining its paid revival action
 

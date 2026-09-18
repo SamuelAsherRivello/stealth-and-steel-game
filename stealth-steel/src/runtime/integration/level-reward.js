@@ -4,7 +4,7 @@ export function trophyForLevel(level) {
     iconUrl:`https://samuelasherrivello.github.io/blockchain-integration-service/assets/achievements/v2/level-${level}-trophy.png`};
 }
 
-export function createLevelReward({accountHost,ui,progress,gold}) {
+export function createLevelReward({accountHost,ui,progress,gold,showTrophyActions=()=>true}) {
   let controller,unsubscribe,disposed=false,visible=false,initializing=false;
   const update=()=>{if(!disposed&&controller)ui.setState(controller.getState());};
   const navigation=action=>{
@@ -23,7 +23,7 @@ export function createLevelReward({accountHost,ui,progress,gold}) {
     finally{initializing=false;}
   }
   return {
-    show(){if(visible||disposed)return;visible=true;ui.setCompletion({levelNumber:progress.current,levelsCompleted:progress.completed+1,totalLevels:progress.total,hasNext:progress.hasNext,collected:gold.collected,total:gold.total});ui.show();void initialize();},
+    show(){if(visible||disposed)return;visible=true;const trophyVisible=Boolean(showTrophyActions?.());ui.setCompletion({levelNumber:progress.current,levelsCompleted:progress.completed+1,totalLevels:progress.total,hasNext:progress.hasNext,collected:gold.collected,total:gold.total});ui.show();if(trophyVisible)void initialize();},
     collect:()=>controller?.collect(),
     check:()=>controller?controller.check():initialize(),
     acknowledge(){if(controller)return controller.acknowledge();ui.setState({needsAcknowledgment:false,message:''});},

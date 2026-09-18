@@ -35,7 +35,7 @@ export function createLevelLostUi({ host, onPay, onRestart, frameElement = null,
   };
 }
 
-export function createLevelCompleteUi({host, onContinue, onRestart = onContinue, onCollect = () => {}, onCheck = () => {}, onAcknowledge = () => {}, outcome = 'win', frameElement = null, documentRef = globalThis.document}) {
+export function createLevelCompleteUi({host, onContinue, onRestart = onContinue, onCollect = () => {}, onCheck = () => {}, onAcknowledge = () => {}, showTrophyActions = () => true, outcome = 'win', frameElement = null, documentRef = globalThis.document}) {
   if(outcome === 'loss'){const ui=createLevelLostUi({host,onPay:()=>{},onRestart,frameElement,documentRef});ui.payButton.hidden=true;return {...ui,button:ui.restartButton};}
   const menu = createMenu({titleText:'Level Completed',bodyText:'',frameElement,documentRef,
     buttonClicksOnly: true,
@@ -53,17 +53,18 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
   const pad=value=>String(Math.max(0,value)).padStart(2,'0');
   function render() {
     const final=!completion.hasNext;
+    const trophyVisible = Boolean(showTrophyActions?.());
     const heading=final?'Game Completed':'Level Completed';
     title.menuTitleLabel.textContent=heading;
     const gold=`${pad(completion.collected)}/${pad(completion.total)}`;
     body.textContent=final?`Great jobs. You completed ${completion.levelsCompleted}/${completion.totalLevels} levels. You collected ${gold} gold in the final level and reached the exit.`:`Great jobs. You collected ${gold} gold and reached the exit.`;
     const message=state.status==='owned'?'You already own this trophy.':state.status==='guest'?'Log in to collect this trophy.':state.message;
-    if(message)body.textContent+=` ${message}`;
+    if(trophyVisible && message)body.textContent+=` ${message}`;
     collectButton.menuLabel.textContent=`Collect Level ${completion.levelNumber} Trophy`;
-    collectButton.disabled=!state.canCollect || state.busy || state.needsAcknowledgment;
+    collectButton.hidden=!trophyVisible; collectButton.disabled=!trophyVisible || !state.canCollect || state.busy || state.needsAcknowledgment;
     continueButton.hidden=final; continueButton.disabled=state.busy || state.needsAcknowledgment;
     restartButton.disabled=state.busy || state.needsAcknowledgment;
-    checkButton.hidden=!state.canCheck; checkButton.disabled=state.busy;
+    checkButton.hidden=!trophyVisible || !state.canCheck; checkButton.disabled=!trophyVisible || state.busy;
     checkButton.menuLabel.textContent=state.status==='uncertain'?'Check Trophy Status':'Check Trophy Ownership';
     acknowledgeButton.hidden=!state.needsAcknowledgment; acknowledgeButton.disabled=state.busy;
     panel.setAttribute('aria-busy',String(state.busy));

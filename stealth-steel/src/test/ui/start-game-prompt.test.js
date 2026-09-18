@@ -76,6 +76,17 @@ test("start prompt places bolt Items below Start and enables it only for an acti
   prompt.close();
 });
 
+test("start prompt hides Items until item support is available", () => {
+  const host = new FakeElement();
+  const prompt = createStartGamePrompt({ host, onStart: () => {}, itemsVisible: false, itemsEnabled: false, documentRef });
+  assert.equal(prompt.itemsButton.hidden, true);
+  prompt.setItemsSupported(true);
+  assert.equal(prompt.itemsButton.hidden, false);
+  prompt.setItemsSupported(false);
+  assert.equal(prompt.itemsButton.hidden, true);
+  prompt.close();
+});
+
 test("start prompt blocks keyboard button activation", () => {
   const host = new FakeElement();
   let starts = 0;
