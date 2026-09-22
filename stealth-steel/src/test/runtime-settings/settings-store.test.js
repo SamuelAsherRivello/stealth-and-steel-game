@@ -209,3 +209,30 @@ test("URL mute parameters initialize their matching audio settings independently
   assert.equal(musicOnly.get(AUDIO_SETTING_KEYS.music), 0);
   assert.equal(musicOnly.get(AUDIO_SETTING_KEYS.sfx), 100);
 });
+
+test("URL mute parameters default to unmuted and preserve stored volumes unless true", () => {
+  const storage = createStorage({
+    [SETTINGS_STORAGE_KEY]: JSON.stringify({
+      version: SETTINGS_VERSION,
+      values: {
+        [AUDIO_SETTING_KEYS.music]: 35,
+        [AUDIO_SETTING_KEYS.sfx]: 65,
+      },
+    }),
+  });
+  const store = createSettingsStore(storage);
+
+  assert.deepEqual(
+    applyUrlAudioMuteParameters({ search: "", store }),
+    { musicMuted: false, sfxMuted: false },
+  );
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 35);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 65);
+
+  assert.deepEqual(
+    applyUrlAudioMuteParameters({ search: "?muteMusic=true", store }),
+    { musicMuted: true, sfxMuted: false },
+  );
+  assert.equal(store.get(AUDIO_SETTING_KEYS.music), 0);
+  assert.equal(store.get(AUDIO_SETTING_KEYS.sfx), 65);
+});
