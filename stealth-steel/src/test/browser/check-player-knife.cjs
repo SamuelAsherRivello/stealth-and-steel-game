@@ -50,7 +50,7 @@ async (page) => {
   s=await page.evaluate(() => {knifeQA.advance(.1);knifeQA.kill();return knifeQA.advance(1);});
   check(s.health[1]===25,'death cancels unfinished impact');
   await open();
-  await page.getByRole('button',{name:'Attack (V)',exact:true}).focus();
+  await page.getByRole('button',{name:'Action (V)',exact:true}).focus();
   await page.keyboard.press('Enter');
   s=await page.evaluate(() => knifeQA.advance(.5));
   check(s.impacts===1&&s.health[0]===75,'accessible Enter and coarse update');

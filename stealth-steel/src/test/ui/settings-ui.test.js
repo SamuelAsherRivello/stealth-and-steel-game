@@ -291,8 +291,9 @@ test("settings source composes required controls, persistence, and pause lifecyc
   assert.match(source, /applyFullscreen\(checked, documentRef\)/);
   assert.doesNotMatch(source, /DISPLAY_SETTING_KEYS/);
   assert.match(source, /createSliderControl\(\{ labelText, value: store\.get\(key\)/);
-  assert.match(source, /createMenuButton\(\{ displayText: "Clear All Settings"/);
-  assert.match(source, /createMenuButton\(\{ displayText: "Open GitHub"/);
+  assert.match(source, /createMenuButton\(\{ displayText: "Clear Local Storage"/);
+  assert.match(source, /createMenuButton\(\{ displayText: "Stealth & Steel"/);
+  assert.match(source, /createMenuButton\(\{ displayText: "BIS"/);
   assert.match(source, /PROJECT_GITHUB_URL = "https:\/\/github\.com\/SamuelAsherRivello\/stealth-and-steel-game"/);
   assert.match(source, /openExternal\(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer"\)/);
   assert.match(source, /store\.reset\(\)/);
@@ -349,7 +350,7 @@ test("developer settings opens above the main settings window and closes back to
   assert.equal(pauseCalls.join(","), "pause,resume");
 });
 
-test("developer settings opens the related GitHub project above Reset", () => {
+test("developer settings opens both related GitHub projects above local storage reset", () => {
   const documentRef = createDocument();
   const opened = [];
   const settingsUi = createSettingsUi({
@@ -363,17 +364,25 @@ test("developer settings opens the related GitHub project above Reset", () => {
   settingsUi.open();
   click(elementByClass(settingsUi.activeWindow.panel, "developer-settings-button"));
   const developerContent = elementByClass(settingsUi.developerWindow.panel, "developer-settings-controls");
-  const githubButton = elementByClass(settingsUi.developerWindow.actions, "settings-github-button");
+  const githubButtons = settingsUi.developerWindow.actions.children.slice(0, 2);
   const resetButton = elementByClass(settingsUi.developerWindow.actions, "settings-reset");
 
-  assert.equal(githubButton.textContent, "Open GitHub");
-  assert.equal(resetButton.textContent, "Clear All Settings");
-  click(githubButton);
-  assert.deepEqual(opened, [[
-    "https://github.com/SamuelAsherRivello/stealth-and-steel-game",
-    "_blank",
-    "noopener,noreferrer",
-  ]]);
+  assert.equal(githubButtons.length, 2);
+  assert.equal(githubButtons[0].textContent, "Stealth & Steel");
+  assert.equal(githubButtons[1].textContent, "BIS");
+  assert.equal(resetButton.textContent, "Clear Local Storage");
+  click(githubButtons[0]);
+  click(githubButtons[1]);
+  assert.deepEqual(opened, [
+    ["https://github.com/SamuelAsherRivello/stealth-and-steel-game", "_blank", "noopener,noreferrer"],
+    ["https://github.com/SamuelAsherRivello/blockchain-integration-service", "_blank", "noopener,noreferrer"],
+  ]);
+});
+
+test("developer action grid keeps the two top buttons at equal row geometry", async () => {
+  const styles = await readFile(new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url), "utf8");
+  assert.match(styles, /\.developer-settings-actions\s*>\s*\.tiny-swords-button \+ \.tiny-swords-button\s*\{[^}]*margin-top:\s*0;/s);
+  assert.match(styles, /\.developer-settings-actions\s*>\s*\.settings-reset\s*\{[^}]*grid-column:\s*1 \/ -1;/s);
 });
 
 test("settings chrome follows inspiration frame-relative measurements", async () => {

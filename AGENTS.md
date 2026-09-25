@@ -1,5 +1,9 @@
 # Repository Agent Instructions
 
+## UI Adjustments
+
+- Prefer hardcoded UI values for sizing and spacing. Use CSS `calc()` only when the user explicitly requests it.
+
 ## Audio for spawned game windows
 
 - The normal game URL intentionally defaults to the player's stored Music and

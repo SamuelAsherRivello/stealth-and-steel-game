@@ -1,23 +1,12 @@
-// Keep ribbon titles on one line while preserving their largest available size.
+// Keep every ribbon title on the shared menu title size.
 if (globalThis.customElements && !customElements.get("menu-title-label")) {
   customElements.define("menu-title-label", class extends HTMLElement {
     connectedCallback() {
       this.fit = () => {
         if (!this.isConnected || !this.parentElement) return;
-        const title = this.parentElement;
-        const safeInset = title.classList.contains("tiny-swords-ribbon")
-          ? parseFloat(getComputedStyle(title).getPropertyValue("--menu-ribbon-title-safe-inset")) || 0
-          : 0;
-        const available = title.clientWidth - (safeInset * 2);
-        if (available <= 0) return;
-        this.style.fontSize = "";
-        const baseSize = parseFloat(getComputedStyle(title).fontSize);
-        if (!baseSize) return;
-        this.style.fontSize = `${baseSize}px`;
-        const range = this.ownerDocument.createRange();
-        range.selectNodeContents(this);
-        const width = range.getBoundingClientRect().width;
-        if (width > available) this.style.fontSize = `${baseSize * Math.max(1, available - 1) / width}px`;
+        // Sizing belongs to the shared CSS token. Do not write an inline
+        // font-size here: that would override --menu-title-font-size.
+        this.style.removeProperty("font-size");
       };
       if (globalThis.ResizeObserver) {
         this.resizeObserver = new ResizeObserver(this.fit);

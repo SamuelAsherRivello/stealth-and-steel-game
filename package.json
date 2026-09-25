@@ -4,7 +4,7 @@
   "version": "0.1.15",
   "type": "module",
   "scripts": {
-    "openspec": "node .openspec/cli.mjs",
+    "openspec": "node openspec/cli.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

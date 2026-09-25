@@ -16,8 +16,10 @@ const documentRef = { createElement: () => new Element() };
 test("window title and close control share the ribbon layout", () => {
   const closeButton = documentRef.createElement("button");
   const menu = createMenu({ titleText: "Settings Menu", content: new Element(), closeButton, documentRef });
-  const header = menu.panel.children[0];
+  const header = menu.headerContainer.children[0];
   assert.ok(header.className.includes("game-window-header"));
+  assert.ok(menu.title.className.includes("menu-header-text"));
+  assert.ok(closeButton.className.includes("menu-header-button"));
   assert.ok(header.children.includes(menu.title));
   assert.ok(header.children.includes(closeButton));
   assert.ok(!menu.panel.children.includes(closeButton));
@@ -55,7 +57,8 @@ test("menus combine optional body text, custom content, and shared actions", () 
   assert.deepEqual(menu.bodyArea.children, [menu.body, content]);
   assert.deepEqual(menu.actions.children, menu.buttons);
   assert.ok(!menu.panel.children.includes(menu.buttons[0]));
-  assert.ok(menu.contentStack.children.includes(menu.actions));
+  assert.equal(menu.bodyContainer.children[0], menu.bodyArea);
+  assert.equal(menu.footerContainer.children[0], menu.actions);
 });
 
 test("menus can omit the visible header while retaining an accessible name", () => {

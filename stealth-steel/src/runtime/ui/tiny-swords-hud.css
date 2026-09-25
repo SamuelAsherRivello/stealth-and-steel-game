@@ -84,7 +84,7 @@
 .ui-layer .joystick { background-size: 133.803%; }
 .ui-layer .control-puck {
   width: 49.3%; height: 49.3%; pointer-events: none;
-  filter: brightness(1.22) drop-shadow(0 3px 3px #203c3455);
+  filter: brightness(1.22) drop-shadow(0 1.5px 3px #203c3455);
 }
 .ui-layer .action-symbol,
 .ui-layer .action-control:last-child .action-symbol {
@@ -111,7 +111,7 @@
   background: var(--hud-round) center / 137.5% no-repeat;
 }
 .ui-layer .joystick.is-pressed .control-puck {
-  filter: brightness(.9) saturate(.75) drop-shadow(0 3px 3px #203c3455);
+  filter: brightness(.9) saturate(.75) drop-shadow(0 1.5px 3px #203c3455);
 }
 .ui-layer .action-control.is-pressed .action-symbol {
   transform: none;

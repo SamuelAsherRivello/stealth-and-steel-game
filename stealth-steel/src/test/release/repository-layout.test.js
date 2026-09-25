@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const app = join(root, "stealth-steel");
 const assets = join(app, "public/assets");
-const runOpenSpecContext = () => spawnSync(process.execPath, [join(root, ".openspec/cli.mjs"), "context", "--json"], {
+const runOpenSpecContext = () => spawnSync(process.execPath, [join(root, "openspec/cli.mjs"), "context", "--json"], {
   cwd: root,
   encoding: "utf8",
   env: { ...process.env, OPENSPEC_TELEMETRY: "0" },
@@ -45,10 +45,10 @@ test("root commands target the contained application and preserve Pages output",
   for (const legacy of ["src", "test", "scripts", "public", "plugins", "vendor", "documentation", "openspec", "index.html"]) {
     assert.equal(existsSync(join(root, legacy)), false, `Legacy root path: ${legacy}`);
   }
-  assert.ok(existsSync(join(root, ".openspec/config.yaml")));
+  assert.ok(existsSync(join(root, "openspec/config.yaml")));
 });
 
-test("the repository OpenSpec adapter supports the pinned latest CLI in .openspec", {
+test("the repository OpenSpec adapter supports the pinned latest CLI in openspec", {
   skip: openSpecMissing ? "OpenSpec 1.13.0 is not installed in this environment." : false,
 }, () => {
   assert.equal(openSpecContextResult.status, 0, openSpecContextResult.stderr || openSpecContextResult.stdout);
@@ -58,7 +58,7 @@ test("the repository OpenSpec adapter supports the pinned latest CLI in .openspe
   assert.equal(context.root.role, "openspec_root");
 });
 
-test("the expanded OpenSpec skills route commands through the .openspec adapter", () => {
+test("the expanded OpenSpec skills route commands through the openspec adapter", () => {
   const generatedSkills = [
     "apply-change", "archive-change", "bulk-archive-change", "continue-change",
     "explore", "ff-change", "new-change", "onboard", "propose", "sync-specs",

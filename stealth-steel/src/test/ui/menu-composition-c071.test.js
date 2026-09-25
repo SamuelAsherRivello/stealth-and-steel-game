@@ -15,7 +15,7 @@ class Element extends EventTarget {
 
 const documentRef = { createElement: () => new Element() };
 
-test("C071 keeps the body and actions in one non-scrolling menu stack", () => {
+test("C071 keeps header, body, and footer in one non-scrolling menu stack", () => {
   const menu = createMenu({
     titleText: "Developer",
     bodyText: "Shared body copy",
@@ -25,7 +25,9 @@ test("C071 keeps the body and actions in one non-scrolling menu stack", () => {
 
   const contentStack = menu.panel.children[1];
   assert.ok(contentStack.className.split(" ").includes("menu-content-stack"));
-  assert.deepEqual(contentStack.children, [menu.bodyArea, menu.actions]);
+  assert.deepEqual(contentStack.children, [menu.headerContainer, menu.bodyContainer, menu.footerContainer]);
+  assert.equal(menu.bodyContainer.children[0], menu.bodyArea);
+  assert.equal(menu.footerContainer.children[0], menu.actions);
   assert.equal(menu.scrollContent, undefined);
 });
 
@@ -57,7 +59,7 @@ test("C071 uses one complete explicit prose style without outcome overrides", as
   );
 
   assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{/);
-  assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{[^}]*font:\s*22px\/1\.6 Georgia, serif;[^}]*margin:\s*0;[^}]*color:\s*#513d2a;[^}]*text-align:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{[^}]*font:\s*22px\/1\.6 Georgia, serif;[^}]*margin:\s*0;[^}]*color:\s*#513d2a;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;[^}]*text-align:\s*center;/s);
   assert.doesNotMatch(styles, /\.ui-layer \.menu-body p,/);
   assert.doesNotMatch(styles, /\.outcome-(?:loss|win) \.tiny-swords-body-text/);
   assert.match(treasure, /message\.className\s*=\s*['"]tiny-swords-body-text['"]/);
@@ -124,6 +126,26 @@ test("C071 keeps the 44px close target with its supplied PNG", async () => {
   assert.match(styles, /\.ui-layer \.game-window \.game-window-close\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s);
   assert.match(styles, /background:\s*url\('\/ui\/tiny-swords\/Icon_09\.png'\) center \/ 19\.2px 19\.2px no-repeat;/);
   assert.match(styles, /image-rendering:\s*pixelated;/);
+});
+
+test("C084 gives closable menus explicit header text and button regions", async () => {
+  const styles = await readFile(
+    new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url),
+    "utf8",
+  );
+  const menu = createMenu({
+    titleText: "Developer",
+    closeButton: documentRef.createElement("button"),
+    documentRef,
+  });
+  const closeButton = menu.header.children.find(child => child !== menu.title);
+
+  assert.ok(menu.header.className.includes("game-window-header"));
+  assert.ok(menu.title.className.includes("menu-header-text"));
+  assert.ok(closeButton.className.includes("menu-header-button"));
+  assert.match(styles, /\.ui-layer \.game-window \.game-window-header\s*\{[^}]*align-items:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.game-window \.menu-header-text\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/s);
+  assert.match(styles, /\.ui-layer \.game-window \.menu-header-button\s*\{[^}]*grid-column:\s*3;[^}]*grid-row:\s*1;[^}]*align-self:\s*center;/s);
 });
 
 test("C071 removes lightning only from BIS toast messaging", async () => {

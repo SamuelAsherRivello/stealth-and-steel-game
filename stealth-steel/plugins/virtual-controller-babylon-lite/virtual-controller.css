@@ -54,7 +54,7 @@
   border: clamp(3px, 0.8cqw, 5px) solid var(--controller-color);
   border-radius: 50%;
   background: var(--controller-fill);
-  box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 28%);
+  box-shadow: 0 0.15rem 1rem rgb(0 0 0 / 28%);
 }
 
 .control-puck {
@@ -94,7 +94,7 @@
   background: var(--controller-puck);
   font-size: clamp(1.25rem, 6cqw, 2rem);
   place-items: center;
-  box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 28%);
+  box-shadow: 0 0.15rem 1rem rgb(0 0 0 / 28%);
   transform: translateY(calc((var(--action-control-size) - var(--move-control-size)) / 2));
   transition: background 80ms ease, transform 80ms ease;
 }

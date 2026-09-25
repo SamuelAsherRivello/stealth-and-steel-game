@@ -197,6 +197,13 @@ const EMPTY_TERRAIN_FRAMES = new Set([
 const canvas = document.querySelector("#renderCanvas");
 const debugCanvas = document.querySelector("#debugCanvas");
 const debugContext = debugCanvas.getContext("2d");
+const baselineDevicePixelRatio = window.devicePixelRatio || 1;
+function refreshBrowserZoomCompensation() {
+  const zoomFactor = (window.devicePixelRatio || baselineDevicePixelRatio) / baselineDevicePixelRatio;
+  document.documentElement.style.setProperty("--browser-zoom-factor", String(Math.max(0.5, zoomFactor)));
+}
+refreshBrowserZoomCompensation();
+window.addEventListener("resize", refreshBrowserZoomCompensation);
 if (import.meta.env.DEV) document.documentElement.dataset.gameDocumentSession = crypto.randomUUID();
 const statusBadgeArt = loadStatusBadgeArt();
 const errorOutput = document.querySelector("#error");
@@ -251,6 +258,7 @@ window.addEventListener("pagehide", () => {
   promptBodyResizeObserver.disconnect();
   window.removeEventListener("resize", refreshGameViewportDiagnostics);
   window.removeEventListener("resize", fullscreenTransition.resize);
+  window.removeEventListener("resize", refreshBrowserZoomCompensation);
   fullscreenTransition.dispose();
 }, { once: true });
 
@@ -313,9 +321,6 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   }
 
   const engine = await createEngine(canvas, {
-    // All world coordinates are authored in the 576x1024 logical space.
-    // Do not let DPR enlarge Babylon's projection space; CSS scales this
-    // single logical surface as one unit with the debug and DOM layers.
     maxDevicePixelRatio: 1,
   });
   // Babylon Lite's automatic surface observer otherwise replaces the logical
@@ -938,6 +943,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   let bisHostGame;
   const accountHost = createBisAccount({
     host: domScreen, pauseController,
+    frameElement: gameFrame,
     restartGame: () => progress.restart(),
     onClose: () => settingsUi?.returnFromAccount(),
     getGameHost: () => bisHostGame,
@@ -1183,7 +1189,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       opener: startGamePrompt?.itemsButton,
       equipmentProvider: () => equipmentControllerPromise,
       onState: applyEquipmentState,
-      onClose: () => { itemsWindow = null; startGamePrompt?.itemsButton.focus(); },
+      onClose: () => { itemsWindow = null; startGamePrompt?.itemsButton?.focus(); },
     });
   };
   void equipmentControllerPromise.then(controller => {

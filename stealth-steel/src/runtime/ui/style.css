@@ -42,7 +42,8 @@ body {
 
 .stage {
   --game-frame-half-width: 28.125dvh;
-  --letterbox-rail-width: clamp(1.8rem, 2.45vw, 2.9rem);
+  /* Keep rails at a stable logical width as browser zoom changes the CSS viewport. */
+  --letterbox-rail-width: calc(clamp(1.8rem, 2.45vw, 2.9rem) / var(--browser-zoom-factor, 1));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   position: relative;
@@ -93,6 +94,7 @@ body {
   border-inline: 1px solid #0a1214;
   overflow: hidden;
   background: #071013;
+  outline: none;
   --letterbox-rail-finish:
     inset 3px 0 0 rgb(187 207 194 / 25%),
     inset -3px 0 0 rgb(0 0 0 / 52%),
@@ -140,6 +142,7 @@ body {
   overflow: hidden;
   background: #72a94f;
   box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+  border: 0;
 }
 
 .ui-layer {
@@ -210,10 +213,16 @@ body {
 
 #renderCanvas,
 #debugCanvas {
+  position: absolute;
+  inset: 0;
   display: block;
   min-width: 0;
+  max-width: 100%;
+  max-height: 100%;
   width: 100%;
   height: 100%;
+  transform: none;
+  zoom: 1;
   image-rendering: pixelated;
   outline: none;
   aspect-ratio: var(--game-logical-aspect-ratio);
@@ -226,8 +235,6 @@ body {
 }
 
 #debugCanvas {
-  position: absolute;
-  inset: 0;
   z-index: 2;
   pointer-events: none;
 }

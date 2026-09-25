@@ -1,8 +1,11 @@
+import { bindToGameFrame } from "../ui/game-frame-bounds.js";
+
 // The game consumes only the public BIS package. Loading is independent of game startup.
 const loadPackage = () => Promise.all([import('@bis/integration'), import('@bis/integration/style.css')]).then(([api]) => api);
 
 export function createBisAccount({host, pauseController, restartGame, documentRef = globalThis.document,
-  load = loadPackage, timeoutMs = 15000, onClose = () => {}, getGameHost = () => undefined}) {
+  load = loadPackage, timeoutMs = 15000, onClose = () => {}, getGameHost = () => undefined,
+  frameElement = null}) {
   const overlay = documentRef.createElement('div');
   overlay.className = 'game-account-host'; overlay.hidden = true; overlay.tabIndex = -1;
   const status = documentRef.createElement('section'); status.className = 'game-account-status';
@@ -14,6 +17,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
   overlay.append(status, mount);
   const overlayParent = () => documentRef.fullscreenElement ?? documentRef.body ?? host;
   overlayParent().append(overlay);
+  const disposeFrameBounds = bindToGameFrame({overlay, frameElement, windowRef: globalThis.window});
   let disposed = false, active = false, visit = 0, restarting = false, session, initialization;
   const continuations = new Set();
   function passive() {
@@ -158,7 +162,7 @@ export function createBisAccount({host, pauseController, restartGame, documentRe
     if (disposed) return; disposed = true; restarting = false; close();
     for (const controller of continuations) controller.dispose(); continuations.clear();
     documentRef.removeEventListener('fullscreenchange', moveOverlay);
-    cleanup(session,preserveContracts); overlay.remove();
+    cleanup(session,preserveContracts); disposeFrameBounds(); overlay.remove();
   }};
 }
 

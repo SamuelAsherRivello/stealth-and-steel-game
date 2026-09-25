@@ -35,6 +35,17 @@ function getPointerId(event) {
   return Number.isFinite(event.pointerId) ? event.pointerId : undefined;
 }
 
+const MOVEMENT_KEY_VECTORS = Object.freeze({
+  KeyW: { x: 0, y: 1 },
+  ArrowUp: { x: 0, y: 1 },
+  KeyA: { x: -1, y: 0 },
+  ArrowLeft: { x: -1, y: 0 },
+  KeyS: { x: 0, y: -1 },
+  ArrowDown: { x: 0, y: -1 },
+  KeyD: { x: 1, y: 0 },
+  ArrowRight: { x: 1, y: 0 },
+});
+
 export function createVirtualController({
   joystick,
   puck,
@@ -46,6 +57,7 @@ export function createVirtualController({
 }) {
   const removers = [];
   const actionPointers = new Map();
+  const pressedMovementKeys = new Set();
   let activeMovementPointer;
   let movement = { x: 0, y: 0 };
 
@@ -88,6 +100,31 @@ export function createVirtualController({
     puck.style.transform = "translate(-50%, -50%)";
   }
 
+  function getKeyboardMovement() {
+    const x = Number([...pressedMovementKeys].some((code) => MOVEMENT_KEY_VECTORS[code].x > 0))
+      - Number([...pressedMovementKeys].some((code) => MOVEMENT_KEY_VECTORS[code].x < 0));
+    const y = Number([...pressedMovementKeys].some((code) => MOVEMENT_KEY_VECTORS[code].y > 0))
+      - Number([...pressedMovementKeys].some((code) => MOVEMENT_KEY_VECTORS[code].y < 0));
+    const length = Math.hypot(x, y);
+    return length > 0 ? { x: x / length, y: y / length } : { x: 0, y: 0 };
+  }
+
+  function updateKeyboardMovement() {
+    if (activeMovementPointer !== undefined) return;
+    movement = getKeyboardMovement();
+    joystick.classList.toggle("is-pressed", pressedMovementKeys.size > 0);
+    onMovementChange({ ...movement });
+    setPuckPosition(movement);
+  }
+
+  function handleKeyboardMovement(event, isPressed) {
+    if (!MOVEMENT_KEY_VECTORS[event.code]) return;
+    event.preventDefault();
+    if (isPressed) pressedMovementKeys.add(event.code);
+    else pressedMovementKeys.delete(event.code);
+    updateKeyboardMovement();
+  }
+
   function handleMovementDown(event) {
     if (activeMovementPointer !== undefined) {
       return;
@@ -120,6 +157,9 @@ export function createVirtualController({
   listen(joystick, "pointerup", handleMovementEnd);
   listen(joystick, "pointercancel", handleMovementEnd);
   listen(joystick, "lostpointercapture", handleMovementEnd);
+
+  listen(window, "keydown", (event) => handleKeyboardMovement(event, true));
+  listen(window, "keyup", (event) => handleKeyboardMovement(event, false));
 
   function registerAction(button, callback) {
     if (!button) return;
@@ -163,7 +203,17 @@ export function createVirtualController({
   registerAction(itemButton, onItem);
   registerAction(attackButton, onAttack);
 
+  listen(window, "keydown", (event) => {
+    if (event.code !== "KeyV") return;
+    event.preventDefault();
+    attackButton?.classList.add("is-pressed");
+  });
+  listen(window, "keyup", (event) => {
+    if (event.code === "KeyV") attackButton?.classList.remove("is-pressed");
+  });
+
   function reset() {
+    pressedMovementKeys.clear();
     resetMovement();
     for (const [button, pointers] of actionPointers) {
       pointers.clear();

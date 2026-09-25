@@ -12,6 +12,7 @@ import { createSliderControl, createToggleControl } from "./menu-controls.js";
 
 const ASSET_BASE = import.meta.env?.BASE_URL ?? "/";
 const PROJECT_GITHUB_URL = "https://github.com/SamuelAsherRivello/stealth-and-steel-game";
+const BIS_GITHUB_URL = "https://github.com/SamuelAsherRivello/blockchain-integration-service";
 
 function createVolumeControl(documentRef, store, labelText, key) {
   const control = createSliderControl({ labelText, value: store.get(key),
@@ -118,11 +119,15 @@ export function createSettingsUi({
       ["Physics Colliders", RUNTIME_DEBUG_SETTING_KEYS.showColliders],
       ["Tile Map Info", RUNTIME_DEBUG_SETTING_KEYS.showTileMapInfo],
     ].map(([label, key]) => ({ key, ...createDebugControl(documentRef, store, label, key) }));
-    const githubButton = createMenuButton({ displayText: "Open GitHub", className: "settings-github-button", documentRef });
+    const githubButton = createMenuButton({ displayText: "Stealth & Steel", icon: "github", className: "settings-github-button", documentRef });
     githubButton.addEventListener("click", () => {
       openExternal(PROJECT_GITHUB_URL, "_blank", "noopener,noreferrer");
     });
-    const resetButton = createMenuButton({ displayText: "Clear All Settings", className: "settings-reset", documentRef });
+    const bisGithubButton = createMenuButton({ displayText: "BIS", icon: "github", className: "settings-github-button settings-bis-button", documentRef });
+    bisGithubButton.addEventListener("click", () => {
+      openExternal(BIS_GITHUB_URL, "_blank", "noopener,noreferrer");
+    });
+    const resetButton = createMenuButton({ displayText: "Clear Local Storage", variant: "secondary", className: "settings-reset", documentRef });
     const mapHeading = documentRef.createElement("h3");
     mapHeading.className = "map-order-heading menu-label-text";
     mapHeading.textContent = "Map";
@@ -164,7 +169,7 @@ export function createSettingsUi({
         host: modalHost,
         title: "Developer",
         content: developerContent,
-        buttons: [githubButton, resetButton],
+        buttons: [githubButton, bisGithubButton, resetButton],
         documentRef,
         opener: developerButton,
         closeLabel: "Close developer settings",
@@ -175,6 +180,9 @@ export function createSettingsUi({
           activeWindow?.setVisible(true);
         },
       });
+      developerWindow.actions.classList.add("developer-settings-actions");
+      developerWindow.actions.textContent = "";
+      developerWindow.actions.append(githubButton, bisGithubButton, resetButton);
       developerWindow.backdrop.classList.add("developer-settings-backdrop");
       developerWindow.dimmer?.classList.add("developer-settings-dimmer");
     };
@@ -203,7 +211,7 @@ export function createSettingsUi({
     gear.setAttribute("aria-label", "Close settings");
     activeWindow = new GameWindow({
       host: modalHost,
-      title: "Settings Menu",
+      title: "Settings",
       content,
       buttons: settingsButtons,
       documentRef,

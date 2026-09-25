@@ -31,7 +31,7 @@ test('completion snapshot renders exact level/final bodies and action gating',()
   ui.setState({canCollect:true,status:'available',message:''});ui.collectButton.dispatchEvent(new Event('click'));assert.equal(collects,1);
   ui.setState({busy:true});for(const b of [ui.collectButton,ui.continueButton,ui.restartButton]){assert.equal(b.disabled,true);b.dispatchEvent(new Event('click'));}assert.equal(collects,1);assert.equal(next+restarts,0);
   ui.setState({busy:false,status:'owned',canCollect:false});assert.equal(ui.backdrop.hidden,false);assert.equal(ui.continueButton.disabled,false);
-  assert.equal(ui.panel.children[1].children[0].textContent,'Great jobs. You collected 03/100 gold and reached the exit. You already own this trophy.');
+  assert.equal(ui.panel.children[1].children[0].textContent,'Great Job. You collected 03/100 gold and reached the exit. You already own this trophy.');
   assert.ok(!ui.panel.children.some(child=>child.className==='level-complete-status'));
   ui.setCompletion({levelNumber:2,levelsCompleted:2,totalLevels:2,hasNext:false});assert.equal(ui.panel.children[0].textContent,'Game Completed');assert.match(ui.panel.children[1].children[0].textContent,/2\/2 levels/);assert.equal(ui.continueButton.hidden,true);assert.equal(ui.restartButton.textContent,'Restart Game');ui.dispose();
 });

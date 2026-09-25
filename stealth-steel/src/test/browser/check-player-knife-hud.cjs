@@ -9,7 +9,7 @@ async (page) => {
     await page.getByRole('button',{name:'Start',exact:true}).click();
     await page.getByRole('button',{name:'Start',exact:true}).waitFor({state:'hidden'});
     check(await page.locator('#item-action').count()===0,'Item still present');
-    const attack=await page.getByRole('button',{name:'Attack (V)',exact:true}).boundingBox();
+    const attack=await page.getByRole('button',{name:'Action (V)',exact:true}).boundingBox();
     const move=await page.getByRole('button',{name:'Move joystick',exact:true}).boundingBox();
     check(attack.x>=0&&attack.y>=0&&attack.x+attack.width<=size.width&&attack.y+attack.height<=size.height,'Attack clipped');
     check(move.x+move.width<attack.x,'controls overlap');

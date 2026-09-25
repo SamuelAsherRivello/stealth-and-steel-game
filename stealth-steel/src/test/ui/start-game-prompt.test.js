@@ -40,7 +40,7 @@ test("start prompt requires its Start button and ignores background clicks", () 
   const host = new FakeElement();
   let starts = 0;
   const prompt = createStartGamePrompt({ host, onStart: () => { starts += 1; }, documentRef });
-  assert.equal(prompt.panel.children[0].textContent, "Start Menu");
+  assert.equal(prompt.panel.children[0].textContent, "Welcome");
   assert.equal(prompt.panel.children[1].children[0].textContent, START_PROMPT_BODY);
   assert.equal(prompt.startButton.textContent, "Start");
   assert.equal(prompt.panel.children.length, 3);
@@ -61,11 +61,12 @@ test("start prompt requires its Start button and ignores background clicks", () 
   secondPrompt.close();
 });
 
-test("start prompt places bolt Items below Start and enables it only for an active player", () => {
+test("supported start prompt places bolt Items below Start and enables it only for an active player", () => {
   const host = new FakeElement();
   let opens = 0;
-  const prompt = createStartGamePrompt({ host, onStart: () => {}, onItems: () => opens++, itemsEnabled: false, documentRef });
+  const prompt = createStartGamePrompt({ host, onStart: () => {}, onItems: () => opens++, itemsVisible: true, itemsEnabled: false, documentRef });
   assert.equal(prompt.startButton.textContent, "Start");
+  assert.equal(prompt.panel.children[1].children[1].children.length, 2);
   assert.equal(prompt.itemsButton.textContent, "⚡Items");
   assert.equal(prompt.itemsButton.disabled, true);
   prompt.setItemsEnabled(true);
@@ -76,14 +77,15 @@ test("start prompt places bolt Items below Start and enables it only for an acti
   prompt.close();
 });
 
-test("start prompt hides Items until item support is available", () => {
+test("unsupported start prompt contains only Start and does not create a deferred Items action", () => {
   const host = new FakeElement();
   const prompt = createStartGamePrompt({ host, onStart: () => {}, itemsVisible: false, itemsEnabled: false, documentRef });
-  assert.equal(prompt.itemsButton.hidden, true);
+  assert.equal(prompt.itemsButton, null);
+  assert.equal(prompt.panel.children[1].children[1].children.length, 1);
   prompt.setItemsSupported(true);
-  assert.equal(prompt.itemsButton.hidden, false);
+  prompt.setItemsEnabled(true);
+  assert.equal(prompt.itemsButton, null);
   prompt.setItemsSupported(false);
-  assert.equal(prompt.itemsButton.hidden, true);
   prompt.close();
 });
 
