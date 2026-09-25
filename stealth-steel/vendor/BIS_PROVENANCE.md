@@ -1,10 +1,11 @@
 # Current BIS release package snapshot (2026-09-25)
 
-Current artifact: bis-integration-0.0.8.tgz. SHA-256: 6a12048da17c782ce3c99c7a3ecd05954917708030828089c5c8503c2d6e2349. Source commit: 97d12b271d8e5891118bfe4b10634b16752ee38b (source worktree dirty for this local release). The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, type verification, and live browser verification are completed for this snapshot. This is the verified local BIS 0.0.8 package snapshot used by the game.
+Current artifact: bis-integration-0.0.9.tgz. SHA-256: ba6260f6e43d4df16bdba4c456d5aa05c644de8e28cc2966937944ff0be21b55. Source commit: 1ac2411240843803a84acb4637acfa6b33dc199e (source worktree dirty for this local release). The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, full BIS test suite, build, type verification, and game verification are completed for this snapshot. This is the verified local BIS 0.0.9 package snapshot used by the game.
 
 ### Game-consumable public API changes
 
 - No new game-consumable public API surface is required for this package refresh. The game continues to consume the public `BisGameServices` host-game API and the package `./style.css` export.
+- Asset Detail no longer offers Select or Clear equipment controls for any owned asset. This does not change the game's own equipment-service API or active loadout behavior.
 - For an LTO treasure reward, BIS records the Game Wallet sender against the submitted reward transaction. When that incoming payment is observed, its activity notification displays `Game Wallet` rather than an unknown sender; unrelated or absent senders remain unchanged.
 - `BisGameServices.hasItemSupport(): boolean` reports item-path availability when the Player Wallet is active in a supported browser environment; it does not require a Game Wallet or initiate wallet operations. The game world Items HUD consumes this capability.
 - `BisGameServices.hasAssetMintingSupport(): boolean` reports whether the Player Wallet, a distinct ready Game Wallet, matching network, and minimum minting funds are available. The BIS Account UI consumes this read-only capability; the game does not initiate minting from it.
