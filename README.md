@@ -5,7 +5,9 @@
 # Stealth and Steel
 
 <!-- AI: Use the requested project display name and keep the introduction to one short sentence describing the implemented project and its audience. -->
-Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype for developers exploring browser-based games with JavaScript and WebGPU.
+This is a proof-of-concept (POC) demonstrating Blockchain use cases for gaming.
+
+The Stealth and Steel game uses the Blockchain Integration Service (BIS); a Blockchain enabled ui and service layer to your games for Signet and Mutinynet networks.
 
 ## Images
 
