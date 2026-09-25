@@ -15,9 +15,9 @@ test("README screenshot opens the image and demo links to the renamed live game"
     { width: 576, height: 1024 }, "match the current portrait screenshot dimensions");
 });
 
-test("the app uses its project name as the development URL base", async () => {
+test("the app uses its GitHub Pages repository path as the deployment URL base", async () => {
   const { default: config } = await import("../../../../vite.config.js");
-  assert.equal(config.base, "/stealth-steel/");
+  assert.equal(config.base, "/stealth-and-steel-game/");
 });
 
 test("Pages publishing checks deployment contracts before building", async () => {
