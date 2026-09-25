@@ -10,7 +10,13 @@ Stealth and Steel is a portrait-oriented Babylon.js Lite sprite game prototype f
 ## Images
 
 <!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
+### Gameplay
+
 <a href="stealth-steel/documentation/images/stealth-and-steel-gameplay.png"><img src="stealth-steel/documentation/images/stealth-and-steel-gameplay.png" width="400" alt="Stealth and Steel gameplay with the updated HUD and virtual controller" /></a>
+
+### BIS HUD
+
+<a href="stealth-steel/documentation/images/stealth-and-steel-bis-hud.png"><img src="stealth-steel/documentation/images/stealth-and-steel-bis-hud.png" width="400" alt="Stealth and Steel BIS account HUD" /></a>
 
 ## Demo
 
@@ -98,7 +104,7 @@ Babylon Lite does not ship the full engine's default loading UI.
 |-- .agents/
 |-- .codex/
 |-- .github/
-|-- .openspec/
+|-- openspec/
 |   |-- changes/
 |   |-- specs/
 |   |-- cli.mjs
