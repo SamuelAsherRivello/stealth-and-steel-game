@@ -222,7 +222,11 @@ Third-party references:
 
 ## Deep Dive
 
-Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. Start with the [Stealth and Steel Deep Dive](stealth-steel/documentation/deep-dive.md).
+<a href="https://raw.githubusercontent.com/SamuelAsherRivello/blockchain-integration-service/main/BIS/documentation/bis-concept-diagram-1.png"><img src="https://raw.githubusercontent.com/SamuelAsherRivello/blockchain-integration-service/main/BIS/documentation/bis-concept-diagram-1.png" width="400" alt="BIS concept diagram" /></a>
+
+Deep Dive takes a closer look at a few representative files and the cross-repository contract that connects them. 
+
+Start with the [Stealth and Steel Deep Dive](stealth-steel/documentation/deep-dive.md).
 
 ## Resources
 
