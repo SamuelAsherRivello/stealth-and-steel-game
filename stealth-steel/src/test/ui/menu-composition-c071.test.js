@@ -62,8 +62,8 @@ test("C071 uses one complete explicit prose style without outcome overrides", as
   assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{[^}]*font:\s*22px\/1\.6 Georgia, serif;[^}]*margin:\s*0;[^}]*color:\s*#513d2a;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;[^}]*text-align:\s*center;/s);
   assert.doesNotMatch(styles, /\.ui-layer \.menu-body p,/);
   assert.doesNotMatch(styles, /\.outcome-(?:loss|win) \.tiny-swords-body-text/);
-  assert.match(treasure, /message\.className\s*=\s*['"]tiny-swords-body-text['"]/);
-  assert.match(treasure, /countdown\.className\s*=\s*['"]tiny-swords-body-text['"]/);
+  assert.match(treasure, /message\.className\s*=\s*['"]tiny-swords-body-text treasure-message['"]/);
+  assert.match(treasure, /countdown\.className\s*=\s*['"]tiny-swords-body-text treasure-countdown['"]/);
   assert.match(outcomes, /bodyText:/);
 });
 

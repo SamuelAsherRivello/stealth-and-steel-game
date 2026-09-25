@@ -24,14 +24,18 @@ sats price, Speed, Offense, and Defense values without overlap.
 
 The Items dialog SHALL open at its ready-state height and immediately display
 the exact shared Tiny Swords body text `Loading ...` while the inventory request
-is pending. Once the request settles, it SHALL replace that loading text with
-`Select 1 of each item type to activate it for gameplay` using the same
-Tiny Swords body-text color and typography used by other menu windows. The
-dialog SHALL preserve existing card details and selection behavior, and make an
-active item visually distinct without relying solely on text. The game SHALL
-expose item support as a lower-camel-case `hasItemSupport()` capability. Item
-support SHALL be available when the Player Wallet is active and BIS item access
-is available, without requiring a selected or ready Game Wallet.
+is pending, with the BIS loading menu layered above it. Once the request
+settles, it SHALL replace that loading text with `You may activate one of each
+item type to empower your gameplay.` using the same Tiny Swords body-text color
+and typography used by other menu windows. The game SHALL use that same BIS
+loading menu while a real item select or clear request is pending, and it SHALL
+call `showLoading()` only when `isBisVisible()` is false, then hide only its own
+host loading entry when that request settles. The dialog SHALL
+preserve existing card details and selection behavior, and make an active item
+visually distinct without relying solely on text. The game SHALL expose item
+support as a lower-camel-case `hasItemSupport()` capability. Item support SHALL
+be available when the Player Wallet is active and BIS item access is available,
+without requiring a selected or ready Game Wallet.
 
 #### Scenario: Player selects an item
 
@@ -39,6 +43,8 @@ is available, without requiring a selected or ready Game Wallet.
 - **THEN** that card becomes the active item for its type using the existing
   equipment selection behavior
 - **AND** the active visual state is visibly stronger than an inactive card
+- **AND** the game shows its loading entry only when BIS is not already visible
+- **AND** that entry never dismisses or interrupts an active BIS operation
 
 #### Scenario: Items opens while inventory is pending
 
@@ -47,12 +53,13 @@ is available, without requiring a selected or ready Game Wallet.
 - **THEN** the dialog immediately occupies the same height it will use when
   cards are ready
 - **AND** its body displays exactly `Loading ...`
+- **AND** the BIS loading menu is visible above the Items dialog
 
 #### Scenario: Inventory becomes ready
 
 - **WHEN** the inventory request succeeds
-- **THEN** the loading text is replaced by the existing equipment instruction
-  in the shared Tiny Swords body-text treatment
+- **THEN** the loading text is replaced by `You may activate one of each item
+  type to empower your gameplay.` in the shared Tiny Swords body-text treatment
 - **AND** selecting an unselected card or clearing a selected card retains the
   existing equipment behavior and visibly distinct active state
 

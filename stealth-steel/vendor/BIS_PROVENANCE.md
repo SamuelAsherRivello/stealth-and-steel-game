@@ -1,10 +1,11 @@
-# Current BIS release package snapshot (2026-09-22)
+# Current BIS release package snapshot (2026-09-25)
 
-Current artifact: bis-integration-0.0.7.tgz. SHA-256: db8253566a300cd4ba03a87810773ef84d62aded963aeef0106163ba33e290cf. Source commit: 48ed1feecbcf59abc6701631c903481e3dc6cd7d. The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, type verification, and live browser verification were completed for this snapshot. This is the verified local BIS 0.0.7 package snapshot used by the game.
+Current artifact: bis-integration-0.0.8.tgz. SHA-256: 6a12048da17c782ce3c99c7a3ecd05954917708030828089c5c8503c2d6e2349. Source commit: 97d12b271d8e5891118bfe4b10634b16752ee38b (source worktree dirty for this local release). The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, focused tests, build, type verification, and live browser verification are completed for this snapshot. This is the verified local BIS 0.0.8 package snapshot used by the game.
 
 ### Game-consumable public API changes
 
 - No new game-consumable public API surface is required for this package refresh. The game continues to consume the public `BisGameServices` host-game API and the package `./style.css` export.
+- For an LTO treasure reward, BIS records the Game Wallet sender against the submitted reward transaction. When that incoming payment is observed, its activity notification displays `Game Wallet` rather than an unknown sender; unrelated or absent senders remain unchanged.
 - `BisGameServices.hasItemSupport(): boolean` reports item-path availability when the Player Wallet is active in a supported browser environment; it does not require a Game Wallet or initiate wallet operations. The game world Items HUD consumes this capability.
 - `BisGameServices.hasAssetMintingSupport(): boolean` reports whether the Player Wallet, a distinct ready Game Wallet, matching network, and minimum minting funds are available. The BIS Account UI consumes this read-only capability; the game does not initiate minting from it.
 - `BisGameServices.hasContractSupport(): boolean` reports whether both distinct wallets are ready on the selected network. The BIS Account UI consumes this read-only capability; individual contract operations retain their own authoritative checks.

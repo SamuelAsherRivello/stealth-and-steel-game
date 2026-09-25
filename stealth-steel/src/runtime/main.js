@@ -130,6 +130,7 @@ import { createLevelCompleteUi, createLevelLostUi } from "./ui/level-complete-ui
 import {createTreasureRuntime} from './integration/treasure-runtime.js';
 import {createTreasureUi} from './ui/treasure-ui.js';
 import {createTreasureChest} from './systems/objects/treasure-chest.js';
+import {createTreasureReveal} from './systems/objects/treasure-reveal.js';
 import {createObjectSpawner} from './systems/objects/object-spawner.js';
 import { createGoal } from "./systems/goals/goal.js";
 import { createGoalExit } from "./systems/goals/goal-exit.js";
@@ -1202,20 +1203,28 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
   const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown-uneven.png`, {
     gridSize: [64, 64], sampling: "nearest",
   });
-  await accountHost.ready().catch(() => {}); // Capability reads require the BIS session boundary; wallet operations remain read-only here.
-  const contractSupported = accountHost.hasContractSupport();
-  const treasureAtlas = contractSupported ? await loadSpriteAtlas(engine,
-    `${import.meta.env.BASE_URL}assets/images/ui/spawners/treasure-chest.png`, {gridSize:[64,64],sampling:'nearest'}) : null;
+  const treasureAtlas = await loadSpriteAtlas(engine,
+    `${import.meta.env.BASE_URL}assets/images/ui/spawners/treasure-chest.png`, {gridSize:[64,64],sampling:'nearest'});
   const treasureLayers=[];
-  const treasureSpawners=contractSupported ? (level.treasureSpawners??[]).map(authored=>{
-    const position=gridCellToWorldCenter(authored.gameCell,TILE_SIZE);
-    const spawner=createObjectSpawner({type:'treasure',position,createObject:position=>{
-      const layer=createSprite2DLayer(treasureAtlas,{capacity:1,order:getYSortedLayerOrder(position.y,worldBounds),pivot:[0.5,0.5]});
-      addSprite2D(layer,{positionPx:[position.x,SCREEN_HEIGHT-position.y],sizePx:[64,64],frame:0});
-      addSpriteRendererLayer(renderer,camera.attachLayer(layer));treasureLayers.push(layer);
-      return createTreasureChest({position,sensor:authored.sensor,canEnter:()=>accountHost.isTreasureReady(),onEnter:()=>void treasureUi.open()});
-    }});spawner.initialize();return spawner;
-  }) : [];
+  const treasureSpawners=[];
+  const treasureReveals=[];
+  let treasureRevealed=false;
+  const revealTreasures=()=>{
+    if(treasureRevealed||treasure.getState().status!=='active')return;
+    treasureRevealed=true;
+    for(const authored of level.treasureSpawners??[]){
+      const position=gridCellToWorldCenter(authored.gameCell,TILE_SIZE);
+      const spawner=createObjectSpawner({type:'treasure',position,createObject:position=>{
+        const layer=createSprite2DLayer(treasureAtlas,{capacity:1,order:getYSortedLayerOrder(position.y,worldBounds),pivot:[0.5,0.5]});
+        const sprite=addSprite2D(layer,{positionPx:[position.x,SCREEN_HEIGHT-position.y],sizePx:[64,64],frame:0,alpha:0,scaleX:0,scaleY:0});
+        addSpriteRendererLayer(renderer,camera.attachLayer(layer));treasureLayers.push(layer);
+        treasureReveals.push(createTreasureReveal({sprite,api:{updateSprite2D}}));
+        return createTreasureChest({position,sensor:authored.sensor,canEnter:()=>accountHost.isTreasureReady(),onEnter:()=>void treasureUi.open()});
+      }});spawner.initialize();treasureSpawners.push(spawner);
+    }
+  };
+  const unsubscribeTreasureReveal=treasure.subscribe(revealTreasures);
+  revealTreasures();
   const goalLayer = createSprite2DLayer(goalAtlas, {
     capacity: 1, order: TILE_MAP_SUB_Z.groundDecorations, pivot: [0.5, 0.5],
   });
@@ -1328,6 +1337,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
       }
     }
     if (activeDelta > 0) {
+      for(const reveal of treasureReveals)reveal.update(activeDelta);
       const nextTouchPairs = new Set();
       for (const spawner of spawners) {
         for (const record of spawner.actors) {
@@ -1847,7 +1857,7 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     grassDecorations.dispose();
     let preserveContracts=false;
     try{const next=JSON.parse(sessionStorage.getItem('stealth-steel-level-run-v1')??'null');preserveContracts=next?.pendingTransition===true&&next.completed>0;}catch{}
-    treasureUi.dispose();treasure.dispose({preserveSession:preserveContracts});
+    unsubscribeTreasureReveal();treasureUi.dispose();treasure.dispose({preserveSession:preserveContracts});
     for(const spawner of treasureSpawners)spawner.dispose();
     for(const layer of treasureLayers)removeSpriteRendererLayer(renderer,layer);
     unsubscribeEquipment();

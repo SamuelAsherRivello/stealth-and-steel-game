@@ -75,7 +75,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   column-gap: 2.5px;
   row-gap: 2.5px;
-  padding-top: 40px;
+  padding-top: 30px;
 }
 .ui-layer .developer-settings-actions > .tiny-swords-button {
   width: 100%;
@@ -210,6 +210,7 @@
 .ui-layer .tiny-swords-title-text { padding-bottom: 16px; white-space: nowrap; }
 .ui-layer .start-game-prompt-panel .tiny-swords-title-text { padding-bottom: 0; }
 .ui-layer .start-game-prompt-panel .tiny-swords-title-text { transform: translateY(5px); }
+.ui-layer .level-complete-panel .tiny-swords-title-text { transform: translateY(5px); }
 .tiny-swords-title-text > .tiny-swords-ribbon-art { top: 10%; bottom: 10%; }
 menu-title-label { display: inline-block; max-width: 100%; white-space: nowrap; }
 .ui-layer .tiny-swords-button {
@@ -320,3 +321,5 @@ menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: 
 
 .treasure-content { display: contents; }
 .treasure-content > [hidden] { display: none; }
+.ui-layer .treasure-content > .treasure-message { min-height: 4em; margin: 0; }
+.ui-layer .treasure-content > .treasure-countdown { min-height: 1.6em; margin: 22px 0 0; }

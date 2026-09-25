@@ -12,12 +12,16 @@ the loading-to-ready transition feel unfinished.
 - Open Items at its ready-state height immediately and show the exact loading
   text `Loading ...` while the equipment provider and refresh are pending.
 - Restore the standard Tiny Swords body-text color and typography for the
-  ready-state instruction, retaining its existing wording.
+  ready-state instruction, using `You may activate one of each item type to
+  empower your gameplay.`.
 - Replace the inventory-count-dependent topology with a compact fixed 2-by-2
   square-card grid with 2px gaps in both directions; each card uses one-quarter
   of the current single-card area.
 - Add a temporary four-copy Shoes I preview used to visually approve the new
   compact layout without changing real equipment-selection semantics.
+- Consume the BIS host loading menu for initial inventory loading and existing
+  asynchronous select/clear pauses, after adding and locally releasing its
+  missing `isBisVisible()`, `showLoading()`, and `hideLoading()` controls.
 
 ## Capabilities
 
@@ -34,5 +38,6 @@ None.
 ## Impact
 
 The change affects the Items UI renderer, Items-specific styles, focused UI
-tests, and browser visual QA. It preserves the existing BIS inventory API,
-wallet capability gating, item details, and real equipment selection behavior.
+tests, browser visual QA, the BIS host-loading API, and the game's pinned
+vendored BIS package. It preserves wallet capability gating, item details, and
+real equipment selection behavior.

@@ -381,6 +381,7 @@ test("developer settings opens both related GitHub projects above local storage 
 
 test("developer action grid keeps the two top buttons at equal row geometry", async () => {
   const styles = await readFile(new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url), "utf8");
+  assert.match(styles, /\.developer-settings-actions\s*\{[^}]*padding-top:\s*30px;/s);
   assert.match(styles, /\.developer-settings-actions\s*>\s*\.tiny-swords-button \+ \.tiny-swords-button\s*\{[^}]*margin-top:\s*0;/s);
   assert.match(styles, /\.developer-settings-actions\s*>\s*\.settings-reset\s*\{[^}]*grid-column:\s*1 \/ -1;/s);
 });

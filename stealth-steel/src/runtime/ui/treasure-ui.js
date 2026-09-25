@@ -9,7 +9,7 @@ export function createTreasureUi({host,screenLayer,frameElement=null,pauseContro
   const render=()=>{
     if(!window)return;
     const state=session.getState();message.textContent=treasureMessage(state.status);
-    countdown.textContent=state.status==='active'?`${state.remainingSeconds}s remaining`:'';
+    countdown.textContent=state.status==='active'?`${state.remainingSeconds} secs remaining ...`:'';
     claim.disabled=reject.disabled=busy||state.status!=='active';
     claim.hidden=reject.hidden=['claimed','rejected','missing-player'].includes(state.status);
     claim.style.display=reject.style.display=claim.hidden?'none':'';
@@ -29,8 +29,8 @@ export function createTreasureUi({host,screenLayer,frameElement=null,pauseContro
     open(){
       if(disposed||window)return;
       const content=documentRef.createElement('div');content.className='treasure-content';
-      message=documentRef.createElement('p');message.className='tiny-swords-body-text';message.setAttribute('role','status');
-      countdown=documentRef.createElement('p');countdown.className='tiny-swords-body-text';
+      message=documentRef.createElement('p');message.className='tiny-swords-body-text treasure-message';message.setAttribute('role','status');
+      countdown=documentRef.createElement('p');countdown.className='tiny-swords-body-text treasure-countdown';
       claim=createMenuButton({displayText:'Claim',documentRef});reject=createMenuButton({displayText:'Reject',documentRef});back=createMenuButton({displayText:'Back',documentRef});
       claim.addEventListener('click',()=>void act('claim'));reject.addEventListener('click',()=>void act('reject'));back.addEventListener('click',()=>window?.close());
       content.append(message,countdown);

@@ -16,6 +16,8 @@ shared Tiny Swords body-text treatment.
 - Make the requested four-card visual approval state deterministic.
 - Preserve the provider, refresh, selection, clearing, focus, close, and BIS
   capability contracts.
+- Use a released BIS host loading control without interfering with BIS-owned
+  pending operations.
 
 **Non-Goals:**
 
@@ -60,12 +62,26 @@ ambiguous.
 
 ### Reuse the shared body-text class instead of copying colors
 
-The ready instruction and loading status will use the Tiny Swords shared body
-text styling. This keeps body copy consistent with the other windows and avoids
+The ready instruction `You may activate one of each item type to empower your
+gameplay.` and the loading status will use the Tiny Swords shared body-text
+styling. This keeps body copy consistent with the other windows and avoids
 another local palette value.
 
 Alternative considered: change the local status color to a sampled equivalent.
 Rejected because it would drift from the shared UI contract.
+
+### Add independent BIS host loading controls
+
+The BIS UI client will publish `isBisVisible()`, `showLoading()`, and
+`hideLoading()` for game hosts. The game calls `showLoading()` only if BIS is
+not visible. Host controls manage a dedicated host entry in the existing BIS
+pending-operation dialog, independent of React-managed BIS entries. Hiding the
+host entry cannot dismiss a BIS operation and a BIS completion cannot dismiss
+host loading.
+
+Alternative considered: importing BIS React components into the DOM game or
+recreating the visual locally. Rejected because the game is DOM-based and the
+user requested the actual BIS menu.
 
 ## Risks / Trade-offs
 
@@ -76,12 +92,15 @@ Rejected because it would drift from the shared UI contract.
   reintroducing the prior variable topology.
 - [Async failure leaves ambiguous copy] -> Reuse the current unavailable/failure
   rendering path after the visible pending state.
+- [Host and BIS calls overlap] -> Keep the two pending entries independent and
+  test both ordering cases.
 
 ## Migration Plan
 
 This is a runtime-only presentation change with no stored-data migration.
-Implement the renderer and CSS together, update focused Items UI tests, run the
-relevant test and production build commands, then visually inspect the pending
-and four-card ready states in a muted browser URL. Rollback restores the former
-responsive inventory topology and delayed initial render; no data conversion is
-needed.
+Implement and verify the BIS host API, export a local verified release, and
+import its pinned tarball before changing the renderer and CSS. Then update
+focused Items UI tests, run the relevant test and production build commands,
+and visually inspect the pending and four-card ready states in a muted browser
+URL. Rollback restores the prior pinned package and Item layout; no data
+conversion is needed.
