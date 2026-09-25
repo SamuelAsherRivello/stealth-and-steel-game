@@ -9,6 +9,18 @@ This is a proof-of-concept (POC) demonstrating Blockchain use cases for gaming.
 
 The Stealth and Steel game uses the Blockchain Integration Service (BIS); a Blockchain enabled ui and service layer to your games for Signet and Mutinynet networks for Bitcoin.
 
+### BIS Benefits
+
+- Accounts
+- Payments
+  - Deposits and withdrawals
+  - Pay-to-play mechanics
+- Assets
+  - Marketplace
+  - In-game items
+  - Achievements and trophies
+- Contracts, including limited-time player reward offers
+
 ## Images
 
 <!-- AI: Use existing project screenshots with relative paths, matching link href and image src, and a 400-pixel preview width. Preserve image order and use descriptive alt text. -->
