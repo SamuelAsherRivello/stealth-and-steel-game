@@ -37,7 +37,7 @@ export function createLevelLostUi({ host, onPay, onRestart, frameElement = null,
 
 export function createLevelCompleteUi({host, onContinue, onRestart = onContinue, onCollect = () => {}, onCheck = () => {}, onAcknowledge = () => {}, showTrophyActions = () => true, outcome = 'win', frameElement = null, documentRef = globalThis.document}) {
   if(outcome === 'loss'){const ui=createLevelLostUi({host,onPay:()=>{},onRestart,frameElement,documentRef});ui.payButton.hidden=true;return {...ui,button:ui.restartButton};}
-  const menu = createMenu({titleText:'Level Completed',bodyText:'',frameElement,documentRef,
+  const menu = createMenu({titleText:'Completed',bodyText:'',frameElement,documentRef,
     buttonClicksOnly: true,
     buttons:[{displayText:'Collect Level 1 Trophy',className:'level-complete-collect'},
       {displayText:'Continue To Next Level',className:'level-complete-continue'},
@@ -54,7 +54,7 @@ export function createLevelCompleteUi({host, onContinue, onRestart = onContinue,
   function render() {
     const final=!completion.hasNext;
     const trophyVisible = Boolean(showTrophyActions?.());
-    const heading=final?'Game Completed':'Level Completed';
+    const heading=final?'Game Completed':'Completed';
     title.menuTitleLabel.textContent=heading;
     const gold=`${pad(completion.collected)}/${pad(completion.total)}`;
     body.textContent=final?`Great Job. You completed ${completion.levelsCompleted}/${completion.totalLevels} levels. You collected ${gold} gold in the final level and reached the exit.`:`Great Job. You collected ${gold} gold and reached the exit.`;

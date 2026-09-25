@@ -1197,8 +1197,9 @@ async function createGameRun({ showStartPrompt = true, initialRun } = {}) {
     unsubscribeEquipment = controller.subscribe(applyEquipmentState);
     applyEquipmentState(controller.getState());
   }).catch(() => {});
+  void initialEquipmentState.then(applyEquipmentState).catch(() => {});
   const goal = createGoal({ host: world.mode === "follow-player" ? gameFrame : gameUi, position: { x: (level.goals[0].gameCell.x + 0.5) * TILE_SIZE, y: (level.goals[0].gameCell.y + 0.5) * TILE_SIZE }, screenWidth: SCREEN_WIDTH, screenHeight: SCREEN_HEIGHT });
-  const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown.png`, {
+  const goalAtlas = await loadSpriteAtlas(engine, `${import.meta.env.BASE_URL}assets/images/goals/StepsDown-uneven.png`, {
     gridSize: [64, 64], sampling: "nearest",
   });
   await accountHost.ready().catch(() => {}); // Capability reads require the BIS session boundary; wallet operations remain read-only here.

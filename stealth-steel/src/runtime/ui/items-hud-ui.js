@@ -4,7 +4,7 @@ export function createItemsHudUi({ host, snapshot, documentRef = globalThis.docu
   const element = documentRef.createElement("p");
   element.className = "items-counter";
   const label = documentRef.createElement("span");
-  label.textContent = "Items: ";
+  label.textContent = "Items:";
   element.append(label);
 
   const slots = FAMILIES.map((family) => {
@@ -24,20 +24,17 @@ export function createItemsHudUi({ host, snapshot, documentRef = globalThis.docu
       slot.textContent = "";
       const item = snapshot?.slots?.[family];
       if (!item) {
-        slot.textContent = "[]";
+        slot.hidden = true;
         slot.setAttribute("aria-label", `${family}: empty`);
         return;
       }
-      const open = documentRef.createElement("span");
-      open.textContent = "[";
+      slot.hidden = false;
       const icon = documentRef.createElement("img");
       icon.src = item.iconUrl;
       icon.alt = item.name;
       icon.title = `${item.name}: ${item.effect}`;
-      const close = documentRef.createElement("span");
-      close.textContent = "]";
       slot.setAttribute("aria-label", `${family}: ${item.name}`);
-      slot.append(open, icon, close);
+      slot.append(icon);
     });
   }
 

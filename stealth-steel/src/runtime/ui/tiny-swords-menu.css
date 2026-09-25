@@ -223,8 +223,8 @@ menu-title-label { display: inline-block; max-width: 100%; white-space: nowrap; 
 .tiny-swords-button-art i { background-image: url('/ui/tiny-swords/BigBlueButton_Regular.png'); }
 .menu-button-secondary .tiny-swords-button-art i { filter: hue-rotate(175deg) saturate(2) brightness(.8); }
 .map-order-buttons { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; justify-content: flex-start; padding: 4px 0; box-sizing: border-box; }
-.ui-layer .game-window .map-order-button { flex: 0 1 68px; min-width: 0; width: 68px; height: 17px; min-height: 17px; padding: 0 4px 3px; font-size: 13px; line-height: 1; }
-.ui-layer .map-order-button .tiny-swords-button-art { grid-template-columns: 10px 1fr 10px; grid-template-rows: 10px 1fr 10px; }
+.ui-layer .game-window .map-order-button { flex: 0 1 68px; min-width: 0; width: 68px; height: 9px; min-height: 9px; padding: 0 4px 1px; font-size: 13px; line-height: 1; }
+.ui-layer .map-order-button .tiny-swords-button-art { grid-template-columns: 5px 1fr 5px; grid-template-rows: 5px 1fr 5px; }
 menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: nowrap; }
 .ui-layer .tiny-swords-button.has-menu-icon { display: flex; justify-content: center; align-items: center; gap: 6px; }
 .ui-layer .tiny-swords-button.has-menu-icon:has(.menu-button-icon-glyph) { gap: 5px; }

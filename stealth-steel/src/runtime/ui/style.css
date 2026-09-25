@@ -316,12 +316,16 @@ body {
   top: calc(var(--ui-safe-top) + 3em);
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .items-counter-slot {
   display: inline-flex;
   align-items: center;
-  min-width: 1.4em;
+}
+
+.items-counter-slot[hidden] {
+  display: none;
 }
 
 .items-counter-slot img {
