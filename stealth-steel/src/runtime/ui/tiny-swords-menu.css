@@ -323,3 +323,4 @@ menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: 
 .treasure-content > [hidden] { display: none; }
 .ui-layer .treasure-content > .treasure-message { min-height: 4em; margin: 0; }
 .ui-layer .treasure-content > .treasure-countdown { min-height: 1.6em; margin: 0; }
+.settings-reset .tiny-swords-button-art i { filter: hue-rotate(175deg) saturate(2) brightness(.8); }

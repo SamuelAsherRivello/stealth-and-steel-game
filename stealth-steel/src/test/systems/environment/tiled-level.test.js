@@ -291,7 +291,7 @@ test("Level01 exposes the current authored enemy roster and player placement", a
   assert.deepEqual(level.spawners.map(({ type, gameCell }) => ({ type, gameCell })), [
     { type: "MONK", gameCell: { x: 2, y: 14 } },
     { type: "PLAYER", gameCell: { x: 3, y: 3 } },
-    { type: "GOBLIN", gameCell: { x: 0, y: 11 } },
+    { type: "GOBLIN", gameCell: { x: 0, y: 10 } },
     { type: "WARRIOR", gameCell: { x: 9, y: 4 } },
     { type: "ARCHER", gameCell: { x: 1, y: 8 } },
     { type: "LANCER", gameCell: { x: 8, y: 10 } },

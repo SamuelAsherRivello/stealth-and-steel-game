@@ -16,7 +16,7 @@ const documentRef = { createElement: () => new Element() };
 test("window title and close control share the ribbon layout", () => {
   const closeButton = documentRef.createElement("button");
   const menu = createMenu({ titleText: "Settings Menu", content: new Element(), closeButton, documentRef });
-  const header = menu.headerContainer.children[0];
+  const header = menu.headerContainer;
   assert.ok(header.className.includes("game-window-header"));
   assert.ok(menu.title.className.includes("menu-header-text"));
   assert.ok(closeButton.className.includes("menu-header-button"));

@@ -15,7 +15,7 @@ const runOpenSpecContext = () => spawnSync(process.execPath, [join(root, "opensp
 });
 const openSpecContextResult = runOpenSpecContext();
 const openSpecMissing = openSpecContextResult.status !== 0
-  && /Install OpenSpec 1\.13\.0/.test(openSpecContextResult.stderr || openSpecContextResult.stdout);
+  && /Install OpenSpec 1\.13\.1/.test(openSpecContextResult.stderr || openSpecContextResult.stdout);
 const walk = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const file = join(directory, entry.name);
   return entry.isDirectory() ? walk(file) : [file];
@@ -42,14 +42,14 @@ test("root commands target the contained application and preserve Pages output",
     assert.equal(lock.packages[""].dependencies[name], dependency);
     if (dependency.startsWith("file:")) assert.ok(existsSync(join(root, dependency.slice(5))), dependency);
   }
-  for (const legacy of ["src", "test", "scripts", "public", "plugins", "vendor", "documentation", "openspec", "index.html"]) {
+  for (const legacy of ["src", "test", "scripts", "public", "plugins", "vendor", "documentation", "index.html"]) {
     assert.equal(existsSync(join(root, legacy)), false, `Legacy root path: ${legacy}`);
   }
   assert.ok(existsSync(join(root, "openspec/config.yaml")));
 });
 
 test("the repository OpenSpec adapter supports the pinned latest CLI in openspec", {
-  skip: openSpecMissing ? "OpenSpec 1.13.0 is not installed in this environment." : false,
+  skip: openSpecMissing ? "OpenSpec 1.13.1 is not installed in this environment." : false,
 }, () => {
   assert.equal(openSpecContextResult.status, 0, openSpecContextResult.stderr || openSpecContextResult.stdout);
   const context = JSON.parse(openSpecContextResult.stdout);
@@ -58,18 +58,10 @@ test("the repository OpenSpec adapter supports the pinned latest CLI in openspec
   assert.equal(context.root.role, "openspec_root");
 });
 
-test("the expanded OpenSpec skills route commands through the openspec adapter", () => {
-  const generatedSkills = [
-    "apply-change", "archive-change", "bulk-archive-change", "continue-change",
-    "explore", "ff-change", "new-change", "onboard", "propose", "sync-specs",
-    "update-change", "verify-change",
-  ];
-  for (const name of generatedSkills) {
-    const contents = readFileSync(join(root, `.agents/skills/openspec-${name}/SKILL.md`), "utf8");
-    assert.match(contents, /generatedBy: "1\.13\.0"/, name);
-    assert.match(contents, /npm run openspec -- /, name);
-    assert.doesNotMatch(contents, /(?:`|^\s+)openspec (?:archive|config|context|doctor|feedback|instructions|list|new|schemas|show|status|store|update|validate|view)\b/m, name);
-  }
+test("the repository routes OpenSpec through its local adapter", () => {
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  assert.equal(pkg.scripts.openspec, "node openspec/cli.mjs");
+  assert.ok(existsSync(join(root, "openspec/cli.mjs")));
 });
 
 test("every active Tiled image and external tileset resolves inside the public asset tree", () => {

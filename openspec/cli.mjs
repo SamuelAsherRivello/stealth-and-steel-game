@@ -3,7 +3,7 @@ import { createRequire, registerHooks } from "node:module";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-// OpenSpec 1.13.0 hardcodes its planning folder. Adapt only this invocation;
+// OpenSpec 1.13.1 hardcodes its planning folder. Adapt only this invocation;
 // leave the installed package, global settings, and metadata formats untouched.
 const require = createRequire(import.meta.url);
 const candidates = [];
@@ -14,10 +14,10 @@ for (const entry of (process.env.PATH ?? "").split(delimiter).filter(Boolean)) {
   candidates.push(join(entry, "../lib/node_modules/@fission-ai/openspec/bin/openspec.js"));
 }
 const cli = candidates.find(existsSync);
-if (!cli) throw new Error("Install OpenSpec 1.13.0, or set OPENSPEC_CLI to its bin/openspec.js path.");
+if (!cli) throw new Error("Install OpenSpec 1.13.1, or set OPENSPEC_CLI to its bin/openspec.js path.");
 const packageRoot = resolve(dirname(cli), "..");
 const { version } = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
-if (version !== "1.13.0") throw new Error(`Unsupported OpenSpec ${version}; review the openspec adapter before upgrading.`);
+if (version !== "1.13.1") throw new Error(`Unsupported OpenSpec ${version}; review the openspec adapter before upgrading.`);
 const distUrl = pathToFileURL(join(packageRoot, "dist") + "/").href;
 registerHooks({
   load(url, context, nextLoad) {

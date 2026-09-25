@@ -9,6 +9,6 @@ test('authored treasure has one palette item, a sensor and a stable origin-relat
   const palette=external.get('../tilesets/TreasureChestSpawner.tsj');assert.equal(palette.tiles.length,1);
   assert.equal(palette.tiles[0].objectgroup.objects[0].class,'Sensor');
   const level=normalizeTiledMap(map,external);assert.equal(level.treasureSpawners.length,1);
-  assert.deepEqual(level.treasureSpawners[0].tiledCell,{x:4,y:11});
+  assert.deepEqual(level.treasureSpawners[0].tiledCell,{x:1,y:5});
   assert.deepEqual(level.treasureSpawners[0].sensor,{x:-24,y:-20,width:48,height:40});
 });

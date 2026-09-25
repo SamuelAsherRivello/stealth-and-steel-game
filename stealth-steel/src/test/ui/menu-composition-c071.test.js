@@ -23,7 +23,7 @@ test("C071 keeps header, body, and footer in one non-scrolling menu stack", () =
     documentRef,
   });
 
-  const contentStack = menu.panel.children[1];
+  const contentStack = menu.contentStack;
   assert.ok(contentStack.className.split(" ").includes("menu-content-stack"));
   assert.deepEqual(contentStack.children, [menu.headerContainer, menu.bodyContainer, menu.footerContainer]);
   assert.equal(menu.bodyContainer.children[0], menu.bodyArea);
@@ -59,7 +59,7 @@ test("C071 uses one complete explicit prose style without outcome overrides", as
   );
 
   assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{/);
-  assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{[^}]*font:\s*22px\/1\.6 Georgia, serif;[^}]*margin:\s*0;[^}]*color:\s*#513d2a;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;[^}]*text-align:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.tiny-swords-body-text\s*\{[^}]*font:\s*22px\/1\.6 Georgia, serif;[^}]*margin:\s*0 0 10px;[^}]*color:\s*#513d2a;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;[^}]*text-align:\s*center;/s);
   assert.doesNotMatch(styles, /\.ui-layer \.menu-body p,/);
   assert.doesNotMatch(styles, /\.outcome-(?:loss|win) \.tiny-swords-body-text/);
   assert.match(treasure, /message\.className\s*=\s*['"]tiny-swords-body-text treasure-message['"]/);
@@ -74,7 +74,7 @@ test("C071 applies compact shared section, form, and action rhythm without chang
   );
 
   assert.match(styles, /--menu-action-gap:\s*3\.6px;/);
-  assert.match(styles, /--menu-action-visual-overlap:\s*8px;/);
+  assert.match(styles, /--menu-action-visual-overlap:\s*10px;/);
   assert.match(styles, /--menu-section-following-gap:\s*2\.4px;/);
   assert.match(styles, /--menu-form-item-gap:\s*3\.6px;/);
   assert.match(styles, /--menu-final-action-bottom:\s*8px;/);
@@ -87,7 +87,7 @@ test("C071 applies compact shared section, form, and action rhythm without chang
   assert.match(styles, /\.map-order-buttons\s*\{[^}]*gap:\s*8px;/s);
 });
 
-test("C071 title labels retain a doubled baseline and shrink to one line when the ribbon narrows", async () => {
+test("C071 title labels retain a shared one-line ribbon treatment", async () => {
   const [styles, menu, titleLabel] = await Promise.all([
     readFile(new URL("../../runtime/ui/tiny-swords-menu.css", import.meta.url), "utf8"),
     readFile(new URL("../../runtime/ui/menu.js", import.meta.url), "utf8"),
@@ -96,13 +96,12 @@ test("C071 title labels retain a doubled baseline and shrink to one line when th
 
   assert.match(styles, /font:\s*bold clamp\(36px, 8cqw, 52px\)\/1\.1 Georgia, serif;/);
   assert.match(styles, /--menu-ribbon-title-safe-inset:\s*72px;/);
-  assert.match(styles, /font:\s*bold clamp\(36px, 9\.6cqw, 56px\)\/1\.1 Georgia, serif;/);
-  assert.match(styles, /\.ui-layer \.game-window \.tiny-swords-title-text\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.tiny-swords-title-text\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/s);
   assert.match(styles, /tiny-swords-title-text[^}]*white-space:\s*nowrap;/s);
   assert.match(menu, /title\.menuTitleLabel\s*=\s*label/);
-  assert.match(titleLabel, /--menu-ribbon-title-safe-inset/);
-  assert.match(titleLabel, /title\.classList\.contains\("tiny-swords-ribbon"\)/);
-  assert.match(titleLabel, /if \(width > available\) this\.style\.fontSize/);
+  assert.match(titleLabel, /this\.style\.removeProperty\("font-size"\)/);
+  assert.match(titleLabel, /new ResizeObserver\(this\.fit\)/);
+  assert.doesNotMatch(titleLabel, /this\.style\.fontSize/);
 });
 
 test("C071 removes every menu scrollbar at the shared layout boundary", async () => {
@@ -143,9 +142,9 @@ test("C084 gives closable menus explicit header text and button regions", async 
   assert.ok(menu.header.className.includes("game-window-header"));
   assert.ok(menu.title.className.includes("menu-header-text"));
   assert.ok(closeButton.className.includes("menu-header-button"));
-  assert.match(styles, /\.ui-layer \.game-window \.game-window-header\s*\{[^}]*align-items:\s*center;/s);
-  assert.match(styles, /\.ui-layer \.game-window \.menu-header-text\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/s);
-  assert.match(styles, /\.ui-layer \.game-window \.menu-header-button\s*\{[^}]*grid-column:\s*3;[^}]*grid-row:\s*1;[^}]*align-self:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.game-window \.title-container\s*\{[^}]*align-items:\s*center;/s);
+  assert.match(styles, /\.ui-layer \.game-window \.title-container \.title-text\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/s);
+  assert.match(styles, /\.ui-layer \.game-window \.title-container \.close-button\s*\{[^}]*grid-column:\s*3;[^}]*grid-row:\s*1;[^}]*align-self:\s*center;/s);
 });
 
 test("C071 removes lightning only from BIS toast messaging", async () => {

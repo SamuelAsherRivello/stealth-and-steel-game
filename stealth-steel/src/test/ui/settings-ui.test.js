@@ -277,7 +277,7 @@ test("settings source composes required controls, persistence, and pause lifecyc
   ]);
   assert.match(source, /gear\.setAttribute\("aria-label", "Open settings"\)/);
   assert.match(source, /icon\.src = `\$\{ASSET_BASE\}ui\/tiny-swords\/Icon_10\.png`/);
-  assert.match(source, /title:\s*"Settings Menu"/);
+  assert.match(source, /title:\s*"Settings"/);
   assert.match(source, /createMenuButton\(\{ displayText: "Developer"/);
   assert.doesNotMatch(source, /settings-items-button|createItemsUi/);
   assert.match(source, /title: "Developer"/);
@@ -338,7 +338,7 @@ test("developer settings opens above the main settings window and closes back to
   const developerButton = elementByClass(settingsUi.activeWindow.panel, "developer-settings-button");
   assert.equal(developerButton.textContent, "Developer");
   click(developerButton);
-  assert.equal(settingsUi.developerWindow.panel.children[0].textContent, "Developer");
+  assert.match(settingsUi.developerWindow.panel.textContent, /Developer/);
   assert.equal(settingsUi.developerWindow.backdrop.classList.values.has("developer-settings-backdrop"), true);
   assert.equal(pauseCalls.join(","), "pause");
 

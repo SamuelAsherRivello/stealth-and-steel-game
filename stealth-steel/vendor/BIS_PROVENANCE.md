@@ -1,6 +1,6 @@
 # Current BIS release package snapshot (2026-09-25)
 
-Current artifact: bis-integration-0.0.9.tgz. SHA-256: ba6260f6e43d4df16bdba4c456d5aa05c644de8e28cc2966937944ff0be21b55. Source commit: 1ac2411240843803a84acb4637acfa6b33dc199e (source worktree dirty for this local release). The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, full BIS test suite, build, type verification, and game verification are completed for this snapshot. This is the verified local BIS 0.0.9 package snapshot used by the game.
+Current artifact: bis-integration-0.0.9.tgz. SHA-256: d02a46fde2ee4497d16ccff60a3b8a03eddb39755133beaefbaf40edfb396529. Source commit: d80a2c279d2dd9e771db707c3470df472cb5476b. The 122-file inventory is recorded in [bis-package-inventory.json](bis-package-inventory.json). Package metadata, public dist/src contents, archive hash, full BIS test suite, build, type verification, and game verification are completed for this snapshot. This is the verified local BIS 0.0.9 package snapshot used by the game.
 
 ### Game-consumable public API changes
 
