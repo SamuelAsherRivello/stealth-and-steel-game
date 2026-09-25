@@ -322,4 +322,4 @@ menu-button-label { display: block; min-width: 0; max-width: 100%; white-space: 
 .treasure-content { display: contents; }
 .treasure-content > [hidden] { display: none; }
 .ui-layer .treasure-content > .treasure-message { min-height: 4em; margin: 0; }
-.ui-layer .treasure-content > .treasure-countdown { min-height: 1.6em; margin: 22px 0 0; }
+.ui-layer .treasure-content > .treasure-countdown { min-height: 1.6em; margin: 0; }
